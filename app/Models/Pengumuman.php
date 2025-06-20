@@ -12,21 +12,28 @@ class Pengumuman extends Model
     protected $table = 'pengumuman';
 
     protected $fillable = [
-        'user_id',
-        'label', // untuk menyimpan label pengumuman
-        'judul',
-        'isi',
-        'tipe',
-        'attachment', // untuk menyimpan file PDF/gambar
+        'created_by',
+        'title',
+        'announcement_type',
+        'label',
+        'content',
+        'attachment_file',
+        'external_link',
     ];
 
-    public function user()
+    /**
+     * Relasi ke user yang membuat pengumuman.
+     */
+    public function creator()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * Relasi jika pengumuman bertipe polling.
+     */
     public function polling()
-{
-    return $this->hasOne(Polling::class);
-}
+    {
+        return $this->hasOne(Polling::class);
+    }
 }
