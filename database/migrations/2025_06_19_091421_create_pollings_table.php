@@ -10,8 +10,9 @@ return new class extends Migration
     {
         Schema::create('pollings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pengumuman_id')->constrained('pengumuman')->onDelete('cascade');
-            $table->timestamp('batas_waktu')->nullable(); // bisa pilih kapan berakhir
+            $table->foreignId('announcement_id')->constrained('announcements')->onDelete('cascade'); // ✅ diperbaiki
+            $table->timestamp('deadline')->nullable(); // batas waktu voting
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });             
     }
