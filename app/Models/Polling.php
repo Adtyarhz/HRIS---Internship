@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Polling extends Model
 {
-    protected $fillable = ['pengumuman_id', 'batas_waktu'];
+    protected $fillable = ['announcement_id', 'deadline', 'created_by'];
 
     public function pengumuman()
     {
-        return $this->belongsTo(Pengumuman::class);
+        return $this->belongsTo(Announcement::class);
     }
 
     public function options()
