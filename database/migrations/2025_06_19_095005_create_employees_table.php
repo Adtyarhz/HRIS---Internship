@@ -13,19 +13,19 @@ return new class extends Migration {
             $table->string('nip', 20)->nullable()->unique();
             $table->string('npwp', 20)->nullable()->unique();
             $table->string('full_name', 100);
-            $table->enum('gender', ['L', 'P']);
+            $table->enum('gender', ['Laki-laki', 'Perempuan']);
             $table->string('religion', 50);
             $table->string('birth_place', 50);
             $table->date('birth_date');
             $table->integer('age');
-            $table->enum('marital_status', ['TK', 'K0', 'K1', 'K2', 'K3'])->default('TK');
+            $table->enum('marital_status', ['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])->default('Lajang');
+            $table->integer('dependents');
             $table->text('ktp_address');
             $table->text('current_address');
-            $table->string('city', 50);
-            $table->string('province', 50);
             $table->string('phone_number', 20)->unique();
             $table->string('email', 100)->unique();
             $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
+            $table->enum('employee_type', ['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])->default('Kontrak');
             $table->date('hire_date');
             $table->date('separation_date')->nullable();
 
