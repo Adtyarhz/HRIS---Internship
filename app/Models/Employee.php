@@ -60,12 +60,12 @@ class Employee extends Model
 
     public function division(): BelongsTo
     {
-        return $this->belongsTo(Divisions::class, 'division_id');
+        return $this->belongsTo(Division::class, 'division_id');
     }
 
     public function position(): BelongsTo
     {
-        return $this->belongsTo(Positions::class, 'position_id');
+        return $this->belongsTo(Position::class, 'position_id');
     }
 
     public function educationHistory(): HasMany
@@ -93,8 +93,13 @@ class Employee extends Model
         return $this->hasOne(HealthRecord::class, 'employee_id');
     }
 
-    public function insuranceBpjs(): HasMany
+    public function insurance(): HasMany
     {
         return $this->hasMany(Insurance::class, 'employee_id');
+    }
+
+    public function familyDependent(): HasMany
+    {
+        return $this->hasMany(FamilyDependent::class, 'employee_id');
     }
 }

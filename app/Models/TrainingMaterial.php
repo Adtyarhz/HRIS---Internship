@@ -11,7 +11,7 @@ class TrainingMaterial extends Model
     use HasFactory;
 
     protected $fillable = [
-        'certification_id',
+        'training_id',
         'file_path',
     ];
 

@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('health_records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->unique()->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->unique()->constrained()->onDelete('cascade');
             $table->decimal('height', 5, 1)->nullable();
             $table->decimal('weight', 5, 1)->nullable();
             $table->enum('blood_type', ['A', 'B', 'AB', 'O', '-'])->nullable();

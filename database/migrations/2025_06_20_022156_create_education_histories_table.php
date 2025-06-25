@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('education_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->enum('education_level', ['SD', 'SMP', 'SMA', 'D1', 'D2', 'D3', 'S1', 'S2', 'S3']);
             $table->string('institution_name', 150);
             $table->text('institution_address')->nullable();

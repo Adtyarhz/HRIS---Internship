@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('training_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('training_name', 150);
             $table->string('provider', 100);
             $table->text('description')->nullable();

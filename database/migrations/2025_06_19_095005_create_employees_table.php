@@ -32,7 +32,7 @@ return new class extends Migration {
             $table->foreignId('division_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('position_id')->nullable()->constrained()->onDelete('set null');
 
-            $table->foreignId('user_id')->nullable()->unique()->constrained()->onDelete('casacade');
+            $table->foreignId('user_id')->nullable()->unique()->constrained()->onDelete('cascade');
 
             $table->timestamps();
         });

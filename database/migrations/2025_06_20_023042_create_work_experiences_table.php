@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('work_experiences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('company_name', 150);
             $table->text('company_address')->nullable();
             $table->string('company_phone', 20)->nullable();

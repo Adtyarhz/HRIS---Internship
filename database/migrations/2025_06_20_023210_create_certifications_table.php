@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('certifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('certification_name', 150);
             $table->string('issuer', 100);
             $table->text('description')->nullable();

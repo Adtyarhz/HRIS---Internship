@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('family_dependents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('contact_name', 100);
             $table->string('relationship', 50);
             $table->string('phone_number', 20)->unique();

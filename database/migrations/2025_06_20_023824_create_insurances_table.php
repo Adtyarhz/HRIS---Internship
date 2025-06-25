@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('insurances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('casacade');
+            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('insurance_number', 30)->unique();
             $table->enum('insurance_type', ['KES', 'TK', 'N-BPJS']);
             $table->date('start_date');
