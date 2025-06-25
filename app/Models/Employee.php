@@ -22,7 +22,6 @@ class Employee extends Model
         'religion',
         'birth_place',
         'birth_date',
-        'age',
         'marital_status',
         'dependents',
         'ktp_address',
@@ -45,13 +44,6 @@ class Employee extends Model
     ];
 
     protected $with = ['user', 'division', 'position'];
-
-    protected $appends = ['age'];
-
-    public function getAgeAttribute()
-    {
-        return $this->birth_date ? Carbon::parse($this->birth_date)->age : null;
-    }
 
     public function user(): BelongsTo
     {

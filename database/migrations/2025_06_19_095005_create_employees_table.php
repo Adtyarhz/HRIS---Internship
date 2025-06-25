@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->string('religion', 50);
             $table->string('birth_place', 50);
             $table->date('birth_date');
-            $table->integer('age');
             $table->enum('marital_status', ['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])->default('Lajang');
             $table->integer('dependents');
             $table->text('ktp_address');
