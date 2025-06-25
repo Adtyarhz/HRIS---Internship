@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('training_materials', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('training_id')->constrained()->onDelete('cascade');
+            $table->foreignId('training_history_id')->constrained()->onDelete('cascade');
             $table->string('file_path');
             $table->timestamps();
         });
