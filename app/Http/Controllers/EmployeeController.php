@@ -16,9 +16,20 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::latest()->paginate(10);
+        $query = Employee::query();
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('nik', 'like', '%' . $search . '%')
+                    ->orWhere('nip', 'like', '%' . $search . '%');
+            });
+        }
+
+        $employees = $query->latest()->paginate(9);
         return view('employees.data.index', compact('employees'));
     }
 

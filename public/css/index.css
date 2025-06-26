@@ -1,0 +1,340 @@
+/* =================================== */
+/* ==   VARIABEL & DASAR HALAMAN    == */
+/* =================================== */
+:root {
+    --bg-table: #F4F1E0;
+    --bg-table-header: #DFD9B6;
+    --bg-pagination: #F3EFE2;
+    --btn-primary: #9A3B3B; /* Digunakan dari style.css */
+    --btn-secondary: #7D131E;
+    --border-color-light: rgba(0, 0, 0, 0.20);
+    --text-placeholder: rgba(0, 0, 0, 0.30);
+}
+
+/* =================================== */
+/* ==      KONTROL ATAS & FORM      == */
+/* =================================== */
+.page-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.search-title {
+    font-family: 'Noto Sans Georgian', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    width: 450px;
+    max-width: 100%;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 0 15px;
+    font-size: 15px;
+}
+.search-input::placeholder {
+    color: var(--text-placeholder);
+}
+
+.search-button {
+    width: 80px;
+    height: 40px;
+    background-color: var(--btn-secondary);
+    color: var(--text-light, white);
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.add-employee-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 200px;
+    height: 45px;
+    background-color: var(--btn-primary);
+    color: var(--text-light, white);
+    font-family: 'Noto Sans Georgian', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.add-employee-button .add-icon {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* =================================== */
+/* ==       NOTIFIKASI (ALERT)      == */
+/* =================================== */
+.alert {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+}
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+
+/* =================================== */
+/* ==     BAGIAN TABEL KARYAWAN     == */
+/* =================================== */
+.employee-table {
+    border: 1px solid var(--border-color);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header Tabel */
+.table-header {
+    display: flex;
+    background-color: var(--bg-table-header);
+    height: 40px;
+    align-items: center;
+    padding: 0 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Body Tabel */
+.table-body {
+    background-color: var(--bg-table);
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* Baris Tabel */
+.employee-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #D1CBB8;
+}
+.employee-row:last-child {
+    border-bottom: none;
+}
+
+.row-col {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+/* Lebar Kolom */
+.col-no { width: 5%; justify-content: center; }
+.col-employee { width: 30%; }
+.col-details { width: 25%; }
+.col-status { width: 15%; }
+.col-actions { width: 25%; justify-content: flex-end; gap: 10px; }
+
+
+/* Konten dalam Kolom */
+.employee-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.employee-info {
+    display: flex;
+    flex-direction: column;
+}
+.employee-name {
+    font-family: 'Noto Sans Georgian', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+.employee-id {
+    font-family: 'Noto Sans Georgian', sans-serif;
+    font-size: 12px;
+}
+.employee-position,
+.employee-division {
+    font-size: 12px;
+    font-family: 'Noto Sans Georgian', sans-serif;
+}
+.employee-position { font-weight: 600; }
+.employee-division { color: #555; }
+
+/* Badge Status */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+}
+.status-badge.status-active { background-color: #28a745; }
+.status-badge.status-inactive { background-color: #dc3545; }
+
+
+/* Tombol Aksi */
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    border: none;
+    color: white !important; /* !important untuk menimpa warna link default */
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.action-btn:hover { opacity: 0.8; }
+
+.view-btn { background-color: #17a2b8; }
+.edit-btn { background-color: #ffc107; }
+.delete-btn { background-color: #dc3545; }
+
+.empty-row {
+    padding: 40px;
+    text-align: center;
+    color: #6c757d;
+}
+
+/* =================================== */
+/* ==     BAGIAN PAGINASI BAWAH     == */
+/* =================================== */
+.page-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+    flex-shrink: 0;
+}
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-pagination);
+    border: 1px solid var(--border-color-light);
+    border-radius: 10px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    padding: 0 5px;
+    height: 48px;
+    list-style: none; /* Menghilangkan bullets dari <ul> */
+}
+.pagination li {
+    display: flex;
+    align-items: center;
+    margin: 0 5px;
+}
+.pagination li a, .pagination li span {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    color: var(--text-dark);
+    text-decoration: none;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+.pagination li.active {
+    background-color: #FFFDEB;
+    border: 1px solid var(--border-color-light);
+    height: 48px;
+    line-height: 46px; /* vert-align */
+    margin: 0;
+    padding: 0 5px;
+}
+.pagination li.active span {
+    font-weight: 600;
+}
+.pagination li.disabled span {
+    color: #6c757d;
+    cursor: default;
+}
+
+/* =================================== */
+/* ==       RESPONSIVE DESIGN       == */
+/* =================================== */
+@media (max-width: 768px) {
+    .page-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-input {
+        width: 100%;
+    }
+    .table-header {
+        display: none; /* Sembunyikan header di mobile */
+    }
+    .employee-row {
+        flex-direction: column;
+        align-items: flex-start;
+        border: 1px solid #D1CBB8;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    .row-col {
+        width: 100%;
+        padding: 8px 0;
+        border-bottom: 1px dashed #D1CBB8;
+    }
+    .row-col:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    /* Trik untuk menampilkan label kolom di mobile */
+    .row-col::before {
+        content: attr(data-label); /* Anda perlu menambahkan atribut data-label di HTML */
+        font-weight: 600;
+        width: 120px;
+        min-width: 120px;
+        color: #555;
+    }
+    .col-no::before { content: "No."; }
+    .col-employee::before { content: "Karyawan"; }
+    .col-details::before { content: "Jabatan/Divisi"; }
+    .col-status::before { content: "Status"; }
+    .col-actions::before { content: "Aksi"; }
+    
+    .col-no {
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .col-actions {
+        justify-content: flex-start;
+    }
+}

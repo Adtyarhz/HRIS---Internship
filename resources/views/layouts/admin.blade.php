@@ -1,95 +1,90 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Admin Panel')</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- AdminLTE css -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>@yield('title', 'HRIS Panel')</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Manrope:wght@400&family=Noto+Sans+Georgian:wght@400&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
+
+    @stack('styles')
+
 </head>
-<body class="hold-transition sidebar-mini">
-<div class="wrapper">
+<body>
+    <div id="app" class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="{{ asset('img/logo.png') }}" alt="Company Logo" class="logo" />
+                <div class="brand">
+                    <span class="brand-title">HRIS</span>
+                    <span class="brand-subtitle">Super Admin</span>
+                </div>
+            </div>
 
-    <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-        <!-- Left navbar links -->
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-            </li>
-        </ul>
-    </nav>
-    <!-- /.navbar -->
-
-    <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <!-- Brand Logo -->
-        <a href="#" class="brand-link">
-            <span class="brand-text font-weight-light">Manajemen Karyawan</span>
-        </a>
-
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Sidebar Menu -->
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                    <li class="nav-item">
-                        <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>
-                                Data Karyawan
-                            </p>
-                        </a>
+            <nav class="sidebar-menu">
+                <ul>
+                    {{-- Contoh link menu dinamis dari Laravel --}}
+                    <li class="{{- request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <a href="{{-- route('dashboard') --}}">Dashboard</a>
                     </li>
-                    <!-- Tambahkan menu lain di sini -->
+                    <li class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                        <a href="{{ route('employees.index') }}">Employee Information</a>
+                    </li>
+                    <li class="{{ request()->routeIs('requests.*') ? 'active' : '' }}">
+                        <a href="{{-- route('requests.index') --}}#">Employee Request</a>
+                    </li>
+                    <li class="{{ request()->routeIs('organization.*') ? 'active' : '' }}">
+                        <a href="#">Organization Structure</a>
+                    </li>
+                    <li class="{{ request()->routeIs('careers.*') ? 'active' : '' }}">
+                        <a href="#">Careers Administration</a>
+                    </li>
+                    <li class="{{ request()->routeIs('attendance.*') ? 'active' : '' }}">
+                        <a href="#">Time & Attendance</a>
+                    </li>
+                    <li class="{{ request()->routeIs('reimbursement.*') ? 'active' : '' }}">
+                        <a href="#">Reimbursement</a>
+                    </li>
+                     <li class="{{ request()->routeIs('payroll.*') ? 'active' : '' }}">
+                        <a href="#">Payroll</a>
+                    </li>
+                     <li class="{{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                        <a href="#">Setting</a>
+                    </li>
                 </ul>
             </nav>
-            <!-- /.sidebar-menu -->
-        </div>
-        <!-- /.sidebar -->
-    </aside>
+        </aside>
 
-    <!-- Content Wrapper. Contains page content -->
-    <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <section class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1>@yield('content_header')</h1>
-                    </div>
-                </div>
-            </div><!-- /.container-fluid -->
-        </section>
+        <main class="main-content">
+            
+            <!-- Header Atas -->
+            <header class="main-header">
+                <h1 class="header-title">
+                    @yield('content_header', 'Page Title')
+                </h1>
+                <img src="https://placehold.co/50x50" alt="User Avatar" class="user-avatar" />
+            </header>
 
-        <!-- Main content -->
-        <section class="content">
-            <div class="container-fluid">
+            <!-- Panel Konten Utama -->
+            <div class="form-panel">
+                
                 @yield('content')
+            
             </div>
-        </section>
-        <!-- /.content -->
+        </main>
     </div>
-    <!-- /.content-wrapper -->
 
-    <footer class="main-footer">
-        <strong>Copyright &copy; {{ date('Y') }} <a href="#">Perusahaan Anda</a>.</strong> All rights reserved.
-    </footer>
-
-</div>
-<!-- ./wrapper -->
-
-<!-- REQUIRED SCRIPTS -->
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script> --}}
 </body>
 </html>

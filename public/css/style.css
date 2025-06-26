@@ -1,0 +1,198 @@
+/* ==================================================== */
+/* ==       PENGATURAN DASAR & VARIABEL GLOBAl       == */
+/* ==================================================== */
+:root {
+    --primary-red: #9a3b3b;
+    --primary-beige: #f3e9d2;
+    --bg-light: #fefef9;
+    --bg-grey: #e3e3e3;
+    --text-dark: black;
+    --text-light: white;
+    --border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Pengaturan dasar untuk seluruh halaman */
+body {
+    margin: 0;
+    font-family: "Montserrat", sans-serif;
+    background-color: var(--bg-grey);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* ==================================================== */
+/* ==      1. KONTAINER APLIKASI UTAMA (WRAPPER)     == */
+/* ==================================================== */
+.app-container {
+    max-width: 1440px;
+    width: 100%;
+    height: 95vh;
+    max-height: 900px;
+    border-radius: 15px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 265px 1fr; /* Kolom untuk sidebar dan konten */
+    background: var(--bg-light);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* ==================================================== */
+/* ==            2. SIDEBAR (NAVIGASI KIRI)          == */
+/* ==================================================== */
+.sidebar {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+    padding: 20px 11px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto; /* Memungkinkan scroll jika menu banyak */
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-shrink: 0;
+}
+.logo {
+    width: 63px;
+    height: 63px;
+    margin-right: 15px;
+}
+.brand-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+.brand-subtitle {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-menu li a {
+    display: block;
+    padding: 10px 20px;
+    margin-bottom: 13px;
+    background-color: var(--primary-beige);
+    color: var(--text-dark);
+    text-decoration: none;
+    border-radius: 7px;
+    font-family: "Noto Sans Georgian", sans-serif;
+    font-size: 16px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s, background-color 0.2s;
+}
+.sidebar-menu li.active a,
+.sidebar-menu li a:hover {
+    background-color: var(--bg-light);
+    transform: scale(1.02);
+}
+
+/* ==================================================== */
+/* ==           3. KONTEN UTAMA (KANAN)            == */
+/* ==================================================== */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Memungkinkan konten utama di-scroll */
+}
+
+.main-header {
+    background-color: var(--primary-beige);
+    height: 87px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    flex-shrink: 0; /* Header tidak akan menyusut */
+    position: sticky; /* Membuat header menempel di atas saat scroll */
+    top: 0;
+    z-index: 10;
+}
+.header-title {
+    font-family: "Noto Sans Georgian", sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0;
+}
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+}
+
+/* Panel Konten (Wadah untuk @yield('content')) */
+.form-panel {
+    background: var(--bg-light);
+    padding: 25px 30px; /* Padding yang lebih baik untuk konten */
+    flex-grow: 1; /* Panel akan mengisi sisa ruang */
+}
+
+/* ==================================================== */
+/* ==       PENYESUAIAN RESPONSIVE (MEDIA QUERIES)   == */
+/* ==================================================== */
+
+/* ------ Untuk Tablet (lebar di bawah 1024px) ------ */
+@media (max-width: 1024px) {
+    .app-container {
+        grid-template-columns: 220px 1fr; /* Perkecil sidebar */
+        height: auto;
+        max-height: none;
+    }
+    .header-title {
+        font-size: 24px;
+    }
+}
+
+/* ------ Untuk Ponsel (lebar di bawah 768px) ------ */
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+        align-items: flex-start;
+    }
+
+    .app-container {
+        grid-template-columns: 1fr; /* Layout menjadi 1 kolom */
+        height: 100vh;
+        width: 100vw;
+        border-radius: 0;
+    }
+
+    .sidebar {
+        position: absolute; /* Sidebar keluar dari flow dokumen */
+        transform: translateX(-100%);
+        z-index: 1000;
+        height: 100%;
+    }
+    
+    .sidebar.is-open {
+        /* Kelas ini bisa ditambahkan via JS untuk menampilkan sidebar */
+        transform: translateX(0);
+    }
+
+    .main-header {
+        padding: 0 15px;
+        height: 70px;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+
+    .form-panel {
+        padding: 20px 15px; /* Kurangi padding di mobile */
+    }
+}
