@@ -32,6 +32,7 @@ class Employee extends Model
         'employee_type',
         'hire_date',
         'separation_date',
+        'cv_file',
         'division_id',
         'position_id',
         'user_id',
@@ -42,6 +43,11 @@ class Employee extends Model
         'hire_date' => 'date',
         'separation_date' => 'date',
     ];
+
+    public function getCvFileUrlAttribute()
+    {
+        return $this->cv_file ? asset('storage/' . $this->cv_file) : null;
+    }
 
     protected $with = ['user', 'division', 'position'];
 
