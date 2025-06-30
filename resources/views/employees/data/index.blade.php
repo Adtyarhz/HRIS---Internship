@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Data Karyawan')
+@section('header_icon', 'icon-park-outline--file-staff-one-01')
 @section('content_header', 'Employee Information')
 
 {{-- Cukup muat file CSS eksternal di sini --}}
