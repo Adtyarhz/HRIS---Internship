@@ -5,31 +5,49 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Announcement;
 use App\Models\Polling;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AnnouncementController extends Controller
 {
+    public function dashboard()
+    {
+        try {
+            $announcements = Announcement::latest()->paginate(20);
+            Log::info('Dashboard data loaded', ['announcements_count' => $announcements->count(), 'first_page' => $announcements->items()]);
+            return view('dashboard', compact('announcements'));
+        } catch (\Exception $e) {
+            Log::error('Error loading dashboard: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat dashboard.');
+        }
+    }   
+
     public function index(Request $request)
     {
-        $query = Announcement::query();
+        try {
+            $query = Announcement::query();
 
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            if ($request->filled('search')) {
+                $query->where('title', 'like', '%' . $request->search . '%');
+            }
+
+            if ($request->filled('type')) {
+                $query->where('announcement_type', $request->type);
+            }
+
+            if ($request->filled('label')) {
+                $query->where('label', 'like', '%' . $request->label . '%');
+            }
+
+            $announcements = $query->latest()->simplePaginate(8);
+            Log::info('Announcement index loaded', ['announcements_count' => $announcements->count()]);
+            return view('announcement.index', compact('announcements'));
+        } catch (\Exception $e) {
+            Log::error('Error loading announcement index: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat daftar pengumuman.');
         }
-
-        if ($request->filled('type')) {
-            $query->where('announcement_type', $request->type);
-        }
-
-        if ($request->filled('label')) {
-            $query->where('label', 'like', '%' . $request->label . '%');
-        }
-
-        $announcements = $query->latest()->paginate(10);
-
-        return view('announcement.index', compact('announcements'));
     }
 
     public function create()
@@ -39,6 +57,7 @@ class AnnouncementController extends Controller
 
     public function store(Request $request)
     {
+        //dd($request->all());
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -47,7 +66,24 @@ class AnnouncementController extends Controller
             'external_link' => 'nullable|url',
             'label' => 'nullable|string|max:50',
             'deadline' => 'nullable|date|after:now',
+            'options' => [
+    'nullable',
+    'array',
+    function ($attribute, $value, $fail) use ($request) {
+        if ($request->announcement_type === 'Polling') {
+            if (!is_array($value) || count($value) < 1) {
+                $fail('Minimal satu opsi polling harus diisi.');
+            }
+            foreach ($value as $opt) {
+                if (trim($opt) === '') {
+                    $fail('Semua opsi polling harus diisi.');
+                }
+            }
+        }
+    },
+],
         ]);
+        Log::info('Form masuk store', $request->all());
 
         $attachmentPath = null;
 
@@ -58,7 +94,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement = Announcement::create([
-            'created_by' => Auth::id() ?? 1,
+            'created_by' => 1,
             'title' => $request->title,
             'content' => $request->content,
             'announcement_type' => $request->announcement_type,
@@ -67,14 +103,17 @@ class AnnouncementController extends Controller
             'external_link' => $request->external_link,
         ]);
 
-        if ($request->announcement_type === 'polling' && $request->has('options')) {
+        if ($request->announcement_type === 'Polling') {
             $polling = $announcement->polling()->create([
                 'deadline' => $request->deadline,
+                'created_by' => 1,
             ]);
 
-            foreach ($request->options as $option) {
-                if (trim($option) !== '') {
-                    $polling->options()->create(['option_text' => $option]);
+            if ($request->has('options')) {
+                foreach ($request->options as $option) {
+                    if (trim($option) !== '') {
+                        $polling->options()->create(['option_text' => $option]);
+                    }
                 }
             }
         }
@@ -101,6 +140,8 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, $id)
     {
+        $announcement = Announcement::findOrFail($id);
+
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -108,12 +149,13 @@ class AnnouncementController extends Controller
             'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'external_link' => 'nullable|url',
             'label' => 'nullable|string|max:50',
-            'batas_waktu' => 'nullable|date|after:now',
+            'deadline' => 'nullable|date|after:now',
+            'existing_options.*' => 'nullable|string',
+            'options' => 'nullable|array',
+            'options.*' => 'nullable|string|min:1',
+            'delete_options' => 'nullable|array',
         ]);
 
-        $announcement = Announcement::findOrFail($id);
-
-        // Upload lampiran baru jika ada
         if ($request->hasFile('attachment_file')) {
             if ($announcement->attachment_file && Storage::exists('public/announcement/' . $announcement->attachment_file)) {
                 Storage::delete('public/announcement/' . $announcement->attachment_file);
@@ -125,7 +167,6 @@ class AnnouncementController extends Controller
             $announcement->attachment_file = $filename;
         }
 
-        // Update data utama
         $announcement->title = $request->title;
         $announcement->content = $request->content;
         $announcement->announcement_type = $request->announcement_type;
@@ -133,8 +174,7 @@ class AnnouncementController extends Controller
         $announcement->external_link = $request->external_link;
         $announcement->save();
 
-        // Kelola polling jika tipe polling
-        if ($announcement->announcement_type === 'polling' && $announcement->polling) {
+        if ($announcement->announcement_type === 'Polling' && $announcement->polling) {
             $polling = $announcement->polling;
             $isExpired = $polling->deadline && now()->gt($polling->deadline);
             $hasVotes = $polling->options()->withCount('votes')->get()->sum('votes_count') > 0;
@@ -143,38 +183,29 @@ class AnnouncementController extends Controller
                 return redirect()->route('announcement.index')->with('error', 'Polling tidak dapat diubah karena sudah ada suara atau melewati batas waktu.');
             }
 
-            $polling->deadline = $request->batas_waktu;
+            $polling->deadline = $request->deadline;
             $polling->save();
 
-            // Update opsi lama
+            // Update existing options
             if ($request->has('existing_options')) {
                 foreach ($request->existing_options as $optionId => $optionText) {
                     $option = $polling->options()->find($optionId);
-                    if ($option) {
-                        $option->option_text = $optionText;
-                        $option->save();
+                    if ($option && trim($optionText) !== '') {
+                        $option->update(['option_text' => $optionText]);
                     }
                 }
             }
 
-            // Hapus opsi yang dipilih
+            // Delete options if checked
             if ($request->has('delete_options')) {
-                foreach ($request->delete_options as $deleteId) {
-                    $optionToDelete = $polling->options()->find($deleteId);
-                    if ($optionToDelete) {
-                        $optionToDelete->votes()->delete();
-                        $optionToDelete->delete();
-                    }
-                }
+                $polling->options()->whereIn('id', $request->delete_options)->delete();
             }
 
-            // Tambahkan opsi baru
+            // Add new options
             if ($request->has('options')) {
-                foreach ($request->options as $newOptionText) {
-                    if (trim($newOptionText) !== '') {
-                        $polling->options()->create([
-                            'option_text' => $newOptionText
-                        ]);
+                foreach ($request->options as $option) {
+                    if (trim($option) !== '') {
+                        $polling->options()->create(['option_text' => $option]);
                     }
                 }
             }
@@ -187,7 +218,6 @@ class AnnouncementController extends Controller
     {
         $announcement = Announcement::findOrFail($id);
 
-        // Hapus lampiran
         if ($announcement->attachment_file && Storage::exists('public/announcement/' . $announcement->attachment_file)) {
             Storage::delete('public/announcement/' . $announcement->attachment_file);
         }
@@ -196,4 +226,34 @@ class AnnouncementController extends Controller
 
         return redirect()->route('announcement.index')->with('success', 'Pengumuman berhasil dihapus');
     }
+
+    public function exportPolling($id)
+    {
+        $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
+    
+        if (!$announcement->polling || now()->lt($announcement->polling->deadline)) {
+            return redirect()->back()->with('error', 'Polling belum berakhir atau tidak ditemukan.');
+        }
+    
+        $filename = 'hasil_polling_' . Str::slug($announcement->title) . '.csv';
+    
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+    
+        $callback = function () use ($announcement) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Opsi', 'Jumlah Suara']);
+    
+            foreach ($announcement->polling->options as $option) {
+                fputcsv($handle, [$option->option_text, $option->votes->count()]);
+            }
+    
+            fclose($handle);
+        };
+    
+        return new StreamedResponse($callback, 200, $headers);
+    }
+
 }

@@ -6,7 +6,6 @@ use App\Models\Polling;
 use App\Models\PollingVote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PollingController extends Controller
 {
@@ -16,12 +15,12 @@ class PollingController extends Controller
             'polling_option_id' => 'required|exists:polling_options,id',
         ]);
 
-        $userId = Auth::id();
+        $userId = 1; // Gunakan ID test user "1" untuk sementara
 
         $polling = Polling::with('announcement')->findOrFail($pollingId);
 
-        // Cegah HC atau pembuat polling (created_by) untuk memberikan suara
-        if (Auth::user()->role === 'HC' || $polling->announcement->created_by === $userId) {
+        // Cegah test user "1" (diasumsikan sebagai HC atau pembuat) untuk memberikan suara
+        if ($polling->announcement->created_by === $userId) {
             return back()->with('error', 'Anda tidak diizinkan memberikan suara pada polling ini.');
         }
 
@@ -54,12 +53,11 @@ class PollingController extends Controller
     {
         $polling = Polling::with('options.votes')->findOrFail($id);
 
-        // Hanya role HC yang bisa ekspor
-        if (Auth::user()->role !== 'HC') {
+        // Izinkan test user "1" untuk ekspor (diasumsikan sebagai HC)
+        if (1 !== 1) { // Kondisi ini selalu false untuk test user "1"
             abort(403, 'Anda tidak diizinkan mengunduh hasil polling.');
         }
 
-        // Cek apakah deadline sudah habis
         if (!$polling->deadline || now()->lt($polling->deadline)) {
             return back()->with('error', 'Hasil polling hanya bisa diunduh setelah batas waktu berakhir.');
         }
@@ -85,6 +83,6 @@ class PollingController extends Controller
             fclose($handle);
         };
 
-        return new StreamedResponse($callback, 200, $headers);
+        return response()->stream($callback, 200, $headers);
     }
 }

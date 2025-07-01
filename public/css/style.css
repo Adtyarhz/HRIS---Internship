@@ -1,0 +1,314 @@
+/* ==================================================== */
+/* ==               PENGATURAN DASAR                 == */
+/* ==================================================== */
+:root {
+    --primary-red: #9a3b3b;
+    --primary-beige: #f3e9d2;
+    --primary-yellow: #fbcf44;
+    --primary-blue: #367fa9;
+    --light-green: #d8e6ad;
+    --light-yellow: #f7f7da;
+    --bg-light: #fefef9;
+    --bg-grey: #e3e3e3;
+    --text-dark: black;
+    --text-light: white;
+    --border-color: rgba(0, 0, 0, 0.2);
+    --placeholder-color: rgba(0, 0, 0, 0.3);
+}
+
+body {
+    margin: 0;
+    font-family: "Montserrat", sans-serif;
+    background-color: var(--bg-grey);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* ==================================================== */
+/* ==      1. KONTAINER APLIKASI UTAMA (WRAPPER)     == */
+/* ==================================================== */
+.app-container {
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 265px 1fr;
+    background: var(--bg-light);
+}
+
+/* ==================================================== */
+/* ==       2. SIDEBAR (NAVIGASI KIRI)             == */
+/* ==================================================== */
+.sidebar {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+    padding: 20px 11px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+.logo {
+    width: 63px;
+    height: 63px;
+    margin-right: 15px;
+}
+.brand-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+.brand-subtitle {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-menu li a {
+    display: block;
+    padding: 10px 20px;
+    margin-bottom: 13px;
+    background-color: var(--primary-beige);
+    color: var(--text-dark);
+    text-decoration: none;
+    border-radius: 7px;
+    font-family: "Noto Sans Georgian", sans-serif;
+    font-size: 16px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s;
+}
+.sidebar-menu li.active a,
+.sidebar-menu li a:hover {
+    background-color: var(--bg-light);
+    transform: scale(1.02);
+}
+
+/* ==================================================== */
+/* ==          3. KONTEN UTAMA (KANAN)               == */
+/* ==================================================== */
+.main-content {
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-header {
+    background-color: var(--primary-beige);
+    height: 87px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    flex-shrink: 0;
+}
+.header-title {
+    font-family: "Noto Sans Georgian", sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0;
+}
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+}
+
+/* Panel Form */
+.form-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--bg-light);
+}
+
+/* Navigasi Tab */
+.tab-nav {
+    display: flex;
+    background: var(--light-yellow);
+    border-bottom: 1px solid var(--border-color);
+}
+.tab-item {
+    flex: 1;
+    padding: 15px 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dark);
+    text-decoration: none;
+    border-right: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+.tab-item:last-child {
+    border-right: none;
+}
+.tab-item.active,
+.tab-item:hover {
+    background: var(--light-green);
+}
+
+/* Isi Form */
+.form-body {
+    display: flex;
+    padding: 25px;
+    gap: 30px;
+}
+
+/* Grup Foto Profil */
+.profile-group {
+    flex-shrink: 0;
+}
+.profile-image {
+    width: 208px;
+    height: 219px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+    object-fit: cover;
+}
+
+/* Grup Input Fields */
+.fields-group {
+    flex-grow: 1;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px 20px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+.form-group.span-2 {
+    grid-column: span 2;
+}
+.form-group.span-3 {
+    grid-column: span 3;
+}
+.form-group.span-4 {
+    grid-column: span 4;
+}
+
+.form-label {
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+.form-label .required {
+    color: var(--primary-red);
+}
+
+.form-control {
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 0 8px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.form-control.placeholder {
+    color: var(--placeholder-color);
+}
+
+/* Style untuk ikon dropdown dan kalender */
+.dropdown::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.6);
+}
+.calendar {
+    padding-right: 30px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23B56767" viewBox="0 0 16 16"><path d="M4.5 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0V.5a.5.5 0 0 0-.5-.5zM11.5 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0V.5a.5.5 0 0 0-.5-.5zM12 2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM3 5.857V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v1.857H3z"/></svg>')
+        no-repeat right 8px center;
+}
+
+/* Style untuk radio button */
+.radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    height: 100%;
+}
+.radio-option {
+    font-family: "Manrope", sans-serif;
+    font-size: 10px;
+}
+.radio-option input {
+    margin-right: 5px;
+}
+
+.char-limit {
+    font-size: 8px;
+    color: rgba(0, 0, 0, 0.8);
+    margin-top: 4px;
+}
+
+/* Grup Tombol Aksi */
+.actions-group {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+.btn {
+    width: 110px;
+    height: 37px;
+    border: none;
+    border-radius: 5px;
+    color: var(--text-light);
+    font-size: 12px;
+    font-family: "Montserrat", sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.btn:hover {
+    opacity: 0.9;
+}
+.btn-submit {
+    background-color: var(--primary-blue);
+}
+.btn-cancel {
+    background-color: var(--primary-red);
+}
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: black;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+}

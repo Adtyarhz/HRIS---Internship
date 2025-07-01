@@ -7,9 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Polling extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['announcement_id', 'deadline', 'created_by'];
 
-    public function pengumuman()
+    protected $casts = [
+       'deadline' => 'datetime', // Konversi otomatis ke Carbon
+    ];
+
+    public function announcement()
     {
         return $this->belongsTo(Announcement::class);
     }
