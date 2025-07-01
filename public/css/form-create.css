@@ -1,0 +1,199 @@
+/* Main container for the form card */
+.form-container {
+    background-color: #FEFEF9;
+    border: none;
+    box-shadow: none;
+    padding: 1rem;
+}
+
+h5 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+hr {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* General Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: .5rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #000;
+}
+
+.form-group label .text-danger {
+    color: #9a3b3b !important;
+}
+
+/* Input, Select, and other form controls */
+.form-control, .form-control-file {
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    height: 38px;
+}
+
+.form-control:focus {
+    border-color: #9a3b3b;
+    box-shadow: 0 0 0 0.2rem rgba(154, 59, 59, 0.25);
+}
+
+textarea.form-control {
+    height: auto;
+}
+
+.form-control-file {
+    height: auto;
+    padding: .375rem .75rem;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    width: 100%;
+}
+
+select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+}
+
+/* Custom radio button styles */
+.form-check-label {
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #121212;
+}
+
+.form-check-input {
+    margin-top: 0.2rem;
+}
+
+/* Styles for custom date input */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group .form-control {
+    padding-right: 2.5rem;
+}
+
+.date-input-group .input-group-append {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    cursor: pointer;
+}
+
+.date-input-group .input-group-text {
+    background-color: transparent;
+    border: none;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+}
+
+.date-input-group .input-group-text img {
+    width: 20px;
+    height: 20px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+/* Photo Preview */
+.photo-preview {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+
+/* Form Buttons */
+.form-buttons-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #E0E0E0;
+}
+
+.btn-submit, .btn-cancel {
+    border-radius: 5px;
+    width: 110px;
+    height: 37px;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.btn-submit {
+    background: #367fa9;
+}
+.btn-submit:hover {
+    background: #2c698d;
+    color: white;
+}
+
+.btn-cancel {
+    background: #9a3b3b;
+}
+.btn-cancel:hover {
+    background: #803030;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .col-lg-8, .col-lg-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .form-buttons-container {
+        flex-direction: column-reverse; /* Stack buttons vertically */
+        gap: 15px;
+    }
+    .btn-submit, .btn-cancel {
+        width: 100%;
+    }
+}
