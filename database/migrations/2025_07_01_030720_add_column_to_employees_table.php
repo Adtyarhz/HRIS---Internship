@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('employees', function (Blueprint $table) {
             $table->string('photo')->nullable()->after('cv_file');
-            $table->string('office')->nullable()->after('employee_type');
+            $table->enum('office', ['Kantor Pusat', 'Kantor Cabang'])->nullable()->after('employee_type');
         });
     }
 

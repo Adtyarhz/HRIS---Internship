@@ -48,7 +48,12 @@ class Employee extends Model
 
     public function getCvFileUrlAttribute()
     {
-        return $this->cv_file ? asset('storage/' . $this->cv_file) : null;
+        return $this->cv_file ? asset('storage/cv/' . $this->cv_file) : null;
+    }
+
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? asset('storage/photo/' . $this->photo) : null;
     }
 
     protected $with = ['user', 'division', 'position'];
