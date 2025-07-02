@@ -1,65 +1,129 @@
 /* =================================== */
-/* ==   VARIABEL & DASAR HALAMAN    == */
+/* ==      VARIABLES & FONTS        == */
 /* =================================== */
 :root {
-    --bg-table: #F4F1E0;
-    --bg-table-header: #DFD9B6;
-    --bg-pagination: #F3EFE2;
-    --btn-primary: #9A3B3B; /* Digunakan dari style.css */
-    --btn-secondary: #7D131E;
-    --border-color-light: rgba(0, 0, 0, 0.20);
-    --text-placeholder: rgba(0, 0, 0, 0.30);
+    --bg-page: #f8f9fa;
+    --bg-card: #FEFEF9;
+    --bg-table: #f4f1e0;
+    --bg-table-header: #dfd9b6;
+    --bg-pagination: #f3efe2;
+    --bg-filter-section: #fdfdf5;
+    --btn-add: #9a3b3b;
+    --btn-search: #7d131e;
+    --btn-filter: #6c757d;
+    --border-color: #d1cbb8;
+    --border-color-light: rgba(0, 0, 0, 0.2);
+    --text-dark: #343a40;
+    --text-muted: #6c757d;
+    --text-light: #fff;
+    --status-active: #28a745;
+    --status-inactive: #6c757d;
 }
 
 /* =================================== */
-/* ==      KONTROL ATAS & FORM      == */
+/* ==      MAIN LAYOUT & CARD       == */
+/* =================================== */
+.page-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+.card-body {
+    padding: 1.25rem;
+}
+
+/* =================================== */
+/* ==    HEADER CONTROLS & FILTER   == */
 /* =================================== */
 .page-controls {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 25px;
+    align-items: flex-start;
+    gap: 1.5rem;
     flex-wrap: wrap;
-    gap: 20px;
+    margin-bottom: 1.5rem;
+}
+
+.search-and-filter-container {
+    flex-grow: 1;
+}
+
+.search-container {
+    margin-bottom: 0.75rem;
 }
 
 .search-title {
-    font-family: 'Noto Sans Georgian', sans-serif;
+    font-family: "Noto Sans Georgian", sans-serif;
     font-size: 20px;
     font-weight: 600;
     margin: 0 0 8px 0;
 }
 
-.search-form {
-    display: flex;
-    gap: 10px;
-}
-
 .search-input {
-    width: 450px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 450px;
     height: 40px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     padding: 0 15px;
     font-size: 15px;
 }
-.search-input::placeholder {
-    color: var(--text-placeholder);
+
+.main-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.search-button {
-    width: 80px;
+.search-button, .btn-filter, .btn-reset {
     height: 40px;
-    background-color: var(--btn-secondary);
-    color: var(--text-light, white);
-    border: none;
+    padding: 0 1.25rem;
     border-radius: 5px;
-    font-size: 16px;
-    font-family: 'Montserrat', sans-serif;
+    border: none;
+    color: var(--text-light);
+    font-family: "Montserrat", sans-serif;
     font-weight: 600;
     cursor: pointer;
-    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.search-button { background-color: var(--btn-search); }
+.btn-filter { background-color: var(--btn-filter); }
+.btn-filter:hover { background-color: var(--btn-filter); } /* No hover effect */
+
+
+.filter-section {
+    background-color: var(--bg-filter-section);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.filter-section label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.filter-section .form-control {
+    height: 38px;
+    border-radius: 5px;
+}
+
+.filter-buttons {
+    display: flex;
+    align-items: flex-end;
+}
+
+.btn-reset {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    width: 100%;
+    height: 38px;
+}
+
+.actions-container {
+    padding-top: 2.8rem; /* Align with search input */
 }
 
 .add-employee-button {
@@ -69,13 +133,12 @@
     gap: 10px;
     width: 200px;
     height: 45px;
-    background-color: var(--btn-primary);
-    color: var(--text-light, white);
-    font-family: 'Noto Sans Georgian', sans-serif;
+    background-color: var(--btn-add);
+    color: var(--text-light);
+    font-family: "Noto Sans Georgian", sans-serif;
     font-size: 16px;
     font-weight: 500;
     border-radius: 10px;
-    cursor: pointer;
     text-decoration: none;
     flex-shrink: 0;
 }
@@ -85,64 +148,33 @@
 }
 
 /* =================================== */
-/* ==       NOTIFIKASI (ALERT)      == */
-/* =================================== */
-.alert {
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-}
-.alert-success {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-}
-.alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
-
-
-/* =================================== */
-/* ==     BAGIAN TABEL KARYAWAN     == */
+/* ==      EMPLOYEE TABLE           == */
 /* =================================== */
 .employee-table {
     border: 1px solid var(--border-color);
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
 }
 
-/* Header Tabel */
 .table-header {
     display: flex;
     background-color: var(--bg-table-header);
     height: 40px;
     align-items: center;
     padding: 0 10px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 12px;
     font-weight: bold;
-    flex-shrink: 0;
 }
 
-/* Body Tabel */
 .table-body {
     background-color: var(--bg-table);
-    padding: 10px;
-    flex-grow: 1;
-    overflow-y: auto;
 }
 
-/* Baris Tabel */
 .employee-row {
     display: flex;
     align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #D1CBB8;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
 }
 .employee-row:last-child {
     border-bottom: none;
@@ -154,187 +186,66 @@
     padding: 0 10px;
 }
 
-/* Lebar Kolom */
 .col-no { width: 5%; justify-content: center; }
 .col-employee { width: 30%; }
 .col-details { width: 25%; }
 .col-status { width: 15%; }
 .col-actions { width: 25%; justify-content: flex-end; gap: 10px; }
 
-
-/* Konten dalam Kolom */
 .employee-avatar {
     width: 45px;
     height: 45px;
     border-radius: 50%;
     margin-right: 15px;
-    flex-shrink: 0;
     object-fit: cover;
 }
 
-.employee-info {
-    display: flex;
-    flex-direction: column;
-}
-.employee-name {
-    font-family: 'Noto Sans Georgian', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-}
-.employee-id {
-    font-family: 'Noto Sans Georgian', sans-serif;
-    font-size: 12px;
-}
-.employee-position,
-.employee-division {
-    font-size: 12px;
-    font-family: 'Noto Sans Georgian', sans-serif;
-}
-.employee-position { font-weight: 600; }
-.employee-division { color: #555; }
+.employee-info { display: flex; flex-direction: column; }
+.employee-name { font-family: "Noto Sans Georgian", sans-serif; font-size: 14px; font-weight: 600; }
+.employee-id { font-family: "Noto Sans Georgian", sans-serif; font-size: 12px; }
+.employee-position { font-size: 12px; font-family: "Noto Sans Georgian", sans-serif; font-weight: 600; }
+.employee-division { font-size: 12px; font-family: "Noto Sans Georgian", sans-serif; color: #555; }
 
-/* Badge Status */
-.status-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: white;
-    text-align: center;
-}
-.status-badge.status-active { background-color: #28a745; }
-.status-badge.status-inactive { background-color: #dc3545; }
+.status-badge { padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; text-align: center; }
+.status-active { background-color: var(--status-active); }
+.status-inactive { background-color: var(--status-inactive); }
 
+.action-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 5px; border: none; color: white !important; text-decoration: none; cursor: pointer; }
+.delete-btn { background-color: #cb3a31; border-radius: 1px; }
 
-/* Tombol Aksi */
-.action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 5px;
-    border: none;
-    color: white !important; /* !important untuk menimpa warna link default */
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-.action-btn:hover { opacity: 0.8; }
-
-.view-btn { background-color: #17a2b8; }
-.edit-btn { background-color: #ffc107; }
-.delete-btn { background-color: #dc3545; }
-
-.empty-row {
-    padding: 40px;
-    text-align: center;
-    color: #6c757d;
-}
+.empty-row { padding: 40px; text-align: center; color: var(--text-muted); }
 
 /* =================================== */
-/* ==     BAGIAN PAGINASI BAWAH     == */
+/* ==         PAGINATION            == */
 /* =================================== */
-.page-footer {
-    display: flex;
-    justify-content: center;
-    padding-top: 10px;
-    flex-shrink: 0;
-}
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--bg-pagination);
-    border: 1px solid var(--border-color-light);
-    border-radius: 10px;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    padding: 0 5px;
-    height: 48px;
-    list-style: none; /* Menghilangkan bullets dari <ul> */
-}
-.pagination li {
-    display: flex;
-    align-items: center;
-    margin: 0 5px;
-}
-.pagination li a, .pagination li span {
-    font-family: 'Poppins', sans-serif;
-    font-size: 16px;
-    color: var(--text-dark);
-    text-decoration: none;
-    padding: 8px 12px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-}
-.pagination li.active {
-    background-color: #FFFDEB;
-    border: 1px solid var(--border-color-light);
-    height: 48px;
-    line-height: 46px; /* vert-align */
-    margin: 0;
-    padding: 0 5px;
-}
-.pagination li.active span {
-    font-weight: 600;
-}
-.pagination li.disabled span {
-    color: #6c757d;
-    cursor: default;
-}
+.page-footer { display: flex; justify-content: center; padding-top: 1rem; }
+.pagination { display: flex; align-items: center; list-style: none; background-color: var(--bg-pagination); border: 1px solid var(--border-color-light); border-radius: 10px; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); padding: 0 5px; height: 48px; }
+.pagination li { display: flex; align-items: center; margin: 0 5px; }
+.pagination li a, .pagination li span { font-family: "Poppins", sans-serif; font-size: 16px; color: var(--text-dark); text-decoration: none; padding: 8px 12px; border: none; background: transparent; cursor: pointer; }
+.pagination li.active { background-color: #fffdeb; border: 1px solid var(--border-color-light); height: 48px; line-height: 46px; margin: 0; padding: 0 5px; }
+.pagination li.active span { font-weight: 600; }
+.pagination li.disabled span { color: var(--text-muted); cursor: default; }
 
 /* =================================== */
-/* ==       RESPONSIVE DESIGN       == */
+/* ==      RESPONSIVE DESIGN        == */
 /* =================================== */
 @media (max-width: 768px) {
-    .page-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .search-input {
-        width: 100%;
-    }
-    .table-header {
-        display: none; /* Sembunyikan header di mobile */
-    }
-    .employee-row {
-        flex-direction: column;
-        align-items: flex-start;
-        border: 1px solid #D1CBB8;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        gap: 8px;
-    }
-    .row-col {
-        width: 100%;
-        padding: 8px 0;
-        border-bottom: 1px dashed #D1CBB8;
-    }
-    .row-col:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    /* Trik untuk menampilkan label kolom di mobile */
-    .row-col::before {
-        content: attr(data-label); /* Anda perlu menambahkan atribut data-label di HTML */
-        font-weight: 600;
-        width: 120px;
-        min-width: 120px;
-        color: #555;
-    }
+    .page-controls { flex-direction: column; align-items: stretch; }
+    .actions-container { padding-top: 1rem; }
+    .search-input { max-width: 100%; }
+    .table-header { display: none; }
+    .employee-row { flex-direction: column; align-items: flex-start; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 10px; gap: 8px; }
+    .row-col { width: 100%; padding: 8px 0; border-bottom: 1px dashed var(--border-color); }
+    .row-col:last-child { border-bottom: none; padding-bottom: 0; }
+    .row-col::before { content: attr(data-label); font-weight: 600; width: 120px; min-width: 120px; color: #555; }
     .col-no::before { content: "No."; }
     .col-employee::before { content: "Karyawan"; }
     .col-details::before { content: "Jabatan/Divisi"; }
     .col-status::before { content: "Status"; }
     .col-actions::before { content: "Aksi"; }
-    
-    .col-no {
-        font-size: 1.2em;
-        font-weight: bold;
-    }
-    .col-actions {
-        justify-content: flex-start;
-    }
+    .col-no { font-size: 1.2em; font-weight: bold; }
+    .col-actions { justify-content: flex-start; }
 }
+
+/* Preserved Icon Style */
+.gg--trash { display: inline-block; width: 24px; height: 24px; --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23000'%3E%3Cpath fill-rule='evenodd' d='M17 5V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v1H4a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2zm-2-1H9v1h6zm2 3H7v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1z' clip-rule='evenodd'/%3E%3Cpath d='M9 9h2v8H9zm4 0h2v8h-2z'/%3E%3C/g%3E%3C/svg%3E"); background-color: currentColor; -webkit-mask-image: var(--svg); mask-image: var(--svg); -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
