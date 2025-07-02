@@ -18,6 +18,8 @@ Route::get('/', function () {
 
 // Route untuk tab edit alamat
 Route::get('employees/{employee}/address', [EmployeeController::class, 'editAddress'])->name('employees.address.edit');
+// Route untuk tab kesehatan
+Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit'])->name('employees.health.edit');
 
 // Baris ini akan membuat semua route untuk Employee CRUD
 Route::resource('employees', EmployeeController::class);
