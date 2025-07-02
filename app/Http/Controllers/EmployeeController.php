@@ -245,4 +245,13 @@ class EmployeeController extends Controller
             return redirect()->route('employees.index')->with('error', 'Gagal menghapus data karyawan. Mungkin data ini masih terhubung dengan data lain.');
         }
     }
+
+    public function editAddress(Employee $employee)
+    {
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+        $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
+
+        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
+    }
 }
