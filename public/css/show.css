@@ -1,0 +1,221 @@
+/* =================================== */
+/* ==      VARIABLES & FONTS        == */
+/* =================================== */
+:root {
+    --bg-page: #FEFEF9;
+    --bg-card: #FFFFF6;
+    --border-color: rgba(0, 0, 0, 0.10);
+    --text-dark: #000000;
+    --text-label: #333;
+    --text-value: #555;
+    --btn-back: #495154;
+    --btn-edit-data: #C4A652;
+    --btn-edit-login: #067DCF;
+    --status-active: #39813F;
+    --status-inactive: #CB3A31;
+    --link-color: #0187C7;
+}
+
+/* Override default layout styles */
+.content-wrapper {
+    background-color: var(--bg-page);
+}
+.content {
+    padding: 20px 25px;
+}
+
+/* =================================== */
+/* ==         PAGE LAYOUT           == */
+/* =================================== */
+.employee-detail-page {
+    width: 100%;
+}
+
+/* Custom Page Header */
+.page-header-container {
+    margin-bottom: 25px;
+}
+
+.page-title {
+    margin: 0 0 15px 0;
+    font-size: 28px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    color: var(--text-dark);
+}
+
+.page-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.right-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: white;
+    font-size: 12px;
+    font-family: 'Montserrat', sans-serif;
+    border: none;
+    transition: opacity 0.2s;
+}
+.action-button:hover {
+    opacity: 0.9;
+    color: white;
+}
+.action-button i {
+    font-size: 12px;
+}
+
+.btn-back { background-color: var(--btn-back); }
+.btn-edit-data { background-color: var(--btn-edit-data); color: var(--text-dark); }
+.btn-edit-login { background-color: var(--btn-edit-login); }
+
+/* Main Content Container & Columns */
+.detail-container {
+    display: flex;
+    gap: 25px;
+}
+
+.detail-column {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.left-column { flex: 1; }
+.right-column { flex: 1; }
+
+/* Card Styling */
+.detail-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dark);
+}
+
+.card-title i {
+    color: var(--text-dark);
+    width: 20px;
+    text-align: center;
+}
+
+.card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Data Item Styling */
+.data-item {
+    display: flex;
+    font-size: 13px;
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+}
+
+.data-label {
+    width: 200px;
+    min-width: 200px;
+    font-weight: 700;
+    color: var(--text-label);
+}
+
+.data-value {
+    font-weight: 500;
+    word-break: break-word;
+    color: var(--text-value);
+}
+
+.status-badge {
+    padding: 3px 12px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+}
+.status-active { background-color: var(--status-active); }
+.status-inactive { background-color: var(--status-inactive); }
+
+.cv-link {
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.cv-link:hover {
+    text-decoration: underline;
+}
+.cv-link i {
+    font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .right-column {
+        flex: 1.2;
+    }
+}
+
+@media (max-width: 992px) {
+    .detail-container {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    .right-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .action-button {
+        justify-content: center;
+    }
+    .page-title {
+        font-size: 24px;
+    }
+    .data-item {
+        flex-direction: column;
+        gap: 5px;
+    }
+    .data-label {
+        width: auto;
+    }
+}
