@@ -98,7 +98,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#"
+                            <a href="{{ route('announcement.index') }}"
                                 class="nav-link{{ request()->routeIs('announcement.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="bi--list-ul"></span>
