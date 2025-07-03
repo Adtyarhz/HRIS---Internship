@@ -38,9 +38,12 @@ class EmployeeFactory extends Factory
             // Status Kepegawaian
             'status' => 'Aktif',
             'employee_type' => $this->faker->randomElement(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime']),
+            'office' => $this->faker->randomElement(['Kantor Pusat', 'Kantor Cabang']),
             'hire_date' => $this->faker->dateTimeBetween('-10 years', 'now'),
             'separation_date' => null,
-
+            'cv_file' => 'cv_' . $this->faker->uuid() . '.pdf',
+            'photo' => 'photo_' . $this->faker->uuid() . '.jpg',
+            
             // Relasi (Asumsi factory untuk model ini juga ada)
             'division_id' => Division::factory(),
             'position_id' => Position::factory(),

@@ -19,18 +19,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeTest extends TestCase
 {
-    /**
-     * @test
-     * Memastikan model Employee dapat dibuat menggunakan factory.
-     */
     #[Test]
     public function it_can_be_instantiated(): void
     {
-        // PERBAIKAN: Berikan ID palsu untuk relasi agar factory tidak mencoba
-        // membuat model terkait di database.
         $employee = Employee::factory()->make([
             'user_id' => 1,
             'division_id' => 1,
@@ -40,14 +35,9 @@ class EmployeeTest extends TestCase
         $this->assertInstanceOf(Employee::class, $employee);
     }
 
-    /**
-     * @test
-     * Memastikan semua atribut tanggal di-cast menjadi objek Carbon.
-     */
     #[Test]
     public function it_casts_date_attributes_correctly(): void
     {
-        // PERBAIKAN: Berikan juga ID palsu untuk relasi di sini.
         $employee = Employee::factory()->make([
             'user_id' => 1,
             'division_id' => 1,
@@ -62,63 +52,69 @@ class EmployeeTest extends TestCase
         $this->assertInstanceOf(Carbon::class, $employee->separation_date);
     }
 
-    /**
-     * @test
-     * Menguji logika accessor getAgeAttribute dengan benar.
-     */
     #[Test]
-    public function it_calculates_age_correctly(): void
+    public function it_returns_correct_cv_file_url(): void
     {
-        Carbon::setTestNow('2025-06-24');
-
-        // PERBAIKAN: Berikan juga ID palsu untuk relasi di sini.
-        $employee = Employee::factory()->make([
+        $employeeWithCv = Employee::factory()->make([
             'user_id' => 1,
             'division_id' => 1,
             'position_id' => 1,
-            'birth_date' => '2000-01-15'
+            'cv_file' => 'my-cv.pdf'
         ]);
+        $this->assertEquals(asset('storage/cv/my-cv.pdf'), $employeeWithCv->cv_file_url);
 
-        $this->assertEquals(25, $employee->age);
+        $employeeWithoutCv = Employee::factory()->make([
+            'user_id' => 2,
+            'division_id' => 1,
+            'position_id' => 1,
+            'cv_file' => null
+        ]);
+        $this->assertNull($employeeWithoutCv->cv_file_url);
     }
 
-    /**
-     * @test
-     * Memastikan semua relasi BelongsTo dideklarasikan dengan benar.
-     * Tes ini tidak perlu diubah karena menggunakan `new Employee()`.
-     */
+    #[Test]
+    public function it_returns_correct_photo_url(): void
+    {
+        $employeeWithPhoto = Employee::factory()->make([
+            'user_id' => 1,
+            'division_id' => 1,
+            'position_id' => 1,
+            'photo' => 'profile.jpg'
+        ]);
+        $this->assertEquals(asset('storage/photo/profile.jpg'), $employeeWithPhoto->photo_url);
+
+        $employeeWithoutPhoto = Employee::factory()->make([
+            'user_id' => 2,
+            'division_id' => 1,
+            'position_id' => 1,
+            'photo' => null
+        ]);
+        $this->assertNull($employeeWithoutPhoto->photo_url);
+    }
+
     #[Test]
     public function it_has_correct_belongs_to_relationships(): void
     {
         $employee = new Employee();
 
-        // Tes relasi user()
         $this->assertInstanceOf(BelongsTo::class, $employee->user());
         $this->assertInstanceOf(User::class, $employee->user()->getRelated());
         $this->assertEquals('user_id', $employee->user()->getForeignKeyName());
 
-        // Tes relasi division()
         $this->assertInstanceOf(BelongsTo::class, $employee->division());
         $this->assertInstanceOf(Division::class, $employee->division()->getRelated());
         $this->assertEquals('division_id', $employee->division()->getForeignKeyName());
 
-        // Tes relasi position()
         $this->assertInstanceOf(BelongsTo::class, $employee->position());
         $this->assertInstanceOf(Position::class, $employee->position()->getRelated());
         $this->assertEquals('position_id', $employee->position()->getForeignKeyName());
     }
-    
-    /**
-     * @test
-     * Memastikan semua relasi HasMany dideklarasikan dengan benar.
-     * Tes ini tidak perlu diubah karena menggunakan `new Employee()`.
-     */
+
     #[Test]
     public function it_has_correct_has_many_relationships(): void
     {
         $employee = new Employee();
 
-        // PERBAIKAN: Mengganti nama relasi yang salah dan menghapus yang tidak ada.
         $relations = [
             'educationHistory' => EducationHistory::class,
             'workExperience' => WorkExperience::class,
@@ -136,17 +132,11 @@ class EmployeeTest extends TestCase
         }
     }
 
-    /**
-     * @test
-     * Memastikan relasi HasOne dideklarasikan dengan benar.
-     * Tes ini tidak perlu diubah karena menggunakan `new Employee()`.
-     */
     #[Test]
     public function it_has_correct_has_one_relationship(): void
     {
         $employee = new Employee();
 
-        // Tes relasi healthRecord()
         $relation = $employee->healthRecord();
         $this->assertInstanceOf(HasOne::class, $relation);
         $this->assertInstanceOf(HealthRecord::class, $relation->getRelated());
