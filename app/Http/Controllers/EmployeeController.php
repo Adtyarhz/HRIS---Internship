@@ -142,7 +142,10 @@ class EmployeeController extends Controller
         if ($employee->birth_date) {
             $age = Carbon::parse($employee->birth_date)->age;
         }
-        return view('employees.data.show', compact('employee', 'age'));
+        $healthRecord = $employee->healthRecord;
+        // buat untuk menampilkan data lainnya ke blade show, jangan lupa untuk compact datanya
+
+        return view('employees.data.show', compact('employee', 'age', 'healthRecord'));
     }
 
     /**
