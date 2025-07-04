@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\PollingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WorkExperienceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,20 +20,32 @@ Route::get('/', function () {
 // Route untuk tab edit alamat
 Route::get('employees/{employee}/address', [EmployeeController::class, 'editAddress'])->name('employees.address.edit');
 
+
 // Baris ini akan membuat semua route untuk Employee CRUD
 Route::resource('employees', EmployeeController::class);
 
 // Rute untuk Health Record yang terhubung dengan Employee
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
     // Menampilkan form untuk create/edit
-    Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
+   // Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
     
     // Menyimpan data (baik baru atau update)
-    Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+    //Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
 
     // Menghapus data
-    Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
+    //Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
 });
+
+// Group nested work experiences under employee
+Route::prefix('employees/{employee}/work-experience')->name('employees.work-experience.')->group(function () {
+    Route::get('/', [WorkExperienceController::class, 'index'])->name('index'); // Show list
+    Route::get('/create', [WorkExperienceController::class, 'create'])->name('create'); // Show add form
+    Route::post('/', [WorkExperienceController::class, 'store'])->name('store'); // Save new
+    Route::get('/{workExperience}/edit', [WorkExperienceController::class, 'edit'])->name('edit'); // Edit form
+    Route::put('/{workExperience}', [WorkExperienceController::class, 'update'])->name('update'); // Update existing
+    Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy'); // Delete
+});
+
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
 Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');

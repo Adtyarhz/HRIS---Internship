@@ -96,7 +96,7 @@
         'employees.health.edit'      => 'Health History',
         'employees.certification.edit' => 'Certification',
         'employees.assurance.edit'   => 'Assurance',
-        'employees.experience.edit'  => 'Work<br/>Experience',
+        'employees.work-experience.index'  => 'Work<br/>Experience',
     ];
 @endphp
 
@@ -106,9 +106,10 @@
         @php
             // Menentukan class modifier berdasarkan kondisi
             $isRouteActive = Route::has($route) && $employeeId;
-            $isActivePage =
-                request()->routeIs($route . '*') ||
-                (request()->routeIs('employees.create') && $route == 'employees.edit');
+            $isActivePage = request()->routeIs($route . '*') 
+            || ($route === 'employees.work-experience.index' && request()->routeIs('employees.work-experience.create'))
+            || ($route === 'employees.work-experience.index' && request()->routeIs('employees.work-experience.edit'))
+            || (request()->routeIs('employees.create') && $route == 'employees.edit');
             $classes = 'tabs-nav__item';
 
             if ($isActivePage) {
