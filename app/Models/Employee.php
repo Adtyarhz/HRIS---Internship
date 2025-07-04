@@ -83,7 +83,7 @@ class Employee extends Model
         return $this->hasMany(WorkExperience::class, 'employee_id');
     }
 
-    public function certification(): HasMany
+    public function certifications(): HasMany
     {
         return $this->hasMany(Certification::class, 'employee_id');
     }

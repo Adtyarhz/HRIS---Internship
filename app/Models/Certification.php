@@ -33,7 +33,7 @@ class Certification extends Model
         return $this->belongsTo(Employee::class, 'employee_id');
     }
 
-    public function certificationMaterial(): HasMany
+    public function certificationMaterials(): HasMany
     {
         return $this->hasMany(CertificationMaterial::class, 'certification_id');
     }
