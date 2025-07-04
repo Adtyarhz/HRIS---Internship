@@ -135,5 +135,54 @@
             </div>
         </div>
     </div>
+
+    <!-- Full-width Column for Collapsible Card -->
+    <div class="full-width-column">
+        <div class="detail-card collapsible-card">
+            <div class="card-header collapsible-header" data-bs-toggle="collapse" href="#healthHistoryCollapse" role="button" aria-expanded="false" aria-controls="healthHistoryCollapse">
+                <h3 class="card-title"><i class="fas fa-heartbeat"></i> Health History</h3>
+                <i class="fas fa-chevron-down collapse-icon"></i>
+            </div>
+            <div class="collapse" id="healthHistoryCollapse">
+                <div class="card-content">
+                    @if($healthRecord)
+                        <div class="data-item"><span class="data-label">Height</span><span class="data-value">{{ $healthRecord->height ?? '-' }} cm</span></div>
+                        <div class="data-item"><span class="data-label">Weight</span><span class="data-value">{{ $healthRecord->weight ?? '-' }} kg</span></div>
+                        <div class="data-item"><span class="data-label">Blood Type</span><span class="data-value">{{ $healthRecord->blood_type ?? '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Known Allergies</span><span class="data-value">{{ $healthRecord->known_allergies ?? '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Chronic Diseases</span><span class="data-value">{{ $healthRecord->chronic_diseases ?? '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Last Checkup Date</span><span class="data-value">{{ $healthRecord->last_checkup_date ? \Carbon\Carbon::parse($healthRecord->last_checkup_date)->format('d F Y') : '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Checkup Location</span><span class="data-value">{{ $healthRecord->checkup_loc ?? '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Checkup Price</span><span class="data-value">{{ $healthRecord->price_last_checkup ? 'Rp ' . number_format($healthRecord->price_last_checkup, 0, ',', '.') : '-' }}</span></div>
+                        <div class="data-item"><span class="data-label">Notes</span><span class="data-value">{{ $healthRecord->notes ?? '-' }}</span></div>
+                    @else
+                        <p>No health history data available.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Ikuti card kesehatan diatas untuk menerapkan expand card untuk menampilkan data lainnya --}}
 </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const collapseEl = document.getElementById('healthHistoryCollapse');
+            collapseEl.addEventListener('show.bs.collapse', function () {
+                var icon = this.previousElementSibling.querySelector('.collapse-icon');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            });
+            collapseEl.addEventListener('hide.bs.collapse', function () {
+                var icon = this.previousElementSibling.querySelector('.collapse-icon');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            });
+        });
+    </script>
+@endpush
+
