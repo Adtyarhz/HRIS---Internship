@@ -1,39 +1,27 @@
-{{--
-    File: resources/views/partials/tab-menu.blade.php
-    Deskripsi:
-    Versi "Clean Code" dari menu navigasi tab.
-    - Menggunakan Flexbox untuk tata letak yang dinamis dan mudah dipelihara.
-    - Menggunakan helper `request()->routeIs()` untuk menandai tab aktif.
-    - Menggunakan `Route::has()` untuk secara dinamis membuat link hanya untuk route yang sudah ada.
-    - Membutuhkan variabel `$employee` untuk membuat URL route yang benar saat mode edit.
-    - Semua 10 tab didefinisikan dalam satu array untuk kemudahan pengelolaan.
---}}
-
 @push('styles')
 <style>
     /*
-     * Menggunakan pendekatan BEM-like (Block, Element, Modifier) untuk CSS yang lebih terstruktur.
-     * .tabs-nav (Block)
-     * .tabs-nav__item (Element)
-     * .tabs-nav__item--active (Modifier)
-    */
+     * Container ini berfungsi untuk "menarik" menu tab keluar dari padding
+     * default .content-wrapper di AdminLTE, membuatnya rapat dengan header.
+     * Sesuaikan nilai margin negatif jika padding layout Anda berbeda.
+     */
+    .tabs-container {
+        margin: -20px -20px 20px -20px; /* Asumsi padding default adalah 20px */
+    }
 
     .tabs-nav {
-        display: flex; /* Menggunakan Flexbox untuk alignment otomatis */
-        width: 100%; /* Lebar penuh, contoh: 1175px */
-        max-width: 1175px;
+        display: flex;
+        width: 100%;
         height: 50px;
         background: #F7F7DA;
         border-bottom: 1px solid rgba(0, 0, 0, 0.20);
-        margin: auto;
     }
 
     .tabs-nav__item {
         /*
-         * `flex: 1;` adalah singkatan dari `flex-grow: 1; flex-shrink: 1; flex-basis: 0%;`
-         * Ini membuat semua tab memiliki lebar yang sama dan mengisi ruang yang tersedia.
-         * Ini jauh lebih baik daripada hardcoding `width: 119px;` dan `left: ...px;`.
-        */
+         * `flex: 1;` membuat semua tab memiliki lebar yang sama dan mengisi ruang.
+         * Ini menggantikan kebutuhan untuk scroll horizontal.
+         */
         flex: 1;
         display: flex;
         justify-content: center;
@@ -41,15 +29,16 @@
         text-align: center;
         text-decoration: none;
         height: 100%;
-        padding: 5px;
+        padding: 5px 10px; /* Padding vertikal dan sedikit horizontal */
         border-right: 1px solid rgba(0, 0, 0, 0.20);
-        box-sizing: border-box; /* Pastikan padding dan border termasuk dalam total lebar/tinggi */
+        box-sizing: border-box;
         transition: background-color 0.2s ease-in-out;
         cursor: pointer;
+        white-space: nowrap;
     }
 
     .tabs-nav__item:last-child {
-        border-right: none; /* Hapus border di item terakhir */
+        border-right: none;
     }
 
     .tabs-nav__item-text {
@@ -62,56 +51,64 @@
 
     /* --- MODIFIERS --- */
 
-    /* Modifier untuk tab yang sedang aktif */
     .tabs-nav__item--active {
         background: #D8E6AD;
-        font-weight: 600; /* Font menjadi tebal saat aktif */
+        font-weight: 600;
     }
 
-    /* Modifier untuk tab yang bisa di-hover (hanya untuk tag <a>) */
     a.tabs-nav__item:hover {
-        background: #c9d893; /* Warna hover yang sedikit lebih gelap */
+        background: #c9d893;
+        text-decoration: none;
+        color: black;
     }
 
-    /* Modifier untuk tab yang belum memiliki route (tidak aktif) */
     .tabs-nav__item--inactive {
         cursor: not-allowed;
-        background-color: #f7f7da !important; /* Paksa warna background agar tidak berubah saat hover */
-        filter: grayscale(80%);
+        background-color: #f7f7da !important;
+        opacity: 0.6;
     }
 
     .tabs-nav__item--inactive .tabs-nav__item-text {
         color: #777;
     }
+
+    /* Responsive untuk layar sangat kecil, teks mungkin perlu dikecilkan */
+    @media (max-width: 768px) {
+        .tabs-nav__item-text {
+            font-size: 11px;
+        }
+        .tabs-nav__item {
+            padding: 5px;
+        }
+    }
 </style>
 @endpush
 
 @php
-    // Variabel $employee dibutuhkan untuk route edit.
     $employeeId = $employee->id ?? null;
 
-    // Definisikan semua tab dengan nama route yang diharapkan.
-    // Ini akan menjadi acuan Anda untuk membuat route dan controller di masa depan.
     $allTabs = [
-        'employees.edit'              => 'Personal',
-        'employees.contact.edit'      => 'Contact',
-        'employees.address.edit'      => 'Address',
-        'employees.family.edit'       => 'Family &<br/>Dependent',
-        'employees.education.edit'    => 'Education',
-        'employees.training.edit'     => 'Training Record',
-        'employees.health.edit'       => 'Health History',
-        'employees.certification.edit'=> 'Certification',
-        'employees.assurance.edit'    => 'Assurance',
-        'employees.experience.edit'   => 'Work<br/>Experience',
+        'employees.edit'             => 'Personal',
+        'employees.address.edit'     => 'Address',
+        'employees.family.edit'      => 'Family &<br/>Dependent',
+        'employees.education.edit'   => 'Education',
+        'employees.training.edit'    => 'Training Record',
+        'employees.health.edit'      => 'Health History',
+        'employees.certification.edit' => 'Certification',
+        'employees.assurance.edit'   => 'Assurance',
+        'employees.experience.edit'  => 'Work<br/>Experience',
     ];
 @endphp
 
-<nav class="tabs-nav">
-    @foreach($allTabs as $route => $label)
+<div class="tabs-container">
+    <nav class="tabs-nav">
+        @foreach ($allTabs as $route => $label)
         @php
             // Menentukan class modifier berdasarkan kondisi
             $isRouteActive = Route::has($route) && $employeeId;
-            $isActivePage = request()->routeIs($route.'*') || (request()->routeIs('employees.create') && $route == 'employees.edit');
+            $isActivePage =
+                request()->routeIs($route . '*') ||
+                (request()->routeIs('employees.create') && $route == 'employees.edit');
             $classes = 'tabs-nav__item';
 
             if ($isActivePage) {
@@ -129,9 +126,10 @@
             </a>
         @else
             {{-- Jika route belum ada ATAU ini mode create, tampilkan sebagai <div> --}}
-            <div class="{{ $classes }}" @if(!Route::has($route)) title="Fitur ini belum tersedia" @endif>
+            <div class="{{ $classes }}" @if (!Route::has($route)) title="Fitur ini belum tersedia" @endif>
                 <span class="tabs-nav__item-text">{!! $label !!}</span>
             </div>
         @endif
     @endforeach
-</nav>
+    </nav>
+</div>
