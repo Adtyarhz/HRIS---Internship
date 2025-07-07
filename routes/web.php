@@ -8,6 +8,7 @@ use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\PollingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkExperienceController;
+use App\Http\Controllers\TrainingHistoryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -57,6 +58,16 @@ Route::prefix('employees/{employee}/certifications')->name('employees.certificat
     Route::put('/{certification}', [CertificationController::class, 'update'])->name('update');
     Route::delete('/{certification}', [CertificationController::class, 'destroy'])->name('destroy');
     Route::delete('/{certification}/materials/{material}', [CertificationController::class, 'destroyMaterial'])->name('materials.destroy');
+});
+
+Route::prefix('employees/{employee}/training-histories')->name('employees.training-histories.')->group(function () {
+    Route::get('/', [TrainingHistoryController::class, 'index'])->name('index');
+    Route::get('/create', [TrainingHistoryController::class, 'create'])->name('create');
+    Route::post('/', [TrainingHistoryController::class, 'store'])->name('store');
+    Route::get('/{trainingHistory}/edit', [TrainingHistoryController::class, 'edit'])->name('edit');
+    Route::put('/{trainingHistory}', [TrainingHistoryController::class, 'update'])->name('update');
+    Route::delete('/{trainingHistory}', [TrainingHistoryController::class, 'destroy'])->name('destroy');
+    Route::delete('/{trainingHistory}/materials/{material}', [TrainingHistoryController::class, 'destroyMaterial'])->name('materials.destroy');
 });
 
 Route::resource('announcement', AnnouncementController::class);

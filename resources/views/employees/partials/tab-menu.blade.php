@@ -92,7 +92,7 @@
         'employees.address.edit'     => 'Address',
         'employees.family.edit'      => 'Family &<br/>Dependent',
         'employees.education.edit'   => 'Education',
-        'employees.training.edit'    => 'Training Record',
+        'employees.training-histories.index'    => 'Training Record',
         'employees.health.edit'      => 'Health History',
         'employees.certifications.index' => 'Certification',
         'employees.assurance.edit'   => 'Assurance',
