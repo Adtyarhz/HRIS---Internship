@@ -95,7 +95,7 @@
         'employees.training.edit'    => 'Training Record',
         'employees.health.edit'      => 'Health History',
         'employees.certifications.index' => 'Certification',
-        'employees.assurance.edit'   => 'Assurance',
+        'employees.insurance.index'   => 'Insurance',
         'employees.work-experience.index'  => 'Work<br/>Experience',
     ];
 @endphp
