@@ -29,13 +29,13 @@ Route::resource('employees', EmployeeController::class);
 // Rute untuk Health Record yang terhubung dengan Employee
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
     // Menampilkan form untuk create/edit
-   // Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
+    Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
     
     // Menyimpan data (baik baru atau update)
-    //Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+    Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
 
     // Menghapus data
-    //Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
+    Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
 });
 
 // Group nested work experiences under employee
