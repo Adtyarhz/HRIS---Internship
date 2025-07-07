@@ -1,0 +1,237 @@
+:root {
+    --bg-content: #fefef9;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --table-header-bg: #dfd9b6;
+    --btn-add-bg: #662727;
+    --btn-add-hover: #501f1f;
+    --btn-cancel-bg: #9A3B3B;
+    --btn-cancel-hover: #803030;
+    --link-color: #2b2da6;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.action-header .employee-training-record {
+    font-size: 16px;
+    font-family: Plus Jakarta Sans, sans-serif;
+    font-weight: 400;
+    line-height: 19.20px;
+    color: black;
+    margin: 0;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.action-buttons-cancel {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.btn-add {
+    background-color: var(--btn-add-bg);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+    outline: 1px rgba(0, 0, 0, 0.2) solid;
+    outline-offset: -1px;
+}
+
+.btn-add:hover {
+    background-color: var(--btn-add-hover);
+    color: white;
+}
+
+.universal-table {
+    font-size: 0.9rem;
+    width: 100%;
+    background: var(--table-header-bg);
+    overflow: hidden;
+}
+
+.universal-table thead th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+    border-color: var(--border-color);
+    text-align: center;
+    font-size: 12px;
+    font-family: Plus Jakarta Sans, sans-serif;
+    line-height: 14.40px;
+    color: black;
+    padding: 0.5rem;
+}
+
+.universal-table th,
+.universal-table td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 0.25rem;
+    font-size: 12px;
+    font-family: Montserrat, sans-serif;
+    font-weight: 400;
+    color: black;
+}
+
+.no-column {
+    width: 5%;
+}
+
+.training-name-column {
+    width: 15%;
+}
+
+.provider-column {
+    width: 10%;
+}
+
+.date-column {
+    width: 10%;
+}
+
+.certificate-number-column {
+    width: 10%;
+}
+
+.file-column {
+    width: 30%;
+}
+
+.universal-link {
+    font-weight: 600;
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.universal-link:hover {
+    color: #1a1a80;
+    text-decoration: underline;
+}
+
+.file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.file-list li + li {
+    margin-top: 5px;
+}
+
+.file-link {
+    text-decoration: none;
+    color: var(--link-color);
+    font-size: 8px;
+    font-family: Noto Sans Georgian, sans-serif;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.file-link i {
+    margin-right: 5px;
+}
+
+.file-link:hover {
+    text-decoration: underline;
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border: 1px dashed #ced4da;
+    border-radius: 0.25rem;
+}
+
+.btn-cancel {
+    background-color: var(--btn-cancel-bg);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+    outline: 1px rgba(0, 0, 0, 0.2) solid;
+    outline-offset: -1px;
+}
+
+.btn-cancel:hover {
+    background-color: var(--btn-cancel-hover);
+    color: white;
+}
+
+/* Responsivitas */
+@media (max-width: 768px) {
+    .action-buttons {
+        justify-content: center;
+    }
+
+    .universal-table {
+        font-size: 0.75rem;
+    }
+
+    .universal-table th,
+    .universal-table td {
+        padding: 0.15rem;
+    }
+
+    .btn-cancel {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .action-header {
+        justify-content: center;
+    }
+
+    .universal-table thead {
+        display: none;
+    }
+
+    .universal-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+    }
+
+    .universal-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem;
+        text-align: left;
+    }
+
+    .universal-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+}
