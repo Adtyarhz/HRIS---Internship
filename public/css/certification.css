@@ -1,0 +1,121 @@
+/*
+ * File: public/css/certification.css
+ * Deskripsi: CSS khusus untuk halaman daftar sertifikasi karyawan.
+ */
+
+:root {
+    --bg-content: #fefef9;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --table-header-bg: #f4f1e0;
+    --btn-add-bg: #662727;
+    --btn-add-hover: #501f1f;
+    --btn-cancel-bg: #9a3b3b;
+    --btn-cancel-hover: #803030;
+    --link-color: #007bff;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+.btn-add-certification {
+    background-color: var(--btn-add-bg);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+.btn-add-certification:hover {
+    background-color: var(--btn-add-hover);
+    color: white;
+}
+
+.certification-table {
+    font-size: 0.9rem;
+}
+.certification-table thead th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+    border-color: var(--border-color);
+    text-align: center;
+}
+.certification-table th,
+.certification-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.certification-link {
+    font-weight: 600;
+    color: var(--link-color);
+    text-decoration: none;
+}
+.certification-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.file-list li + li {
+    margin-top: 5px;
+}
+
+.file-link {
+    text-decoration: none;
+    color: var(--link-color);
+    font-size: 0.875rem;
+}
+.file-link:hover {
+    text-decoration: underline;
+}
+.file-link i {
+    margin-right: 5px;
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border: 1px dashed #ced4da;
+    border-radius: 0.25rem;
+}
+
+.page-footer {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    z-index: 10;
+}
+.btn-cancel {
+    background-color: var(--btn-cancel-bg);
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+.btn-cancel:hover {
+    background-color: var(--btn-cancel-hover);
+    color: white;
+}
