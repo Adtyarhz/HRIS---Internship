@@ -36,6 +36,6 @@ class TrainingHistory extends Model
 
     public function trainingMaterials(): HasMany
     {
-        return $this->hasMany(TrainingMaterial::class, 'training_id');
+        return $this->hasMany(TrainingMaterial::class, 'training_history_id');
     }
 }
