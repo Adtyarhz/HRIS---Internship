@@ -49,15 +49,15 @@ Route::prefix('employees/{employee}/work-experience')->name('employees.work-expe
     Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy'); // Delete
 });
 
-Route::prefix('employees/{employee}')->name('employees.')->group(function () {
-    // Rute untuk Health Record yang terhubung dengan Employee
-    Route::resource('certifications', CertificationController::class)->scoped();
+Route::prefix('employees/{employee}/certifications')->name('employees.certifications.')->group(function () {
+    Route::get('/', [CertificationController::class, 'index'])->name('index');
+    Route::get('/create', [CertificationController::class, 'create'])->name('create');
+    Route::post('/', [CertificationController::class, 'store'])->name('store');
+    Route::get('/{certification}/edit', [CertificationController::class, 'edit'])->name('edit');
+    Route::put('/{certification}', [CertificationController::class, 'update'])->name('update');
+    Route::delete('/{certification}', [CertificationController::class, 'destroy'])->name('destroy');
+    Route::delete('/{certification}/materials/{material}', [CertificationController::class, 'destroyMaterial'])->name('materials.destroy');
 });
-
-// Route untuk menghapus file materi sertifikasi secara individual.
-// Route ini tidak bersarang di bawah employee karena hanya butuh ID materi.
-Route::delete('certifications/materials/{material}', [CertificationController::class, 'destroyMaterial'])
-    ->name('certifications.materials.destroy');
 
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
