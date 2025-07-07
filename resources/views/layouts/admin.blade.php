@@ -90,7 +90,7 @@
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                         data-accordion="false">
                         <li class="nav-item">
-                            <a href="#" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }}">
+                            <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="mdi-light--home"></span>
                                     <p>Dashboard</p>
