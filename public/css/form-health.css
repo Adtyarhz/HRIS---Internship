@@ -99,7 +99,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     padding-top: 20px;
 }
 
-.btn-submit, .btn-cancel {
+.btn-submit, .btn-cancel, .btn-delete {
     border-radius: 5px;
     width: 110px;
     height: 37px;
@@ -116,9 +116,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .btn-submit { background: #367fa9; }
 .btn-cancel { background: #9a3b3b; margin-right: 10px; }
+.btn-delete { background-color: #FF4242; margin-right: 10px; }
 
-.btn-submit:hover { background: #2c698d; }
+.btn-submit:hover { background: #2c698d; color: white }
 .btn-cancel:hover { background: #803030; color: white; }
+.btn-delete:hover { background-color: #e63939; color: white;
+        }
 
 /* Responsive */
 @media (max-width: 767.98px) {
