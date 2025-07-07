@@ -4,6 +4,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HealthRecordController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\PollingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkExperienceController;
@@ -30,7 +31,7 @@ Route::resource('employees', EmployeeController::class);
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
     // Menampilkan form untuk create/edit
     Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
-    
+
     // Menyimpan data (baik baru atau update)
     Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
 
@@ -47,6 +48,16 @@ Route::prefix('employees/{employee}/work-experience')->name('employees.work-expe
     Route::put('/{workExperience}', [WorkExperienceController::class, 'update'])->name('update'); // Update existing
     Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy'); // Delete
 });
+
+Route::prefix('employees/{employee}')->name('employees.')->group(function () {
+    // Rute untuk Health Record yang terhubung dengan Employee
+    Route::resource('certifications', CertificationController::class)->scoped();
+});
+
+// Route untuk menghapus file materi sertifikasi secara individual.
+// Route ini tidak bersarang di bawah employee karena hanya butuh ID materi.
+Route::delete('certifications/materials/{material}', [CertificationController::class, 'destroyMaterial'])
+    ->name('certifications.materials.destroy');
 
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
