@@ -89,7 +89,6 @@ class TrainingHistoryController extends Controller
      */
     public function update(Request $request, Employee $employee, TrainingHistory $trainingHistory)
     {
-        // FIX: Menyesuaikan aturan validasi untuk TrainingHistory
         $validatedData = $request->validate([
             'training_name' => 'required|string|max:255',
             'provider' => 'required|string|max:255',
@@ -100,7 +99,8 @@ class TrainingHistoryController extends Controller
             'location' => 'required|string|max:255',
             'certificate_number' => 'nullable|string|max:50',
             'material_files' => 'nullable|array',
-            'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
+            'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
+            'delete_materials' => 'nullable|array', // Menambahkan validasi untuk delete_materials
         ]);
 
         DB::beginTransaction();
@@ -108,7 +108,20 @@ class TrainingHistoryController extends Controller
             // 1. Perbarui data teks pada record riwayat pelatihan
             $trainingHistory->update($validatedData);
 
-            // 2. Handle penambahan file materi baru (jika ada)
+            // 2. Handle penghapusan file materi yang dipilih
+            if (!empty($validatedData['delete_materials'])) {
+                foreach ($validatedData['delete_materials'] as $materialId) {
+                    $material = TrainingMaterial::where('training_history_id', $trainingHistory->id)
+                                                ->where('id', $materialId)
+                                                ->first();
+                    if ($material) {
+                        Storage::delete('public/training_materials/' . $material->file_path);
+                        $material->delete();
+                    }
+                }
+            }
+
+            // 3. Handle penambahan file materi baru (jika ada)
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
                     $materialFileName = time() . '_' . $materialFile->getClientOriginalName();
@@ -156,17 +169,29 @@ class TrainingHistoryController extends Controller
     /**
      * Menghapus file materi pelatihan secara individual.
      */
-    public function destroyMaterial(TrainingMaterial $material)
+    public function destroyMaterial(Employee $employee, TrainingHistory $trainingHistory, TrainingMaterial $material)
     {
+        // Pastikan pelatihan dan materi terkait dengan karyawan
+        if ($trainingHistory->employee_id !== $employee->id || $material->training_history_id !== $trainingHistory->id) {
+            abort(403, 'File materi tidak terkait dengan pelatihan atau karyawan ini.');
+        }
+
+        DB::beginTransaction();
         try {
             // Hapus file dari storage
-            Storage::delete('public/training_materials/' . $material->file_path);
+            if ($material->file_path) {
+                Storage::delete('public/training_materials/' . $material->file_path);
+            }
+
             // Hapus record dari database
             $material->delete();
 
+            DB::commit();
             return back()->with('success', 'File materi berhasil dihapus.');
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus file materi.');
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus file materi: ' . $e->getMessage());
         }
     }
 }
