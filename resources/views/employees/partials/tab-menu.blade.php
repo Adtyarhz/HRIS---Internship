@@ -94,7 +94,7 @@
         'employees.education.edit'   => 'Education',
         'employees.training.edit'    => 'Training Record',
         'employees.health.edit'      => 'Health History',
-        'employees.certification.edit' => 'Certification',
+        'employees.certifications.index' => 'Certification',
         'employees.assurance.edit'   => 'Assurance',
         'employees.work-experience.index'  => 'Work<br/>Experience',
     ];
