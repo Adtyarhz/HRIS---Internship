@@ -9,6 +9,7 @@ use App\Http\Controllers\PollingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkExperienceController;
 use App\Http\Controllers\InsuranceController;
+use App\Http\Controllers\EducationHistoryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -67,6 +68,15 @@ Route::prefix('employees/{employee}/insurance')->name('employees.insurance.')->g
     Route::get('/{insurance}/edit', [InsuranceController::class, 'edit'])->name('edit'); // Edit form
     Route::put('/{insurance}', [InsuranceController::class, 'update'])->name('update'); // Update existing
     Route::delete('/{insurance}', [InsuranceController::class, 'destroy'])->name('destroy'); // Delete
+});
+
+Route::prefix('employees/{employee}/educationhistory')->name('employees.educationhistory.')->group(function () {
+    Route::get('/', [EducationHistoryController::class, 'index'])->name('index');
+    Route::get('/create', [EducationHistoryController::class, 'create'])->name('create');
+    Route::post('/', [EducationHistoryController::class, 'store'])->name('store');
+    Route::get('/{educationHistory}/edit', [EducationHistoryController::class, 'edit'])->name('edit');
+    Route::put('/{educationHistory}', [EducationHistoryController::class, 'update'])->name('update');
+    Route::delete('/{educationHistory}', [EducationHistoryController::class, 'destroy'])->name('destroy');
 });
 
 Route::resource('announcement', AnnouncementController::class);
