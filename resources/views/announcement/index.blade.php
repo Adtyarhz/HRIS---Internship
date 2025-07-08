@@ -161,6 +161,8 @@
 @endsection
 
 @section('content')
+
+    @include('announcement.alert')
     <div class="announcement-header">
         <h2>Announcement</h2>
         <a href="{{ route('announcement.create') }}" class="btn-add">+ Add Announcement</a>
@@ -221,6 +223,6 @@
 
     <!-- Tambahkan tautan paginasi sederhana (Previous dan Next) -->
     <div class="pagination">
-        {{ $announcements->links('pagination::simple-bootstrap-4') }}
+        {{ $announcements->links('pagination::custom') }}
     </div>
 @endsection

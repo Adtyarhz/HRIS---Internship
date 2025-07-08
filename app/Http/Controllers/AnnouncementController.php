@@ -41,7 +41,7 @@ class AnnouncementController extends Controller
                 $query->where('label', 'like', '%' . $request->label . '%');
             }
 
-            $announcements = $query->latest()->simplePaginate(8);
+            $announcements = $query->latest()->paginate(8);
             Log::info('Announcement index loaded', ['announcements_count' => $announcements->count()]);
             return view('announcement.index', compact('announcements'));
         } catch (\Exception $e) {
@@ -64,8 +64,8 @@ class AnnouncementController extends Controller
             'announcement_type' => 'required|in:Umum,Divisi,Urgent,Informasi,Polling',
             'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'external_link' => 'nullable|url',
-            'label' => 'nullable|string|max:50',
-            'deadline' => 'nullable|date|after:now',
+            'label' => 'required|string|max:50',
+            'deadline' => 'required_if:announcement_type,Polling|nullable|date|after:now',
             'options' => [
     'nullable',
     'array',
@@ -118,18 +118,18 @@ class AnnouncementController extends Controller
             }
         }
 
-        return redirect()->route('announcement.index')->with('success', 'Pengumuman berhasil dibuat');
+        return redirect()->route('announcement.index')->with('success', 'Announcement has been created');
     }
 
-    public function show($id)
+    public function show($id, Request $request)
     {
         $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
-
         $now = now();
         $deadline = optional($announcement->polling)->deadline;
         $isExpired = $deadline && $now->greaterThan($deadline);
+        $from = $request->query('from'); // Tambahan
 
-        return view('announcement.show', compact('announcement', 'isExpired'));
+        return view('announcement.show', compact('announcement', 'isExpired', 'from'));
     }
 
     public function edit($id)
@@ -141,52 +141,63 @@ class AnnouncementController extends Controller
     public function update(Request $request, $id)
     {
         $announcement = Announcement::findOrFail($id);
+        $polling = $announcement->polling;
+        $isPolling = $announcement->announcement_type === 'Polling';
+        $isExpired = $polling && $polling->deadline && now()->gt($polling->deadline);
+        $isLocked = $polling && $polling->is_locked;
+        $hasVotes = $polling && $polling->options()->withCount('votes')->get()->sum('votes_count') > 0;
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'announcement_type' => 'required|in:Umum,Divisi,Urgent,Informasi,Polling',
-            'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'external_link' => 'nullable|url',
-            'label' => 'nullable|string|max:50',
-            'deadline' => 'nullable|date|after:now',
-            'existing_options.*' => 'nullable|string',
-            'options' => 'nullable|array',
-            'options.*' => 'nullable|string|min:1',
-            'delete_options' => 'nullable|array',
-        ]);
+    $rules = [
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'announcement_type' => 'required|in:Umum,Divisi,Urgent,Informasi,Polling',
+        'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'external_link' => 'nullable|url',
+        'label' => 'required|string|max:50',
+        'existing_options.*' => 'nullable|string',
+        'options' => 'nullable|array',
+        'options.*' => 'nullable|string|min:1',
+        'deleted_options' => 'nullable|array',
+    ];
 
-        if ($request->hasFile('attachment_file')) {
-            if ($announcement->attachment_file && Storage::exists('public/announcement/' . $announcement->attachment_file)) {
-                Storage::delete('public/announcement/' . $announcement->attachment_file);
-            }
+    // Hanya validasi deadline jika polling masih bisa diedit
+    if ($isPolling && !$isExpired && !$isLocked && !$hasVotes) {
+        $rules['deadline'] = 'required_if:announcement_type,Polling||date|after:now';
+    }
 
-            $file = $request->file('attachment_file');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('announcement', $filename, 'public');
-            $announcement->attachment_file = $filename;
+    $request->validate($rules);
+
+    // ✅ Update field yang tetap bisa diubah
+    $announcement->title = $request->title;
+    $announcement->content = $request->content;
+    $announcement->announcement_type = $request->announcement_type;
+    $announcement->label = $request->label;
+    $announcement->external_link = $request->external_link;
+
+    // ✅ Handle file attachment
+    if ($request->hasFile('attachment_file')) {
+        if ($announcement->attachment_file && Storage::exists('public/announcement/' . $announcement->attachment_file)) {
+            Storage::delete('public/announcement/' . $announcement->attachment_file);
         }
 
-        $announcement->title = $request->title;
-        $announcement->content = $request->content;
-        $announcement->announcement_type = $request->announcement_type;
-        $announcement->label = $request->label;
-        $announcement->external_link = $request->external_link;
-        $announcement->save();
+        $file = $request->file('attachment_file');
+        $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+        $file->storeAs('announcement', $filename, 'public');
+        $announcement->attachment_file = $filename;
+    }
 
-        if ($announcement->announcement_type === 'Polling' && $announcement->polling) {
-            $polling = $announcement->polling;
-            $isExpired = $polling->deadline && now()->gt($polling->deadline);
-            $hasVotes = $polling->options()->withCount('votes')->get()->sum('votes_count') > 0;
+    $announcement->save();
 
-            if ($isExpired || $hasVotes) {
-                return redirect()->route('announcement.index')->with('error', 'Polling tidak dapat diubah karena sudah ada suara atau melewati batas waktu.');
-            }
+    // ✅ Hanya proses polling jika belum expired atau belum terkunci
+    if ($announcement->announcement_type === 'Polling' && $polling) {
+        $isExpired = $polling->deadline && now()->gt($polling->deadline);
+        $hasVotes = $polling->options()->withCount('votes')->get()->sum('votes_count') > 0;
 
+        if (!($polling->is_locked || $isExpired || $hasVotes)) {
             $polling->deadline = $request->deadline;
             $polling->save();
 
-            // Update existing options
+            // Update opsi lama
             if ($request->has('existing_options')) {
                 foreach ($request->existing_options as $optionId => $optionText) {
                     $option = $polling->options()->find($optionId);
@@ -196,12 +207,14 @@ class AnnouncementController extends Controller
                 }
             }
 
-            // Delete options if checked
-            if ($request->has('delete_options')) {
-                $polling->options()->whereIn('id', $request->delete_options)->delete();
-            }
+            // Hapus opsi
+            if ($request->has('deleted_options')) {
+                foreach ($request->deleted_options as $optionId) {
+                    $polling->options()->where('id', $optionId)->delete();
+                }
+            }            
 
-            // Add new options
+            // Tambah opsi baru
             if ($request->has('options')) {
                 foreach ($request->options as $option) {
                     if (trim($option) !== '') {
@@ -210,9 +223,10 @@ class AnnouncementController extends Controller
                 }
             }
         }
-
-        return redirect()->route('announcement.index')->with('success', 'Pengumuman berhasil diperbarui');
     }
+
+    return redirect()->route('announcement.index')->with('success', 'Announcement has been updated');
+}
 
     public function destroy($id)
     {
@@ -224,7 +238,7 @@ class AnnouncementController extends Controller
 
         $announcement->delete();
 
-        return redirect()->route('announcement.index')->with('success', 'Pengumuman berhasil dihapus');
+        return redirect()->route('announcement.index')->with('success', 'Announcement has been deleted');
     }
 
     public function exportPolling($id)
