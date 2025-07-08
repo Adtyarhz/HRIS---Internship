@@ -1,82 +1,74 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Dashboard')
 
 @section('content_header')
-    <h1 class="header-title">Dashboard</h1>
+    <div style="display: flex; align-items: center; gap: 10px; font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 24px;">
+        <i class="fas fa-home" style="color: #000;"></i>
+        <span>Dashboard</span>
+    </div>
 @endsection
 
 @section('content')
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+    @php
+        use Carbon\Carbon;
+        Carbon::setLocale('id');
+        $now = Carbon::now()->translatedFormat('l, d F Y H:i');
+    @endphp
 
-    <div class="dashboard-container" style="display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; min-height: 100%;">
-        <!-- Chart Section (Employee Data) -->
-        <div class="chart-section" style="width: 363px; height: 731px; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.20); margin-bottom: 20px; position: relative; flex-shrink: 0;">
-            <div style="width: 92px; height: 52px; margin: 0 auto; padding-top: 10px; color: black; font-size: 24px; font-family: Montserrat; font-weight: 400; text-align: center;">
-                Employee Stats
-            </div>
-            <div id="employee-chart" style="width: 100%; height: 600px; margin-top: 20px;"></div>
+    <div style="width: 1175px; min-height: 100vh; position: relative; background: #FEFEF9; overflow: hidden; padding: 15px;">
+        {{-- Tanggal Hari Ini --}}
+        <div style="width: 370px; margin-left: 43px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; font-family: Montserrat; font-size: 24px; font-weight: semibold; border-bottom: 1px solid black; padding-bottom: 5px;">
+            {{ $now }}
         </div>
 
-        <!-- Container kanan -->
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-            <!-- Announcement Section -->
-<div class="announcement-section" style="width: 100%; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.20); padding: 20px; overflow-y: auto;">
-    <div style="text-align: center; font-size: 24px; font-family: Montserrat; font-weight: 500; margin-bottom: 20px;">
+        <div style="display: flex; gap: 20px; padding: 0 15px;">
+            {{-- Panel Kiri: Employee Stats --}}
+            <div style="width: 363px; height: 731px; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.2); padding: 20px; flex-shrink: 0;">
+                <div style="text-align: center; font-size: 24px; font-family: Montserrat; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.3); padding-bottom: 10px; margin-bottom: 20px;">
+                    Employee Stats
+                </div>
+                <div id="employee-chart" style="height: 600px;"></div>
+            </div>
+
+{{-- Panel Kanan: Announcement --}}
+<div style="flex: 1; height: 747px; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.2); padding: 20px; overflow-y: auto;">
+    <div style="font-size: 24px; font-family: Montserrat; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.3); padding-bottom: 8px; margin-bottom: 16px;">
         Announcement
     </div>
 
     @if ($announcements->isEmpty())
-        <p style="text-align: center;">Tidak ada pengumuman saat ini. <strong>Count: {{ $announcements->total() }}</strong></p>
+        <p style="text-align: center;">Tidak ada pengumuman saat ini.</p>
     @else
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            @foreach ($announcements as $announcement)
-                <div style="background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 16px;">
-                    <div style="font-weight: 600; color: #333; font-size: 16px; margin-bottom: 6px;">
-                        <a href="{{ route('announcement.show', $announcement->id) }}" style="text-decoration: none; color: inherit;">
-                            {{ $announcement->label ? '[' . strtoupper($announcement->label) . '] ' : '' }}{{ $announcement->title }}
-                        </a>
-                    </div>
-                    <div style="font-size: 14px; color: #555;">
-                        {{ \Illuminate\Support\Str::limit(strip_tags($announcement->content), 80, '...') }}
-                    </div>
-                    <div style="margin-top: 6px;">
-                        <a href="{{ route('announcement.show', $announcement->id) }}" style="font-size: 13px; color: #9A3B3B; font-weight: 500; text-decoration: none;">
-                            selengkapnya →
-                        </a>
-                    </div>
+        @foreach ($announcements as $announcement)
+            <div style="margin-bottom: 18px;">
+                {{-- Label dan Judul --}}
+                <div style="font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 500; color: #000;">
+                <a href="{{ route('announcement.show', ['announcement' => $announcement->id, 'from' => 'dashboard']) }}"
+                    style="text-decoration: none; color: inherit;">
+                        <span style="color: #530087;">[{{ strtoupper($announcement->label ?? 'HR') }}]</span>
+                        {{ $announcement->title }}
+                    </a>
                 </div>
-            @endforeach
-        </div>
-        <div class="mt-3">
+
+                {{-- Ringkasan konten --}}
+                <div style="color: #555; font-size: 13.5px; font-family: 'Montserrat', sans-serif; font-weight: 200; margin-top: 0px;">
+                    {{ \Illuminate\Support\Str::limit(strip_tags($announcement->content), 120, '...') }}
+                </div>
+            </div>
+        @endforeach
+
+        <div>
             {{ $announcements->links() }}
         </div>
     @endif
 </div>
-        </div>
-    </div>
 
     @push('styles')
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex&display=swap" rel="stylesheet">
         <style>
-            .dashboard-container {
-                display: flex;
-                gap: 20px;
-                padding: 20px;
-                flex-wrap: wrap;
-                min-height: 100%;
-            }
-            .chart-section, .announcement-section {
-                box-sizing: border-box;
-            }
-            .announcement-section {
-                overflow-y: auto;
-            }
-            @media (max-width: 1200px) {
-                .chart-section, .announcement-section {
-                    width: 100% !important;
-                }
+            body {
+                background-color: #FEFEF9;
             }
         </style>
     @endpush
@@ -100,6 +92,8 @@
                             }]
                         },
                         options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
                             scales: {
                                 y: {
                                     beginAtZero: true
