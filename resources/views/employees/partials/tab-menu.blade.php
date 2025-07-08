@@ -90,7 +90,7 @@
     $allTabs = [
         'employees.edit'             => 'Personal',
         'employees.address.edit'     => 'Address',
-        'employees.family-dependents.index'      => 'Family &<br/>Dependent',
+        'employees.family.edit'      => 'Family &<br/>Dependent',
         'employees.education.edit'   => 'Education',
         'employees.training-histories.index'    => 'Training Record',
         'employees.health.edit'      => 'Health History',
