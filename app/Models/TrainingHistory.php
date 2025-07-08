@@ -34,8 +34,8 @@ class TrainingHistory extends Model
         return $this->belongsTo(Employee::class, 'employee_id');
     }
 
-    public function trainingMaterial(): HasMany
+    public function trainingMaterials(): HasMany
     {
-        return $this->hasMany(TrainingMaterial::class, 'training_id');
+        return $this->hasMany(TrainingMaterial::class, 'training_history_id');
     }
 }

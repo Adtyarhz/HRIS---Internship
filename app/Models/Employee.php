@@ -88,7 +88,7 @@ class Employee extends Model
         return $this->hasMany(Certification::class, 'employee_id');
     }
 
-    public function trainingHistory(): HasMany
+    public function trainingHistories(): HasMany
     {
         return $this->hasMany(TrainingHistory::class, 'employee_id');
     }

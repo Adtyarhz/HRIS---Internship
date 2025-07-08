@@ -11,12 +11,12 @@ class TrainingMaterial extends Model
     use HasFactory;
 
     protected $fillable = [
-        'training_id',
+        'training_history_id',
         'file_path',
     ];
 
     public function trainingHistory(): BelongsTo
     {
-        return $this->belongsTo(TrainingHistory::class, 'training_id');
+        return $this->belongsTo(TrainingHistory::class, 'training_history_id');
     }
 }
