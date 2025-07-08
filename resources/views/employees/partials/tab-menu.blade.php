@@ -91,7 +91,7 @@
         'employees.edit'             => 'Personal',
         'employees.address.edit'     => 'Address',
         'employees.family.edit'      => 'Family &<br/>Dependent',
-        'employees.education.edit'   => 'Education',
+        'employees.educationhistory.index'   => 'Education History',
         'employees.training-histories.index'    => 'Training Record',
         'employees.health.edit'      => 'Health History',
         'employees.certifications.index' => 'Certification',
@@ -107,9 +107,16 @@
             // Menentukan class modifier berdasarkan kondisi
             $isRouteActive = Route::has($route) && $employeeId;
             $isActivePage = request()->routeIs($route . '*') 
-            || ($route === 'employees.work-experience.index' && request()->routeIs('employees.work-experience.create'))
-            || ($route === 'employees.work-experience.index' && request()->routeIs('employees.work-experience.edit'))
-            || (request()->routeIs('employees.create') && $route == 'employees.edit');
+    || (
+        $route === 'employees.work-experience.index' && 
+        (request()->routeIs('employees.work-experience.create') || request()->routeIs('employees.work-experience.edit'))
+    )
+    || (
+        $route === 'employees.educationhistory.index' && 
+        (request()->routeIs('employees.educationhistory.create') || request()->routeIs('employees.educationhistory.edit'))
+    )
+    || (request()->routeIs('employees.create') && $route == 'employees.edit');
+
             $classes = 'tabs-nav__item';
 
             if ($isActivePage) {
