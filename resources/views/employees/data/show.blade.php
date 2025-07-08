@@ -70,7 +70,7 @@
                         <span class="data-label">CV File</span>
                         <span class="data-value">
                             @if($employee->cv_file)
-                                <a href="{{ $employee->cv_file_url }}" target="_blank" class="cv-link"><i class="fas fa-file-alt"></i> Lihat File</a>
+                                <a href="{{ asset('storage/'.$employee->cv_file) }}" target="_blank" class="cv-link"><i class="fas fa-file-alt"></i> Lihat File</a>
                             @else
                                 -
                             @endif

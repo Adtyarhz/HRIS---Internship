@@ -4,7 +4,7 @@
         <div class="form-group text-center">
             <label>Profile Picture</label>
             <img id="photo-preview"
-                src="{{ $employee->photo ? asset('storage/photo/' . $employee->photo) : 'https://placehold.co/200x220/EFEFEF/AAAAAA?text=Upload+Photo' }}"
+                src="{{ $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/200x220/EFEFEF/AAAAAA?text=Upload+Photo' }}"
                 alt="Profile Picture" class="profile-picture-preview">
             <input type="file" name="photo" id="photo"
                 class="form-control-file mt-2 @error('photo') is-invalid @enderror" accept="image/*">
@@ -18,7 +18,7 @@
                 name="cv_file" accept=".pdf,.doc,.docx">
             @if ($employee->cv_file)
                 <small class="form-text text-muted">Current file: <a
-                        href="{{ asset('storage/cv/' . $employee->cv_file) }}" target="_blank">View CV</a></small>
+                        href="{{ asset('storage/' . $employee->cv_file) }}" target="_blank">View CV</a></small>
             @endif
             @error('cv_file')
                 <span class="invalid-feedback d-block">{{ $message }}</span>
