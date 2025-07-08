@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkExperienceController;
 use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
+use App\Http\Controllers\TrainingHistoryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -78,6 +79,16 @@ Route::prefix('employees/{employee}/educationhistory')->name('employees.educatio
     Route::get('/{educationHistory}/edit', [EducationHistoryController::class, 'edit'])->name('edit');
     Route::put('/{educationHistory}', [EducationHistoryController::class, 'update'])->name('update');
     Route::delete('/{educationHistory}', [EducationHistoryController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('employees/{employee}/training-histories')->name('employees.training-histories.')->group(function () {
+    Route::get('/', [TrainingHistoryController::class, 'index'])->name('index');
+    Route::get('/create', [TrainingHistoryController::class, 'create'])->name('create');
+    Route::post('/', [TrainingHistoryController::class, 'store'])->name('store');
+    Route::get('/{trainingHistory}/edit', [TrainingHistoryController::class, 'edit'])->name('edit');
+    Route::put('/{trainingHistory}', [TrainingHistoryController::class, 'update'])->name('update');
+    Route::delete('/{trainingHistory}', [TrainingHistoryController::class, 'destroy'])->name('destroy');
+    Route::delete('/{trainingHistory}/materials/{material}', [TrainingHistoryController::class, 'destroyMaterial'])->name('materials.destroy');
 });
 
 Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
