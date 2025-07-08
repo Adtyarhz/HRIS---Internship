@@ -8,6 +8,7 @@ use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\PollingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkExperienceController;
+use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\TrainingHistoryController;
 
 Route::get('/', function () {
@@ -58,6 +59,15 @@ Route::prefix('employees/{employee}/certifications')->name('employees.certificat
     Route::put('/{certification}', [CertificationController::class, 'update'])->name('update');
     Route::delete('/{certification}', [CertificationController::class, 'destroy'])->name('destroy');
     Route::delete('/{certification}/materials/{material}', [CertificationController::class, 'destroyMaterial'])->name('materials.destroy');
+});
+
+Route::prefix('employees/{employee}/insurance')->name('employees.insurance.')->group(function () {
+    Route::get('/', [InsuranceController::class, 'index'])->name('index'); // Show list
+    Route::get('/create', [InsuranceController::class, 'create'])->name('create'); // Show add form
+    Route::post('/', [InsuranceController::class, 'store'])->name('store'); // Save new
+    Route::get('/{insurance}/edit', [InsuranceController::class, 'edit'])->name('edit'); // Edit form
+    Route::put('/{insurance}', [InsuranceController::class, 'update'])->name('update'); // Update existing
+    Route::delete('/{insurance}', [InsuranceController::class, 'destroy'])->name('destroy'); // Delete
 });
 
 Route::prefix('employees/{employee}/training-histories')->name('employees.training-histories.')->group(function () {
