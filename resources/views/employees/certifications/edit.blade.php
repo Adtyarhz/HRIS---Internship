@@ -209,7 +209,7 @@
                                     @if ($certification->certificate_file)
                                         <p class="mt-2">File saat ini:
                                             <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}"
-                                                target="_blank">{{ Str::limit($certification->certificate_file, 40) }}</a>
+                                                target="_blank">{{ Str::afterLast($certification->certificate_file, '_') }}</a>
                                         </p>
                                         <input type="hidden" name="existing_certificate_file"
                                             value="{{ $certification->certificate_file }}">
@@ -230,7 +230,7 @@
                                                     <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}"
                                                         target="_blank">
                                                         <i class="fas fa-file-alt"></i>
-                                                        {{ Str::limit($material->file_path, 40) }}
+                                                        {{ Str::afterLast($material->file_path, '_') }}
                                                     </a>
                                                     <button type="button" class="btn btn-delete-material"
                                                         onclick="showDeleteMaterialModal('{{ route('employees.certifications.materials.destroy', [$employee->id, $certification->id, $material->id]) }}')">Hapus</button>
