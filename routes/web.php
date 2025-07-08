@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FamilyDependentController;
 use App\Http\Controllers\HealthRecordController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementController;
@@ -78,6 +79,8 @@ Route::prefix('employees/{employee}/educationhistory')->name('employees.educatio
     Route::put('/{educationHistory}', [EducationHistoryController::class, 'update'])->name('update');
     Route::delete('/{educationHistory}', [EducationHistoryController::class, 'destroy'])->name('destroy');
 });
+
+Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');

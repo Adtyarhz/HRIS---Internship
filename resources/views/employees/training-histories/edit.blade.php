@@ -209,7 +209,7 @@
                                     <input type="text"
                                         class="form-control @error('certificate_number') is-invalid @enderror"
                                         id="certificate_number" name="certificate_number"
-                                        value="{{ old('certificate_number', $trainingHistory->provider) }}" required>
+                                        value="{{ old('certificate_number', $trainingHistory->certificate_number) }}" required>
                                     @error('certificate_number')
                                         <span class="invalid-feedback d-block">{{ $message }}</span>
                                     @enderror
