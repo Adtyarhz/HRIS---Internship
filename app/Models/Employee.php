@@ -103,7 +103,7 @@ class Employee extends Model
         return $this->hasMany(Insurance::class, 'employee_id');
     }
 
-    public function familyDependent(): HasMany
+    public function familyDependents(): HasMany
     {
         return $this->hasMany(FamilyDependent::class, 'employee_id');
     }
