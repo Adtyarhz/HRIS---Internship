@@ -199,5 +199,15 @@
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     @stack('scripts')
 </body>
+<script>
+    function showDeletePopup(id) {
+        const modal = new bootstrap.Modal(document.getElementById('deletePopup-' + id));
+        modal.show();
+    }
 
+    function closeDeletePopup(id) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deletePopup-' + id));
+        if (modal) modal.hide();
+    }
+</script>
 </html>
