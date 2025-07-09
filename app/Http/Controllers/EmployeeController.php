@@ -75,9 +75,9 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $validateData = $request->validate([
-            'nik' => 'required|string|max:20|unique:employees,nik',
-            'nip' => 'nullable|string|max:20|unique:employees,nip',
-            'npwp' => 'nullable|string|max:20|unique:employees,npwp',
+            'nik' => 'required|string|size:16|unique:employees,nik|regex:/^[0-9]+$/',
+            'nip' => 'nullable|string|max:20|unique:employees,nip|regex:/^[0-9]+$/',
+            'npwp' => 'nullable|string|max:20|unique:employees,npwp|regex:/^[0-9]+$/',
             'full_name' => 'required|string|max:100',
             'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
             'religion' => 'required|string|max:50',
@@ -87,7 +87,7 @@ class EmployeeController extends Controller
             'dependents' => 'required|integer|min:0',
             'ktp_address' => 'required|string',
             'current_address' => 'required|string',
-            'phone_number' => 'required|string|max:20|unique:employees,phone_number',
+            'phone_number' => ['required', 'string', 'max:20', 'unique:employees,phone_number', 'regex:/^\+?[0-9]{8,20}$/'],
             'email' => 'required|email|max:100|unique:employees,email',
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
             'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
@@ -165,9 +165,9 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee)
     {
         $validatedData = $request->validate([
-            'nik' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id)],
-            'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id)],
-            'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id)],
+            'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+            'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+            'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
             'full_name' => 'required|string|max:100',
             'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
             'religion' => 'required|string|max:50',
@@ -177,7 +177,7 @@ class EmployeeController extends Controller
             'dependents' => 'required|integer|min:0',
             'ktp_address' => 'required|string',
             'current_address' => 'required|string',
-            'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id)],
+            'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
             'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
             'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
