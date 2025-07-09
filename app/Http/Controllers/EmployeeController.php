@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class EmployeeController extends Controller
 {
@@ -105,29 +106,31 @@ class EmployeeController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('cv_file')) {
-                $cvFile = $request->file('cv_file');
-                $cvFileName = time() . '_' . $cvFile->getClientOriginalName();
-                $cvFile->storeAs('public/cv', $cvFileName);
-                $validateData['cv_file'] = $cvFileName;
+                $file = $request->file('cv_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validateData['cv_file'] = $file->storeAs('cv', $filename, 'public');
             }
 
             if ($request->hasFile('photo')) {
-                $photoFile = $request->file('photo');
-                $photoFileName = time() . '_' . $photoFile->getClientOriginalName();
-                $photoFile->storeAs('public/photo', $photoFileName);
-                $validateData['photo'] = $photoFileName;
+                $file = $request->file('photo');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validateData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
 
             Employee::create($validateData);
+
             DB::commit();
             return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            if (isset($validateData['cv_file']))
-                Storage::delete('public/cv/' . $validateData['cv_file']);
-            if (isset($validateData['photo']))
-                Storage::delete('public/photo/' . $validateData['photo']);
+            // Hapus file yang sudah terupload jika gagal
+            if (isset($validateData['cv_file'])) {
+                Storage::disk('public')->delete($validateData['cv_file']);
+            }
+            if (isset($validateData['photo'])) {
+                Storage::disk('public')->delete($validateData['photo']);
+            }
 
             return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();
         }
@@ -196,25 +199,26 @@ class EmployeeController extends Controller
 
             if ($request->hasFile('cv_file')) {
                 if ($employee->cv_file) {
-                    Storage::delete('public/cv/' . $employee->cv_file);
+                    Storage::disk('public')->delete($employee->cv_file);
                 }
-                $cvFile = $request->file('cv_file');
-                $cvFileName = time() . '_' . $cvFile->getClientOriginalName();
-                $cvFile->storeAs('public/cv', $cvFileName);
-                $validatedData['cv_file'] = $cvFileName;
+
+                $file = $request->file('cv_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
             }
 
             if ($request->hasFile('photo')) {
                 if ($employee->photo) {
-                    Storage::delete('public/photo/' . $employee->photo);
+                    Storage::disk('public')->delete($employee->photo);
                 }
-                $photoFile = $request->file('photo');
-                $photoFileName = time() . '_' . $photoFile->getClientOriginalName();
-                $photoFile->storeAs('public/photo', $photoFileName);
-                $validatedData['photo'] = $photoFileName;
+
+                $file = $request->file('photo');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
 
             $employee->update($validatedData);
+
             DB::commit();
             return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil diperbarui.');
         } catch (\Exception $e) {

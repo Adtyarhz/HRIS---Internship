@@ -112,7 +112,7 @@
                         <div class="employee-row">
                             <div class="row-col col-no" data-label="No.">{{ $loop->iteration + ($employees->currentPage() - 1) * $employees->perPage() }}</div>
                             <div class="row-col col-employee" data-label="Karyawan">
-                                <img src="{{ $employee->photo ? asset('storage/photo/' . $employee->photo) : 'https://placehold.co/45x45/9A3B3B/FFFFFF?text=' . strtoupper(substr($employee->full_name, 0, 1)) }}" alt="Avatar Karyawan" class="employee-avatar">
+                                <img src="{{ $employee->photo ? asset('storage/'. $employee->photo) : 'https://placehold.co/45x45/9A3B3B/FFFFFF?text=' . strtoupper(substr($employee->full_name, 0, 1)) }}" alt="Avatar Karyawan" class="employee-avatar">
                                 <div class="employee-info">
                                     <span class="employee-name">{{ $employee->full_name }}</span>
                                     <span class="employee-id">NIK: {{ $employee->nik }}</span>
