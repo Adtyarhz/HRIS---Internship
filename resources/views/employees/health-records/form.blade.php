@@ -101,7 +101,7 @@
                                         class="text-danger">*</span> :</label>
                                 <div class="col-md-4">
                                     <textarea class="form-control @error('known_allergies') is-invalid @enderror" id="known_allergies"
-                                        name="known_allergies" rows="8" placeholder="Description of Your Allergies" required>{{ old('known_allergies', $healthRecord->known_allergies ?? '') }}</textarea>
+                                        name="known_allergies" rows="6" placeholder="Description of Your Allergies" required>{{ old('known_allergies', $healthRecord->known_allergies ?? '') }}</textarea>
                                     @error('known_allergies')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -113,7 +113,7 @@
                                 <label for="chronic_diseases" class="col-md-2 col-form-label">Chronic Diseases :</label>
                                 <div class="col-md-4">
                                     <textarea class="form-control @error('chronic_diseases') is-invalid @enderror" id="chronic_diseases"
-                                        name="chronic_diseases" rows="8" placeholder="Description of Your Chronic Diseases">{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
+                                        name="chronic_diseases" rows="6" placeholder="Description of Your Chronic Diseases">{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
                                     @error('chronic_diseases')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -141,11 +141,23 @@
                                 </div>
                             </div>
 
+                            {{-- Location Checkup --}}
+                            <div class="form-group row">
+                                <label for="checkup_loc" class="col-md-2 col-form-label">Location Checkup :</label>
+                                <div class="col-md-4">
+                                    <textarea class="form-control @error('checkup_loc') is-invalid @enderror" id="checkup_loc" name="checkup_loc" rows="4"
+                                        placeholder="....">{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
+                                    @error('notes')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             {{-- Notes --}}
                             <div class="form-group row">
                                 <label for="notes" class="col-md-2 col-form-label">Notes :</label>
                                 <div class="col-md-4">
-                                    <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="8"
+                                    <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="4"
                                         placeholder="Notes of Your Health Record">{{ old('notes', $healthRecord->notes ?? '') }}</textarea>
                                     @error('notes')
                                         <span class="invalid-feedback">{{ $message }}</span>
