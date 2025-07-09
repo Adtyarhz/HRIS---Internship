@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class CertificationController extends Controller
 {
@@ -52,11 +53,12 @@ class CertificationController extends Controller
         DB::beginTransaction();
         try {
             // 1. Handle unggahan file sertifikat utama
-            $mainCertificatePath = null;
+            $mainCertificateFileName = null;
             if ($request->hasFile('certificate_file')) {
                 $file = $request->file('certificate_file');
-                $fileName = time() . '_cert_' . str_replace(' ', '_', $file->getClientOriginalName());
-                $mainCertificatePath = $file->storeAs('public/certifications/main', $fileName);
+                $mainCertificateFileName = time() . '_cert_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                    . '.' . $file->getClientOriginalExtension();
+                $storedPath = $file->storeAs('certifications/main', $mainCertificateFileName, 'public');
             }
 
             // 2. Buat record sertifikasi utama
@@ -68,7 +70,7 @@ class CertificationController extends Controller
                 'date_obtained' => $validatedData['date_obtained'],
                 'expiry_date' => $validatedData['expiry_date'] ?? null,
                 'cost' => $validatedData['cost'] ?? null,
-                'certificate_file' => $mainCertificatePath ? basename($mainCertificatePath) : null,
+                'certificate_file' => $mainCertificateFileName,
             ];
 
             $certification = Certification::create($certificationData);
@@ -76,24 +78,24 @@ class CertificationController extends Controller
             // 3. Handle unggahan file-file materi pendukung (jika ada)
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
-                    $materialFileName = time() . '_mat_' . str_replace(' ', '_', $materialFile->getClientOriginalName());
-                    $path = $materialFile->storeAs('public/certifications/materials', $materialFileName);
-                    
+                    $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '.' . $materialFile->getClientOriginalExtension();
+                    $materialStoredPath = $materialFile->storeAs('certifications/materials', $materialFileName, 'public');
+
                     $certification->certificationMaterials()->create([
-                        'file_path' => basename($path)
+                        'file_path' => $materialFileName // hanya simpan nama file
                     ]);
                 }
             }
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                             ->with('success', 'Sertifikasi dan materi pendukung berhasil ditambahkan.');
-
+                ->with('success', 'Sertifikasi dan materi pendukung berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
             // Hapus file sertifikat utama jika sudah terunggah
-            if ($mainCertificatePath && Storage::exists($mainCertificatePath)) {
-                Storage::delete($mainCertificatePath);
+            if (!empty($mainCertificateFileName)) {
+                Storage::disk('public')->delete('certifications/main/' . $mainCertificateFileName);
             }
             return back()->with('error', 'Gagal menyimpan sertifikasi: ' . $e->getMessage())->withInput();
         }
@@ -143,36 +145,39 @@ class CertificationController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Handle penghapusan file materi yang dipilih
+            // 1. Hapus file materi yang dipilih
             if (!empty($validatedData['delete_materials'])) {
                 foreach ($validatedData['delete_materials'] as $materialId) {
                     $material = CertificationMaterial::where('certification_id', $certification->id)
-                                                    ->where('id', $materialId)
-                                                    ->first();
+                        ->where('id', $materialId)
+                        ->first();
                     if ($material) {
-                        Storage::delete('public/certifications/materials/' . $material->file_path);
+                        Storage::disk('public')->delete('certifications/materials/' . $material->file_path);
                         $material->delete();
                     }
                 }
             }
 
-            // 2. Handle pembaruan file sertifikat utama (jika ada file baru)
+            // 2. Perbarui file sertifikat utama (jika diunggah baru)
             if ($request->hasFile('certificate_file')) {
                 // Hapus file lama jika ada
                 if ($certification->certificate_file) {
-                    Storage::delete('public/certifications/main/' . $certification->certificate_file);
+                    Storage::disk('public')->delete('certifications/main/' . $certification->certificate_file);
                 }
-                // Unggah file baru
+
+                // Upload file baru dengan nama aman
                 $file = $request->file('certificate_file');
-                $fileName = time() . '_cert_' . str_replace(' ', '_', $file->getClientOriginalName());
-                $path = $file->storeAs('public/certifications/main', $fileName);
-                $validatedData['certificate_file'] = basename($path);
+                $fileName = time() . '_cert_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                    . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('certifications/main', $fileName, 'public');
+
+                $validatedData['certificate_file'] = $fileName;
             } else {
-                // Pertahankan file lama jika tidak ada file baru
+                // Pertahankan file lama jika tidak diganti
                 $validatedData['certificate_file'] = $certification->certificate_file;
             }
 
-            // 3. Perbarui data sertifikasi
+            // 3. Update data sertifikasi
             $certification->update([
                 'certification_name' => $validatedData['certification_name'],
                 'issuer' => $validatedData['issuer'],
@@ -183,21 +188,22 @@ class CertificationController extends Controller
                 'certificate_file' => $validatedData['certificate_file'],
             ]);
 
-            // 4. Handle penambahan file materi baru (jika ada)
+            // 4. Tambah file materi baru jika ada
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
-                    $materialFileName = time() . '_mat_' . str_replace(' ', '_', $materialFile->getClientOriginalName());
-                    $path = $materialFile->storeAs('public/certifications/materials', $materialFileName);
+                    $filename = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '.' . $materialFile->getClientOriginalExtension();
+                    $materialFile->storeAs('certifications/materials', $filename, 'public');
+
                     $certification->certificationMaterials()->create([
-                        'file_path' => basename($path)
+                        'file_path' => $filename
                     ]);
                 }
             }
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                             ->with('success', 'Sertifikasi dan materi pendukung berhasil diperbarui.');
-
+                ->with('success', 'Sertifikasi dan materi pendukung berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memperbarui sertifikasi: ' . $e->getMessage())->withInput();
@@ -232,7 +238,7 @@ class CertificationController extends Controller
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                             ->with('success', 'Sertifikasi dan semua file terkait berhasil dihapus.');
+                ->with('success', 'Sertifikasi dan semua file terkait berhasil dihapus.');
 
         } catch (\Exception $e) {
             DB::rollBack();
