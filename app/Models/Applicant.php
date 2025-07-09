@@ -16,7 +16,6 @@ class Applicant extends Model
         'address',
         'resume_file',
         'applied_position',
-        'pendidikan_terakhir',
         'last_education',
         'origin',
         'gpa_score',
