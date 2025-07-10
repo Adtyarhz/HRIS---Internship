@@ -114,12 +114,12 @@
                                         <td class="file-column">
                                             @if ($trainingHistory->trainingMaterials->isNotEmpty())
                                                 <ul class="file-list">
-                                                    @foreach ($trainingHistory->trainingMaterials as $material)
+                                                    @foreach ($trainingHistory->trainingMaterials as $index => $material)
                                                         <li>
                                                             <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
                                                                target="_blank" class="file-link">
                                                                 <i class="fa-regular fa-file"></i>
-                                                                {{ basename($material->file_path) }}
+                                                                Training Material File {{ $index + 1 }}
                                                             </a>
                                                         </li>
                                                     @endforeach
