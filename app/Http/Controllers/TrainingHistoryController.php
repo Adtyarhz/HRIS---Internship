@@ -8,6 +8,7 @@ use App\Models\TrainingMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TrainingHistoryController extends Controller
 {
@@ -48,16 +49,17 @@ class TrainingHistoryController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Buat record riwayat pelatihan utama
+            // 1. Buat record utama training history
             $trainingHistory = $employee->trainingHistories()->create($validatedData);
 
-            // 2. Handle unggahan file materi (jika ada)
+            // 2. Handle upload file materi (jika ada)
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
-                    $materialFileName = time() . '_' . $materialFile->getClientOriginalName();
-                    $materialFile->storeAs('public/training_materials', $materialFileName);
+                    $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '.' . $materialFile->getClientOriginalExtension();
+                    $materialFile->storeAs('training_materials', $materialFileName, 'public');
 
-                    // Buat record untuk setiap materi
+                    // Buat record relasi training_materials
                     $trainingHistory->trainingMaterials()->create([
                         'file_path' => $materialFileName
                     ]);
@@ -66,8 +68,7 @@ class TrainingHistoryController extends Controller
 
             DB::commit();
             return redirect()->route('employees.training-histories.index', $employee->id)
-                             ->with('success', 'Riwayat pelatihan berhasil ditambahkan.');
-
+                            ->with('success', 'Riwayat pelatihan berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal menyimpan riwayat pelatihan: ' . $e->getMessage())->withInput();
@@ -108,32 +109,37 @@ class TrainingHistoryController extends Controller
             // 1. Perbarui data teks pada record riwayat pelatihan
             $trainingHistory->update($validatedData);
 
-            // 2. Handle penghapusan file materi yang dipilih
+            // 2. Hapus file materi yang dipilih untuk dihapus
             if (!empty($validatedData['delete_materials'])) {
                 foreach ($validatedData['delete_materials'] as $materialId) {
                     $material = TrainingMaterial::where('training_history_id', $trainingHistory->id)
                                                 ->where('id', $materialId)
                                                 ->first();
+
                     if ($material) {
-                        Storage::delete('public/training_materials/' . $material->file_path);
+                        Storage::disk('public')->delete('training_materials/' . $material->file_path);
                         $material->delete();
                     }
                 }
             }
 
-            // 3. Handle penambahan file materi baru (jika ada)
+            // 3. Tambah file materi baru (jika ada)
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
-                    $materialFileName = time() . '_' . $materialFile->getClientOriginalName();
-                    $materialFile->storeAs('public/training_materials', $materialFileName);
-                    $trainingHistory->trainingMaterials()->create(['file_path' => $materialFileName]);
+                    $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '.' . $materialFile->getClientOriginalExtension();
+                    
+                    $materialFile->storeAs('training_materials', $materialFileName, 'public');
+
+                    $trainingHistory->trainingMaterials()->create([
+                        'file_path' => $materialFileName
+                    ]);
                 }
             }
-            
+
             DB::commit();
             return redirect()->route('employees.training-histories.index', $employee->id)
-                             ->with('success', 'Riwayat pelatihan berhasil diperbarui.');
-
+                            ->with('success', 'Riwayat pelatihan berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memperbarui riwayat pelatihan: ' . $e->getMessage())->withInput();
