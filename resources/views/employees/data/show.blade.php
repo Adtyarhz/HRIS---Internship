@@ -295,7 +295,7 @@
                                         <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}"
                                             target="_blank">
                                             <i class="fas fa-file-alt"></i>
-                                            {{ basename($certification->certificate_file) }}
+                                            {{ Str::afterLast ($certification->certificate_file, '_') }}
                                         </a>
                                     @else
                                         -
