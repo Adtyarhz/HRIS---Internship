@@ -120,7 +120,7 @@
                             </div>
                             <div class="row-col col-details" data-label="Jabatan/Divisi">
                                 <div class="employee-info">
-                                    <span class="employee-position">{{ $employee->position->name ?? 'Belum Diatur' }}</span>
+                                    <span class="employee-position">{{ $employee->position->title ?? 'Belum Diatur' }}</span>
                                     <span class="employee-division">{{ $employee->division->name ?? 'Belum Diatur' }}</span>
                                 </div>
                             </div>
