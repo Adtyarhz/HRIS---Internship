@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class RecruitmentProgress extends Model
 {
     use HasFactory;
+    protected $table = 'recruitment_progresses';
 
     protected $fillable = [
         'applicant_id',
