@@ -372,7 +372,7 @@
                                         @foreach ($positions as $position)
                                             <option value="{{ $position->id }}"
                                                 {{ old('position_id') == $position->id ? 'selected' : '' }}>
-                                                {{ $position->name }}</option>
+                                                {{ $position->title }}</option>
                                         @endforeach
                                     </select>
                                     @error('position_id')
