@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Position extends Model
 {
@@ -22,8 +23,8 @@ class Position extends Model
         return $this->hasMany(CareerHistory::class, 'position_id');
     }
 
-    public function careerProjections(): HasMany
+    public function careerProjection(): HasOne
     {
-        return $this->hasMany(CareerProjection::class, 'projected_position_id');
+        return $this->hasOne(CareerProjection::class, 'projected_position_id');
     }
 }

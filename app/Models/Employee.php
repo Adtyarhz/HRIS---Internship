@@ -113,8 +113,8 @@ class Employee extends Model
         return $this->hasMany(CareerHistory::class, 'employee_id');
     }
 
-    public function careerProjections(): HasMany
+    public function careerProjection(): HasOne
     {
-        return $this->hasMany(CareerProjection::class, 'employee_id');
+        return $this->hasOne(CareerProjection::class, 'employee_id');
     }
 }
