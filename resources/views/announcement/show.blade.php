@@ -172,7 +172,7 @@
                 justify-content: center;
                 align-items: center;
             ">
-               <span class="iconify" data-icon="fa6-regular:trash-can" style="font-size: 20px; color:#9A3B3B"></span>
+               <span class="iconify" data-icon="fa6-solid:trash-can" style="font-size: 20px; color:#9A3B3B"></span>
             </div>
             <div style="font-size: 18px; font-family: Inter, sans-serif; font-weight: 600; color: black;">
                 Are you sure to delete this Announcement?

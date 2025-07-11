@@ -1,0 +1,273 @@
+@extends('layouts.admin')
+
+@section('title', 'Recruitment Applicant')
+@section('content_header', 'Recruitment Applicant')
+
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+    .detail-wrapper {
+        background-color: #FAFBEF;
+        padding: 60px 30px 30px 30px; /* Tambahkan padding-top 60px */
+        border-radius: 10px;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        position: relative;
+        font-family: 'Manrope', sans-serif;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+        .detail-wrapper {
+            padding: 20px;
+        }
+    }
+
+    .detail-row {
+        margin-bottom: 15px;
+    }
+
+    .detail-label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 4px;
+        color: #000;
+    }
+
+    .detail-value {
+        color: #333;
+        word-wrap: break-word;
+    }
+
+    .btn-edit {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        background-color: #C4A652;
+        color: #000;
+        border: 1px solid #ccc;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-edit i {
+        font-size: 14px;
+    }
+
+    .btn-edit:hover {
+        background-color: #e1d9b6;
+    }
+
+    .btn-back,
+    .btn-delete {
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: bold;
+        border: none;
+        font-size: 15px;
+    }
+
+    .btn-back {
+        background-color: #1C6DD0;
+        color: #fff;
+    }
+
+    .btn-back:hover {
+        background-color: #e1d9b6;
+    }
+
+    .btn-delete {
+        background-color: #9A3B3B;
+        color: #fff;
+    }
+
+    .btn-delete:hover {
+        background-color: #e1d9b6;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 40px;
+    }
+
+    .file-link {
+        background-color: transparent;
+        color: #007bff;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        word-break: break-all;
+    }
+
+    .file-link i {
+        color: #007bff;
+    }
+
+    .file-link:hover {
+        text-decoration: underline;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="detail-wrapper">
+    {{-- Edit Button --}}
+    <a href="{{ route('applicants.edit', $applicant) }}" class="btn-edit">
+        <i class="fa-solid fa-id-card"></i> Edit Applicant Data
+    </a>
+
+    {{-- Applicant Details --}}
+    @foreach ([
+        'Applicant Fullname' => $applicant->full_name,
+        'Applicant Position' => $applicant->applied_position,
+        'Email' => $applicant->email,
+        'Phone' => $applicant->phone,
+        'Address' => $applicant->address,
+        'Last Education' => $applicant->last_education,
+        'Institution Name' => $applicant->origin,
+        'GPA / Score' => $applicant->gpa_score,
+    ] as $label => $value)
+        <div class="detail-row">
+            <span class="detail-label">{{ $label }}</span>
+            <span class="detail-value">{{ $value ?: '-' }}</span>
+        </div>
+    @endforeach
+
+    {{-- Resume --}}
+    @if ($applicant->resume_file)
+        <div class="detail-row">
+            <span class="detail-label">Resume File</span>
+            <a href="{{ asset('storage/' . $applicant->resume_file) }}" target="_blank" class="file-link">
+                <i class="fa-solid fa-file-lines"></i>
+                {{ Str::afterLast($applicant->resume_file, '_') }}
+            </a>
+        </div>
+    @endif
+
+    {{-- Action Buttons --}}
+    <div class="action-buttons">
+        <a href="{{ route('applicants.index') }}" class="btn-back">Back</a>
+        <!-- Tombol untuk membuka modal -->
+        <button type="button" class="btn-delete" onclick="showDeleteModal()">Delete</button>
+    </div>
+    <!-- Modal Delete Confirmation -->
+<div id="deleteModal" style="
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 100%;
+">
+    <div style="
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 24px 32px;
+        width: 90%;
+        max-width: 520px;
+        box-shadow: 0 4px 20px rgba(63, 63, 63, 0.2);
+    ">
+        <!-- Header: Icon + Text -->
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="
+                background: #FFEA9F;
+                border-radius: 8px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            ">
+               <span class="iconify" data-icon="fa6-solid:trash-can" style="font-size: 20px; color:#9A3B3B"></span>
+            </div>
+            <div style="font-size: 18px; font-family: Inter, sans-serif; font-weight: 600; color: black;">
+                Are you sure you want to delete this applicant?
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 24px;">
+            <button onclick="hideDeleteModal()" style="
+                width: 160px;
+                height: 48px;
+                background: #9A3B3B;
+                color: white;
+                font-size: 16px;
+                font-family: Inter, sans-serif;
+                font-weight: 500;
+                border: none;
+                border-radius: 8px;
+                outline: 1px rgba(0, 0, 0, 0.2) solid;
+            ">Cancel</button>
+
+            <form action="{{ route('applicants.destroy', $applicant) }}" method="POST" style="margin: 0">
+                @csrf
+                @method('DELETE')
+                <button type="submit" style="
+                    width: 160px;
+                    height: 48px;
+                    background: #F9FCE6;
+                    color: black;
+                    font-size: 16px;
+                    font-family: Inter, sans-serif;
+                    font-weight: 500;
+                    border: none;
+                    border-radius: 8px;
+                    outline: 1px rgba(0, 0, 0, 0.2) solid;
+                ">Yes</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay -->
+<div id="modalOverlay" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+"></div>
+
+</div>
+
+@push('scripts')
+<script>
+    function showDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('deleteModal');
+        const overlay = document.getElementById('modalOverlay');
+
+        if (event.target === overlay) {
+            hideDeleteModal();
+        }
+    });
+</script>
+@endpush
+@endsection

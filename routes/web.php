@@ -12,6 +12,7 @@ use App\Http\Controllers\WorkExperienceController;
 use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
+use App\Http\Controllers\ApplicantController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -98,3 +99,5 @@ Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name
 Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
 // Alihkan dashboard ke announcement.index
 Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
+
+Route::resource('applicants', ApplicantController::class);
