@@ -16,4 +16,14 @@ class Position extends Model
     {
         return $this->hasMany(Employee::class, 'position_id');
     }
+
+    public function careerHistories(): HasMany
+    {
+        return $this->hasMany(CareerHistory::class, 'position_id');
+    }
+
+    public function careerProjections(): HasMany
+    {
+        return $this->hasMany(CareerProjection::class, 'projected_position_id');
+    }
 }
