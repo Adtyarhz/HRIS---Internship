@@ -25,6 +25,9 @@
 
     {{-- Link ke CSS Kustom Anda --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
+    <!-- Iconify CDN -->
+    <!-- BENAR -->
+    <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
 
     @stack('styles')
 </head>
@@ -148,11 +151,11 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item"><a href="#"
+                        <li class="nav-item"><a href="{{ route('applicants.index') }}"
                                 class="nav-link{{ request()->routeIs('reimbursement.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="ri--refund-line"></span>
-                                    <p>Reimbursement</p>
+                                    <p>Recruitment Applicant</p>
                                 </div>
                             </a>
                         </li>
@@ -197,6 +200,7 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    
     @stack('scripts')
 </body>
 <script>
