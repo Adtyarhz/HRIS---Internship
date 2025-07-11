@@ -20,4 +20,9 @@ class Division extends Model
     {
         return $this->hasMany(Applicant::class, 'division_id');
     }
+
+    public function careerHistories(): HasMany
+    {
+        return $this->hasMany(CareerHistory::class, 'division_id');
+    }
 }

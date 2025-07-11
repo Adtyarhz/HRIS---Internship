@@ -107,4 +107,14 @@ class Employee extends Model
     {
         return $this->hasMany(FamilyDependent::class, 'employee_id');
     }
+
+    public function careerHistories(): HasMany
+    {
+        return $this->hasMany(CareerHistory::class, 'employee_id');
+    }
+
+    public function careerProjection(): HasOne
+    {
+        return $this->hasOne(CareerProjection::class, 'employee_id');
+    }
 }
