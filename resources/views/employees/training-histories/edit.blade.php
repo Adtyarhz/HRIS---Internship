@@ -226,7 +226,7 @@
                                                     <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
                                                         target="_blank">
                                                         <i class="fas fa-file-alt"></i>
-                                                        {{ Str::limit($material->file_path, 40) }}
+                                                        {{ Str::afterLast($material->file_path, '_') }}
                                                     </a>
                                                     <button type="button" class="btn btn-delete-material"
                                                         onclick="showDeleteMaterialModal('{{ route('employees.training-histories.materials.destroy', [$employee->id, $trainingHistory->id, $material->id]) }}')">Hapus</button>
