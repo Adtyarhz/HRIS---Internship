@@ -13,6 +13,8 @@ use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\CareerHistoryController;
+use App\Http\Controllers\CareerProjectionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -93,6 +95,15 @@ Route::prefix('employees/{employee}/training-histories')->name('employees.traini
 });
 
 Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
+
+Route::resource('employees.career_histories', CareerHistoryController::class)
+    ->parameters(['career_histories' => 'careerHistory'])
+    ->except(['show']);
+
+Route::resource('employees.career_projections', CareerProjectionController::class)
+    ->parameters(['career_projections' => 'careerProjection'])
+    ->except(['show'])
+    ->middleware('auth');
 
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
