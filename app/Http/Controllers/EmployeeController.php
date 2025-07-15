@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
 
 class EmployeeController extends Controller
 {
@@ -20,15 +21,18 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Employee::query();
+        Employee::whereNotNull('separation_date')
+            ->where('separation_date', '<', Carbon::today())
+            ->where('status', '!=', 'Tidak Aktif')
+            ->update(['status' => 'Tidak Aktif']);
+
+        $query = Employee::where('status', 'Aktif');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%')
-                    ->orWhere('nip', 'like', '%' . $search . '%')
-                    ->orWhere('npwp', 'like', '%' . $search . '%');
+                    ->orWhere('nik', 'like', '%' . $search . '%');
             });
         }
 
@@ -42,10 +46,6 @@ class EmployeeController extends Controller
 
         if ($request->filled('employee_type')) {
             $query->where('employee_type', $request->employee_type);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
         }
 
         if ($request->filled('office')) {
@@ -255,6 +255,19 @@ class EmployeeController extends Controller
 
             return redirect()->route('employees.index')->with('error', 'Gagal menghapus data karyawan. Mungkin data ini masih terhubung dengan data lain.');
         }
+    }
+
+    public function deactivate(Employee $employee): RedirectResponse
+    {
+        if ($employee->status !== 'Tidak Aktif') {
+            $employee->status = 'Tidak Aktif';
+            $employee->separation_date = now();
+            $employee->save();
+
+            return redirect()->back()->with('success', 'Status karyawan berhasil diubah menjadi Tidak Aktif.');
+        }
+
+        return redirect()->back()->with('info', 'Karyawan sudah berstatus Tidak Aktif.');
     }
 
     public function editAddress(Employee $employee)
