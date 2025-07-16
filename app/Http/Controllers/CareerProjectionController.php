@@ -15,29 +15,31 @@ class CareerProjectionController extends Controller
     /**
      * Display a listing of the career projections.
      */
-    public function index()
+    public function index(Employee $employee)
     {
-        $careerProjections = CareerProjection::with(['employee', 'projectedPosition', 'creator'])->get();
-        return view('career_projections.index', compact('careerProjections'));
+        $careerProjections = CareerProjection::where('employee_id', $employee->id)
+            ->with(['employee', 'projectedPosition', 'creator'])
+            ->get();
+        return view('career-path.career_projections.index', compact('careerProjections', 'employee'));
     }
 
     /**
-     * Show the form for creating a new career projection.
+     * Show the form for creating career projection.
      */
-    public function create()
+    public function form(Employee $employee)
     {
-        $employees = Employee::all()->pluck('name', 'id');
-        $positions = Position::all()->pluck('name', 'id');
-        return view('career_projections.create', compact('employees', 'positions'));
+        $careerProjection = CareerProjection::where('employee_id', $employee->id)->first();
+        $positions = Position::orderBy('title')->pluck('title', 'id');
+
+        return view('career-path.career_projections.form', compact('employee', 'careerProjection', 'positions'));
     }
 
     /**
-     * Store a newly created career projection in storage.
+     * Store or Update a newly created career projection in storage.
      */
-    public function store(Request $request)
+    public function storeOrUpdate(Request $request, Employee $employee)
     {
         $validator = Validator::make($request->all(), [
-            'employee_id' => 'required|exists:employees,id',
             'projected_position_id' => 'required|exists:positions,id',
             'timeline' => 'required|in:1 Tahun,3 Tahun,5 Tahun',
             'status' => 'required|in:Direncanakan,Disetujui,Tercapai,Dibatalkan',
@@ -48,51 +50,37 @@ class CareerProjectionController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->all();
-        $data['created_by'] = Auth::id(); // Automatically set created_by to authenticated user
-        CareerProjection::create($data);
-        return redirect()->route('career_projections.index')->with('success', 'Career projection created successfully.');
-    }
+        $data = $request->only(['projected_position_id', 'timeline', 'status', 'readiness_notes']);
+        $data['employee_id'] = $employee->id;
 
-    /**
-     * Show the form for editing the specified career projection.
-     */
-    public function edit(CareerProjection $careerProjection)
-    {
-        $employees = Employee::all()->pluck('name', 'id');
-        $positions = Position::all()->pluck('name', 'id');
-        return view('career_projections.edit', compact('careerProjection', 'employees', 'positions'));
-    }
+        $existing = CareerProjection::where('employee_id', $employee->id)->first();
 
-    /**
-     * Update the specified career projection in storage.
-     */
-    public function update(Request $request, CareerProjection $careerProjection)
-    {
-        $validator = Validator::make($request->all(), [
-            'employee_id' => 'required|exists:employees,id',
-            'projected_position_id' => 'required|exists:positions,id',
-            'timeline' => 'required|in:1 Tahun,3 Tahun,5 Tahun',
-            'status' => 'required|in:Direncanakan,Disetujui,Tercapai,Dibatalkan',
-            'readiness_notes' => 'nullable|string',
-        ]);
+        if ($existing) {
+            // Update
+            $existing->update($data);
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('success', 'Career projection updated successfully.');
+        } else {
+            // Create
+            $data['created_by'] = null; // atau Auth::id() jika login tersedia
+            CareerProjection::create($data);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('success', 'Career projection created successfully.');
         }
-
-        $data = $request->all();
-        $data['created_by'] = $careerProjection->created_by; // Preserve original created_by
-        $careerProjection->update($data);
-        return redirect()->route('career_projections.index')->with('success', 'Career projection updated successfully.');
     }
 
     /**
      * Remove the Specified career projection from storage.
      */
-    public function destroy(CareerProjection $careerProjection)
+    public function destroy(Employee $employee, CareerProjection $careerProjection)
     {
+        if ($careerProjection->employee_id !== $employee->id) {
+            abort(404);
+        }
+
         $careerProjection->delete();
-        return redirect()->route('career_projections.index')->with('success', 'Career projection deleted successfully.');
+        return redirect()->route('employees.showCareer', $employee)
+            ->with('success', 'Career projection deleted successfully.');
     }
 }
