@@ -81,6 +81,10 @@
 .btn-back { background-color: var(--btn-back); }
 .btn-edit-data { background-color: var(--btn-edit-data); color: var(--text-dark); }
 .btn-edit-login { background-color: var(--btn-edit-login); }
+.btn-career-projection { background-color: var(--btn-edit-data); color: var(--text-dark); }
+.btn-career-history { background-color: var(--btn-edit-login); color: #fff;}
+.btn-career-projection:hover {color: var(--text-dark); }
+.btn-career-history:hover {color: #fff;}
 
 /* Main Content Container & Columns */
 .detail-container {
