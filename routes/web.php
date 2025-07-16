@@ -13,6 +13,7 @@ use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\InterviewScheduleController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -101,3 +102,13 @@ Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 
 Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
 
 Route::resource('applicants', ApplicantController::class);
+
+Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
+    Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
+    Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
+    Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
+    Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
+    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
+    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
+    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+});
