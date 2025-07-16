@@ -1,0 +1,298 @@
+@extends('layouts.admin')
+
+@section('title', 'Recruitment Applicant')
+
+@push('styles')
+<style>
+    .stepper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        max-width: 950px;
+        margin-inline: auto;
+    }
+
+    .step {
+        text-align: center;
+        flex: 1;
+        position: relative;
+        cursor: default;
+    }
+
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: -50%;
+        height: 4px;
+        width: 100%;
+        background-color: #ccc;
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+
+    .step .circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: auto;
+        line-height: 40px;
+        color: white;
+        font-weight: bold;
+        z-index: 1;
+        position: relative;
+    }
+
+        /* Hijau terang untuk yang sedang dibuka */
+    .step.accepted.active .circle {
+        background-color: #198038;
+    }
+
+    /* Hijau blur untuk yang sudah accepted tapi bukan stage yang dibuka */
+    .step.accepted:not(.active) .circle {
+        background-color: #63c98cff;
+    }
+
+        /* In Progress */
+    .step.in_progress.active .circle {
+        background-color: #263657;
+    }
+    .step.in_progress:not(.active) .circle {
+        background-color: #AABFEB;
+    }
+    
+    .step.rejected .circle {
+        background-color: #e74c3c; /* red */
+    }
+
+    .step.pending .circle {
+        background-color: #0043CE; /* gray */
+    }
+
+    .step .label {
+        margin-top: 10px;
+        font-size: 12px;
+    }
+
+    .step.disabled {
+        pointer-events: none;
+        opacity: 0.9;
+    }
+
+    .stage-content {
+    position: relative;
+    background-color: #fdfdf5;
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    max-width: 900px;
+    margin: auto;
+}
+
+    .stage-content h5 {
+        font-weight: bold;
+    }
+
+    .edit-btn {
+        margin-top: 15px;
+        float: right;
+        background-color: #C4A652;
+        color: black;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-family: 'Manrope', sans-serif;
+    }
+    .edit-button-wrapper {
+    position: absolute;
+    top: 2px;
+    right: 15px;
+}
+.back-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 30px;
+    font-family: 'Manrope', sans-serif;
+}
+
+.back-container {
+    max-width: 900px;
+    margin: 20px auto 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 15px; /* Geser ke kiri dari kanan */
+}
+.stage-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    row-gap: 12px;
+    column-gap: 20px;
+    margin-top: 20px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: white;
+    border-radius: 6px;
+    height: 28px;
+    min-width: 80px;
+    text-align: center;
+}
+.stage-grid .label {
+    font-weight: bold;
+    align-self: center;
+}
+
+.stage-grid .value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: normal;
+    word-break: break-word;
+    flex-wrap: wrap;
+}
+
+.file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #007bff;
+    text-decoration: none;
+    flex-wrap: wrap;
+    max-width: 100%;
+    word-break: break-word;
+    line-height: 1.4;
+}
+</style>
+@endpush
+
+@section('content_header')
+    <div class="header-with-icon">
+        <i class="fas fa-users"></i> Recruitment Applicant
+    </div>
+@endsection
+
+@section('content')
+<div class="container">
+    <!-- Stepper -->
+    <div class="stepper">
+        @foreach ($stages as $index => $step)
+            @php
+                $progressData = $applicant->recruitmentProgresses->firstWhere('stage', $step);
+                $status = $progressData->offering_status ?? null;
+
+                $class = '';
+                if ($status === 'accepted') {
+                    $class = $step === $stage ? 'accepted active' : 'accepted';
+                } elseif ($status === 'rejected') {
+                    $class = 'rejected';
+                } elseif ($status === 'in_progress') {
+                    $class = $step === $stage ? 'in_progress active' : 'in_progress';
+                } else {
+                    $class = 'pending';
+                }
+
+                $canClick = true;
+                if ($index > 0) {
+                    $prev = $applicant->recruitmentProgresses->firstWhere('stage', $stages[$index - 1]);
+                    $canClick = $prev && $prev->offering_status === 'accepted';
+                }
+
+                $disabled = !$canClick || ($applicant->recruitmentProgresses->firstWhere('offering_status', 'rejected') && $step !== $stage);
+            @endphp
+
+            <div class="step {{ $class }} {{ $disabled ? 'disabled' : '' }}">
+                @if (!$disabled)
+                    <a href="{{ route('recruitment.stage.show', [$applicant->id, $step]) }}" style="text-decoration:none">
+                        <div class="circle">{{ $index + 1 }}</div>
+                        <div class="label">{{ ucwords(str_replace('_', ' ', $step)) }}</div>
+                    </a>
+                @else
+                    <div class="circle">{{ $index + 1 }}</div>
+                    <div class="label">{{ ucwords(str_replace('_', ' ', $step)) }}</div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+
+    <!-- Stage Detail -->
+    <div class="stage-content">
+    @if ($progress)
+    {{-- Tombol edit kanan atas --}}
+    @if ($progress->offering_status !== 'rejected')
+        <div class="edit-button-wrapper">
+            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                <i class="fas fa-id-card"></i> Edit Recruitment Data
+            </a>
+        </div>
+    @endif
+
+    {{-- GRID LAYOUT --}}
+    <div class="stage-grid">
+        <div class="label">Offering Status:</div>
+        <div class="value">
+            <span class="status-badge" style="background-color: 
+                {{ $progress->offering_status == 'accepted' ? '#2ecc71' : 
+                   ($progress->offering_status == 'rejected' ? '#e74c3c' : '#3498db') }}">
+                {{ $progress->offering_status }}
+            </span>
+        </div>
+
+        <div class="label">Status Date:</div>
+        <div class="value">{{ $progress->status_date ?? '-' }}</div>
+
+        <div class="label">Notes:</div>
+        <div class="value notes-value">{!! nl2br(e($progress->notes ?? '-')) !!}</div>
+
+        @if ($progress->offering_status == 'rejected')
+            <div class="label">Rejected Reason:</div>
+            <div class="value">{{ $progress->rejected_reason }}</div>
+        @endif
+
+        <div class="label">Contract Type:</div>
+        <div class="value">{{ $progress->contract_type ?? '-' }}</div>
+
+        <div class="label">Test Result:</div>
+        <div class="value">{{ $progress->test_result ?? '-' }}</div>
+
+        <div class="label">Score:</div>
+        <div class="value">{{ $progress->score ?? '-' }}</div>
+
+        <div class="label">SLIK Recap:</div>
+        <div class="value">{{ $progress->slik_recap ?? '-' }}</div>
+
+        @if ($progress->result_file)
+            <div class="label">Result File:</div>
+            <div class="value">
+                <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
+                    <i class="fas fa-file-alt"></i>
+                    {{ basename($progress->result_file) }}
+                </a>
+            </div>
+        @endif
+    </div>
+@else
+    <div class="edit-button-wrapper">
+        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+            <i class="fas fa-id-card"></i> Fill Recruitment Data
+        </a>
+    </div>
+    <p class="text-center text-muted">No data available for this stage.</p>
+@endif
+
+</div>
+
+<div class="back-container">
+    <a href="{{ route('applicants.index') }}" class="back-btn">
+      Back
+    </a>
+</div>
+
+</div>
+@endsection

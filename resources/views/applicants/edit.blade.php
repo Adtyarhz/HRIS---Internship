@@ -40,7 +40,7 @@
         @include('applicants._form', ['applicant' => $applicant, 'divisions' => $divisions])
 
         <div class="form-actions">
-            <a href="{{ route('applicants.index') }}" class="btn btn-cancel">Cancel</a>
+            <a href="{{ route('applicants.show',  $applicant) }}" class="btn btn-cancel">Cancel</a>
             <button type="submit" class="btn btn-submit">Update</button>
         </div>
     </form>
