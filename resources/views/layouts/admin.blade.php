@@ -157,7 +157,7 @@
                         <li class="nav-item"><a href="{{ route('applicants.index') }}"
                                 class="nav-link{{ request()->routeIs('reimbursement.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
-                                    <i class="fas fa-users"></i>
+                                    <span class="fluent-mdl2--recruitment-management"></span>
                                     <p>Recruitment Applicant</p>
                                 </div>
                             </a>
