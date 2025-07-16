@@ -135,8 +135,8 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('careers_administration.*') ? ' active' : '' }}">
+                        <li class="nav-item">
+                            <a href="{{ route('career.index') }}" class="nav-link{{ request()->routeIs('career.index') || request()->routeIs('employees.showCareer') || request()->routeIs('employees.career_histories.*') || request()->routeIs('employees.career_projections.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="material-symbols--work-outline"></span>
                                     <p>Careers Administration</p>
