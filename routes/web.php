@@ -31,6 +31,8 @@ Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit
 
 // Baris ini akan membuat semua route untuk Employee CRUD
 Route::resource('employees', EmployeeController::class);
+Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+
 
 // Rute untuk Health Record yang terhubung dengan Employee
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
