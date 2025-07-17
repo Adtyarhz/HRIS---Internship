@@ -99,9 +99,11 @@
                                         <td class="col-details" data-label="Jabatan/Divisi">
                                             <div class="jabatan-divisi">
                                                 <div class="employee-position">
-                                                    <b>{{ $employee->position->title ?? 'Belum Diatur' }}</b></div>
+                                                    <b>{{ $careerHistory->position->title ?? 'Belum Diatur' }}</b>
+                                                </div>
                                                 <div class="employee-division">
-                                                    {{ $employee->division->name ?? 'Belum Datur' }}</div>
+                                                    {{ $careerHistory->division->name ?? 'Belum Datur' }}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>{{ $careerHistory->type }}</td>

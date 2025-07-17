@@ -15,13 +15,18 @@ class CareerHistoryController extends Controller
     /**
      * Display a listing of the career histories.
      */
-    public function index(Employee $employee)
-    {
-        $careerHistories = CareerHistory::where('employee_id', $employee->id)
-            ->with(['employee', 'position', 'division'])
-            ->get();
-        return view('career-path.career_histories.index', compact('careerHistories', 'employee'));
-    }
+public function index(Employee $employee)
+{
+    $careerHistories = CareerHistory::where('employee_id', $employee->id)
+        ->with(['position', 'division'])
+        ->orderBy('id')
+        ->get();
+
+    $divisions = Division::orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+
+    return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
+}
 
     /**
      * Show the form for creating a new career history.
