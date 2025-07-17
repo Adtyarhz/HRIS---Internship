@@ -59,6 +59,47 @@ class EmployeeController extends Controller
         return view('employees.data.index', compact('employees', 'divisions', 'positions'));
     }
 
+    public function indexCareer(Request $request)
+    {
+        $query = Employee::query();
+        // Employee::whereNotNull('separation_date')
+        //     ->where('separation_date', '<', Carbon::today())
+        //     ->where('status', '!=', 'Tidak Aktif')
+        //     ->update(['status' => 'Tidak Aktif']);
+
+        $query = Employee::where('status', 'Aktif');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('nik', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('division_id')) {
+            $query->where('division_id', $request->division_id);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        if ($request->filled('employee_type')) {
+            $query->where('employee_type', $request->employee_type);
+        }
+
+        if ($request->filled('office')) {
+            $query->where('office', $request->office);
+        }
+
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+
+        $employees = $query->latest()->paginate(9)->withQueryString();
+        return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -153,6 +194,16 @@ class EmployeeController extends Controller
         $workExperiences = $employee->workExperience;
         $trainingHistories = $employee->trainingHistories;
         return view('employees.data.show', compact('employee', 'age', 'healthRecord', 'educationHistories', 'dependents', 'certifications', 'insurances', 'workExperiences', 'trainingHistories' ));
+    }
+
+    /**
+     * Display the specified resource for career path details.
+     */
+    public function showCareer(Employee $employee)
+    {
+        $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
+        $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
+        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
     }
 
     /**
