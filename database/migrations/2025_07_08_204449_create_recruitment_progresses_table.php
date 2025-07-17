@@ -23,7 +23,7 @@ return new class extends Migration
                 'offering_letter',
                 'rejected'
             ]);
-            $table->enum('offering_status', ['accepted', 'rejected'])->nullable();
+            $table->enum('offering_status', ['accepted', 'rejected', 'in_progress'])->nullable();
             $table->dateTime('status_date');
             $table->text('notes')->nullable();
             $table->text('rejected_reason')->nullable();

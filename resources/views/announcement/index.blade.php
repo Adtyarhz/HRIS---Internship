@@ -64,7 +64,7 @@
     }
 
     .btn-filter {
-        background-color: black;
+        background-color: #b44343ff;
         color: white;
         border: none;
         padding: 8px 16px;
@@ -74,7 +74,7 @@
     }
 
     .btn-detail {
-        background-color: black;
+        background-color: #b44343ff;
         color: white;
         border: none;
         padding: 8px 16px;

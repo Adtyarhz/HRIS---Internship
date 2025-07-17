@@ -28,7 +28,7 @@ class Applicant extends Model
     }
     public function recruitmentProgresses()
     {
-        return $this->hasOne(RecruitmentProgress::class);
+        return $this->hasMany(RecruitmentProgress::class);
     }
 
     public function interviewSchedules()

@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'Data Karyawan')
-@section('header_icon', 'icon-park-outline--file-staff-one-01')
-@section('content_header', 'Employee Information')
+@section('title', 'Career Path')
+@section('header_icon', 'material-symbols--work-outline-01')
+@section('content_header', 'Careers Administration')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,7 +12,7 @@
 @section('content')
     <div class="card-body">
         {{-- Search & Filter Form --}}
-        <form action="{{ route('employees.index') }}" method="GET">
+        <form action="{{ route('career.index') }}" method="GET">
             <header class="page-controls">
                 <div class="search-and-filter-container">
                     <div class="search-container">
@@ -25,10 +25,6 @@
                         <button type="button" class="btn-filter" id="filter-toggle-btn">
                             <i class="fas fa-filter"></i> Filter
                         </button>
-                        <a href="{{ route('employees.create') }}" class="add-employee-button">
-                            <span class="add-icon">+</span>
-                            Add New Employee
-                        </a>
                     </div>
                 </div>
             </header>
@@ -141,7 +137,7 @@
                         </td>
                         <td class="col-actions" data-label="Aksi">
                             <div class="action-wrapper">
-                                <a href="{{ route('employees.show', $employee) }}" class="btn-detail">See Employee</a>
+                                <a href="{{ route('employees.showCareer', $employee) }}" class="btn-detail">See Employee</a>
                             </div>
                         </td>
                     </tr>

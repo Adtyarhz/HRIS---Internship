@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\CareerHistoryController;
+use App\Http\Controllers\CareerProjectionController;
 use App\Http\Controllers\FamilyDependentController;
 use App\Http\Controllers\HealthRecordController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +15,7 @@ use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\RecruitmentProgressController;
 use App\Http\Controllers\InterviewScheduleController;
 
 Route::get('/', function () {
@@ -21,7 +24,7 @@ Route::get('/', function () {
 
 Route::get('/', function () {
     // Arahkan halaman utama ke daftar karyawan untuk kemudahan akses
-    return redirect()->route('employees.index');
+    return redirect()->route('dashboard');
 });
 
 // Route untuk tab edit alamat
@@ -32,6 +35,8 @@ Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit
 
 // Baris ini akan membuat semua route untuk Employee CRUD
 Route::resource('employees', EmployeeController::class);
+Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+
 
 // Rute untuk Health Record yang terhubung dengan Employee
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
@@ -95,6 +100,23 @@ Route::prefix('employees/{employee}/training-histories')->name('employees.traini
 
 Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
+Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
+Route::get('employees/{employee}/career', [EmployeeController::class, 'showCareer'])->name('employees.showCareer');
+
+// Nested resource routes for CareerHistory under Employee
+Route::resource('employees.career_histories', CareerHistoryController::class)
+    ->parameters(['career_histories' => 'careerHistory'])
+    ->except(['show']);
+
+// Nested resource routes for CareerProjection under Employee
+// Route::middleware('auth')->group(function () { --> jika login sudah terdefinisi
+Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
+    Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
+    Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+    Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
+});
+// });
+
 Route::resource('announcement', AnnouncementController::class);
 Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
 Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
@@ -102,6 +124,14 @@ Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 
 Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
 
 Route::resource('applicants', ApplicantController::class);
+
+Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {
+    Route::get('/', [RecruitmentProgressController::class, 'show'])->name('recruitment-progress.show');
+    
+    Route::get('/stage/{stage}', [RecruitmentProgressController::class, 'stageShow'])->name('recruitment.stage.show');
+    Route::get('/stage/{stage}/edit', [RecruitmentProgressController::class, 'stageEdit'])->name('recruitment.stage.edit');
+    Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
+});
 
 Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
     Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');

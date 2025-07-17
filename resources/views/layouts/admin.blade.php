@@ -19,6 +19,9 @@
         rel="stylesheet" />
 
     <!-- Font Awesome -->
+     <!-- Optional: Font Awesome CDN (v6) jika ikon tidak muncul) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/plugins/fontawesome-free/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
@@ -135,8 +138,8 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('careers_administration.*') ? ' active' : '' }}">
+                        <li class="nav-item">
+                            <a href="{{ route('career.index') }}" class="nav-link{{ request()->routeIs('career.index') || request()->routeIs('employees.showCareer') || request()->routeIs('employees.career_histories.*') || request()->routeIs('employees.career_projections.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="material-symbols--work-outline"></span>
                                     <p>Careers Administration</p>
@@ -154,7 +157,7 @@
                         <li class="nav-item"><a href="{{ route('applicants.index') }}"
                                 class="nav-link{{ request()->routeIs('reimbursement.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
-                                    <span class="ri--refund-line"></span>
+                                    <span class="fluent-mdl2--recruitment-management"></span>
                                     <p>Recruitment Applicant</p>
                                 </div>
                             </a>

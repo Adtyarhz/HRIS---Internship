@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
 
 class EmployeeController extends Controller
 {
@@ -20,15 +21,18 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Employee::query();
+        Employee::whereNotNull('separation_date')
+            ->where('separation_date', '<', Carbon::today())
+            ->where('status', '!=', 'Tidak Aktif')
+            ->update(['status' => 'Tidak Aktif']);
+
+        $query = Employee::where('status', 'Aktif');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%')
-                    ->orWhere('nip', 'like', '%' . $search . '%')
-                    ->orWhere('npwp', 'like', '%' . $search . '%');
+                    ->orWhere('nik', 'like', '%' . $search . '%');
             });
         }
 
@@ -44,8 +48,45 @@ class EmployeeController extends Controller
             $query->where('employee_type', $request->employee_type);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($request->filled('office')) {
+            $query->where('office', $request->office);
+        }
+
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+
+        $employees = $query->latest()->paginate(9)->withQueryString();
+        return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+    }
+
+    public function indexCareer(Request $request)
+    {
+        $query = Employee::query();
+        // Employee::whereNotNull('separation_date')
+        //     ->where('separation_date', '<', Carbon::today())
+        //     ->where('status', '!=', 'Tidak Aktif')
+        //     ->update(['status' => 'Tidak Aktif']);
+
+        $query = Employee::where('status', 'Aktif');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('nik', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('division_id')) {
+            $query->where('division_id', $request->division_id);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        if ($request->filled('employee_type')) {
+            $query->where('employee_type', $request->employee_type);
         }
 
         if ($request->filled('office')) {
@@ -56,7 +97,7 @@ class EmployeeController extends Controller
         $positions = Position::orderBy('title')->get();
 
         $employees = $query->latest()->paginate(9)->withQueryString();
-        return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+        return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
     }
 
     /**
@@ -153,6 +194,16 @@ class EmployeeController extends Controller
         $workExperiences = $employee->workExperience;
         $trainingHistories = $employee->trainingHistories;
         return view('employees.data.show', compact('employee', 'age', 'healthRecord', 'educationHistories', 'dependents', 'certifications', 'insurances', 'workExperiences', 'trainingHistories' ));
+    }
+
+    /**
+     * Display the specified resource for career path details.
+     */
+    public function showCareer(Employee $employee)
+    {
+        $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
+        $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
+        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
     }
 
     /**
@@ -255,6 +306,19 @@ class EmployeeController extends Controller
 
             return redirect()->route('employees.index')->with('error', 'Gagal menghapus data karyawan. Mungkin data ini masih terhubung dengan data lain.');
         }
+    }
+
+    public function deactivate(Employee $employee): RedirectResponse
+    {
+        if ($employee->status !== 'Tidak Aktif') {
+            $employee->status = 'Tidak Aktif';
+            $employee->separation_date = now();
+            $employee->save();
+
+            return redirect()->back()->with('success', 'Status karyawan berhasil diubah menjadi Tidak Aktif.');
+        }
+
+        return redirect()->back()->with('info', 'Karyawan sudah berstatus Tidak Aktif.');
     }
 
     public function editAddress(Employee $employee)
