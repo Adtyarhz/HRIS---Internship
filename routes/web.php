@@ -13,6 +13,7 @@ use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\RecruitmentProgressController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -103,3 +104,13 @@ Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 
 Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
 
 Route::resource('applicants', ApplicantController::class);
+
+Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {
+    Route::get('/', [RecruitmentProgressController::class, 'show'])->name('recruitment-progress.show');
+    
+    Route::get('/stage/{stage}', [RecruitmentProgressController::class, 'stageShow'])->name('recruitment.stage.show');
+    Route::get('/stage/{stage}/edit', [RecruitmentProgressController::class, 'stageEdit'])->name('recruitment.stage.edit');
+    Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
+});
+
+
