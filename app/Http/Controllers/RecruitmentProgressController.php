@@ -18,34 +18,38 @@ class RecruitmentProgressController extends Controller
         'offering_letter',
     ];
 
-    public function show(Applicant $applicant)
+   public function show(Applicant $applicant)
     {
         $applicant->load('recruitmentProgresses');
         $progresses = $applicant->recruitmentProgresses->keyBy('stage');
 
-        // 1. Cek jika ada yang in_progress
-        foreach ($this->stages as $stage) {
-            if (isset($progresses[$stage]) && $progresses[$stage]->offering_status === 'in_progress') {
-                return redirect()->route('recruitment.stage.show', [$applicant->id, $stage]);
-            }
-        }
-
-        // 2. Cek kalau ada yang rejected, tampilkan di stage tersebut
-        foreach ($this->stages as $stage) {
-            if (isset($progresses[$stage]) && $progresses[$stage]->offering_status === 'rejected') {
-                return redirect()->route('recruitment.stage.show', [$applicant->id, $stage]);
-            }
-        }
-
-        // 3. Cari accepted terakhir
         $lastAcceptedIndex = -1;
+        $rejectedStage = null;
+
         foreach ($this->stages as $index => $stage) {
-            if (isset($progresses[$stage]) && $progresses[$stage]->offering_status === 'accepted') {
+            if (!isset($progresses[$stage])) continue;
+
+            $status = $progresses[$stage]->offering_status;
+
+            if ($status === 'in_progress') {
+                return redirect()->route('recruitment.stage.show', [$applicant->id, $stage]);
+            }
+
+            if ($status === 'rejected' && $rejectedStage === null) {
+                $rejectedStage = $stage;
+            }
+
+            if ($status === 'accepted') {
                 $lastAcceptedIndex = $index;
             }
         }
 
-        // Jika ada accepted terakhir, buka stage setelahnya (kalau ada)
+        // Jika ada yang rejected
+        if ($rejectedStage !== null) {
+            return redirect()->route('recruitment.stage.show', [$applicant->id, $rejectedStage]);
+        }
+
+        // Jika ada accepted terakhir dan ada stage setelahnya
         if ($lastAcceptedIndex !== -1 && isset($this->stages[$lastAcceptedIndex + 1])) {
             return redirect()->route('recruitment.stage.show', [$applicant->id, $this->stages[$lastAcceptedIndex + 1]]);
         }
