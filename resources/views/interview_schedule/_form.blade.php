@@ -40,7 +40,7 @@
     </div>
 
     <div class="detail-row">
-        <div class="detail-label">Result</div>
+        <div class="detail-label">Description</div>
         <div class="input-wrapper">
             <textarea name="result" class="form-control input-large" rows="3">{{ old('result', $schedule->result ?? '') }}</textarea>
         </div>

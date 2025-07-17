@@ -146,6 +146,7 @@
 @endsection
 
 @section('content')
+@include('interview_schedule.alert')
 <div class="schedule-header">
     <h2>Interview Schedules of {{ $applicant->full_name }}</h2>
 </div>

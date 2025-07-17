@@ -169,6 +169,18 @@
     word-break: break-word;
     line-height: 1.4;
 }
+.schedule-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem; /* lebih kecil */
+    }
+
+    .schedule-header h2 {
+        font-size: 22px;
+        font-weight: bold;
+        font-family: 'Noto Sans Georgian', sans-serif;
+        margin: 0;
+    }
 </style>
 @endpush
 
@@ -184,6 +196,10 @@
 @endsection
 
 @section('content')
+@include('applicants.alert')
+<div class="schedule-header">
+    <h2>Recruitment Progress of {{ $applicant->full_name }}</h2>
+</div>
 <div class="container">
     <!-- Stepper -->
     <div class="stepper">
@@ -228,76 +244,82 @@
 
     <!-- Stage Detail -->
     <div class="stage-content">
-    @if ($progress)
-    {{-- Tombol edit kanan atas --}}
-    @if ($progress->offering_status !== 'rejected')
-        <div class="edit-button-wrapper">
-            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                <i class="fas fa-id-card"></i> Edit Recruitment Data
-            </a>
-        </div>
-    @endif
+        @if ($progress)
+            @if ($progress->offering_status !== 'rejected')
+                <div class="edit-button-wrapper">
+                    <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                        <i class="fas fa-id-card"></i> Edit Recruitment Data
+                    </a>
+                </div>
+            @endif
 
-    {{-- GRID LAYOUT --}}
-    <div class="stage-grid">
-        <div class="label">Offering Status:</div>
-        <div class="value">
-            <span class="status-badge" style="background-color: 
-                {{ $progress->offering_status == 'accepted' ? '#2ecc71' : 
-                   ($progress->offering_status == 'rejected' ? '#e74c3c' : '#3498db') }}">
-                {{ $progress->offering_status }}
-            </span>
-        </div>
+            <div class="stage-grid">
+                <div class="label">Recruitment Status:</div>
+                <div class="value">
+                    <span class="status-badge" style="background-color: 
+                        {{ $progress->offering_status == 'accepted' ? '#2ecc71' : 
+                           ($progress->offering_status == 'rejected' ? '#e74c3c' : '#3498db') }}">
+                        {{ $progress->offering_status }}
+                    </span>
+                </div>
 
-        <div class="label">Status Date:</div>
-        <div class="value">{{ $progress->status_date ?? '-' }}</div>
+                <div class="label">Status Date:</div>
+                <div class="value">
+                    {{ $progress->status_date ? \Carbon\Carbon::parse($progress->status_date)->format('d/m/Y') : '-' }}
+                </div>
 
-        <div class="label">Notes:</div>
-        <div class="value notes-value">{!! nl2br(e($progress->notes ?? '-')) !!}</div>
+                <div class="label">Notes:</div>
+                <div class="value notes-value">{!! nl2br(e($progress->notes ?? '-')) !!}</div>
 
-        @if ($progress->offering_status == 'rejected')
-            <div class="label">Rejected Reason:</div>
-            <div class="value">{{ $progress->rejected_reason }}</div>
-        @endif
+                @if ($progress->offering_status == 'rejected')
+                    <div class="label">Rejected Reason:</div>
+                    <div class="value">{{ $progress->rejected_reason }}</div>
+                @endif
 
-        <div class="label">Contract Type:</div>
-        <div class="value">{{ $progress->contract_type ?? '-' }}</div>
+                {{-- Ambil contract_type dari stage CV Screening --}}
+                @php
+                    $cvScreening = $applicant->recruitmentProgresses->firstWhere('stage', 'cv_screening');
+                @endphp
+                <div class="label">Contract Type:</div>
+                <div class="value">{{ $cvScreening->contract_type ?? '-' }}</div>
 
-        <div class="label">Test Result:</div>
-        <div class="value">{{ $progress->test_result ?? '-' }}</div>
+                <div class="label">Test Result:</div>
+                <div class="value">{{ $progress->test_result ?? '-' }}</div>
 
-        <div class="label">Score:</div>
-        <div class="value">{{ $progress->score ?? '-' }}</div>
+                <div class="label">Score:</div>
+                <div class="value">{{ $progress->score ?? '-' }}</div>
 
-        <div class="label">SLIK Recap:</div>
-        <div class="value">{{ $progress->slik_recap ?? '-' }}</div>
+                {{-- SLIK Recap hanya ditampilkan jika stage = hc_interview --}}
+                @if ($stage === 'hc_interview')
+                    <div class="label">SLIK Recap:</div>
+                    <div class="value">{{ $progress->slik_recap ?? '-' }}</div>
+                @endif
 
-        @if ($progress->result_file)
-            <div class="label">Result File:</div>
-            <div class="value">
-                <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
-                    <i class="fas fa-file-alt"></i>
-                    {{ basename($progress->result_file) }}
+                @if ($progress->result_file)
+                    <div class="label">Result File:</div>
+                    <div class="value">
+                        <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
+                            <i class="fas fa-file-alt"></i>
+                            {{ basename($progress->result_file) }}
+                        </a>
+                    </div>
+                @endif
+            </div>
+        @else
+            <div class="edit-button-wrapper">
+                <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                    <i class="fas fa-id-card"></i> Fill Recruitment Data
                 </a>
             </div>
+            <p class="text-center text-muted">No data available for this stage.</p>
         @endif
     </div>
-@else
-    <div class="edit-button-wrapper">
-        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-            <i class="fas fa-id-card"></i> Fill Recruitment Data
+
+    <div class="back-container">
+        <a href="{{ route('applicants.index') }}" class="back-btn">
+            Back
         </a>
     </div>
-    <p class="text-center text-muted">No data available for this stage.</p>
-@endif
-
-</div>
-
-<div class="back-container">
-    <a href="{{ route('applicants.index') }}" class="back-btn">
-      Back
-    </a>
-</div>
 
 </div>
 @endsection

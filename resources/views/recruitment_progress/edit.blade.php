@@ -87,10 +87,9 @@
 
 @section('content_header')
     <div class="header-with-icon d-flex align-items-center">
-        <!-- Ikon Recruitment -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 2048 2048" class="mr-2">
             <path fill="currentColor"
-                d="M2048 1280v768H1024v-768h256v-256h512v256zm-640 0h256v-128h-256zm512 384h-128v128h-128v-128h-256v128h-128v-128h-128v256h768zm0-256h-768v128h768zm-355-512q-54-61-128-94t-157-34q-80 0-149 30t-122 82t-83 123t-30 149q0 92-41 173t-116 136q45 23 84 53t73 68v338q0-79-30-149t-82-122t-123-83t-149-30q-80 0-149 30t-122 82t-83 123t-30 149H0q0-73 20-141t57-129t90-108t118-81q-74-54-115-135t-42-174q0-79 30-149t82-122t122-83t150-30q92 0 173 41t136 116q38-75 97-134t135-98q-74-54-115-135t-42-174q0-79 30-149t82-122t122-83t150-30q79 0 149 30t122 82t83 123t30 149q0 92-41 173t-116 136q68 34 123 85t93 118zM512 1408q53 0 99-20t82-55t55-81t20-100q0-53-20-99t-55-82t-81-55t-100-20q-53 0-99 20t-82 55t-55 81t-20 100q0 53 20 99t55 82t81 55t100 20m512-1024q0 53 20 99t55 82t81 55t100 20q53 0 99-20t82-55t55-81t20-100q0-53-20-99t-55-82t-81-55t-100-20q-53 0-99 20t-82 55t-55 81t-20 100"/>
+                d="..."/>
         </svg>
         <h1 class="header-title mb-0">Recruitment Applicant</h1>
     </div>
@@ -108,9 +107,9 @@
         <input type="hidden" name="stage" value="{{ $stage }}">
 
         <div class="detail-row">
-            <div class="detail-label">Offering Status</div>
+            <div class="detail-label">Recruitment Status</div>
             <div class="input-wrapper">
-                <select name="offering_status" class="form-control">
+                <select name="offering_status" class="form-control" id="offering_status">
                     <option value="">-- Select Status --</option>
                     <option value="accepted" {{ old('offering_status', $progress->offering_status) === 'accepted' ? 'selected' : '' }}>Accepted</option>
                     <option value="rejected" {{ old('offering_status', $progress->offering_status) === 'rejected' ? 'selected' : '' }}>Rejected</option>
@@ -122,7 +121,7 @@
         <div class="detail-row">
             <div class="detail-label">Status Date</div>
             <div class="input-wrapper">
-                <input type="date" name="status_date" class="form-control" value="{{ old('status_date', $progress->status_date) }}">
+               <input type="date" name="status_date" class="form-control" id="status_date" value="{{ old('status_date', $progress->status_date ? \Carbon\Carbon::parse($progress->status_date)->format('Y-m-d') : '') }}">
             </div>
         </div>
 
@@ -133,23 +132,29 @@
             </div>
         </div>
 
-        <div class="detail-row">
+        {{-- Rejected Reason (Only if rejected) --}}
+        <div class="detail-row" id="rejected_reason_wrapper" style="display: none;">
             <div class="detail-label">Rejected Reason</div>
             <div class="input-wrapper">
                 <input type="text" name="rejected_reason" class="form-control" value="{{ old('rejected_reason', $progress->rejected_reason) }}">
             </div>
         </div>
 
+        {{-- Contract Type --}}
         <div class="detail-row">
             <div class="detail-label">Contract Type</div>
             <div class="input-wrapper">
-                <select name="contract_type" class="form-control">
-                    <option value="">-- Select Contract Type --</option>
-                    <option value="Contract" {{ old('contract_type', $progress->contract_type) === 'Contract' ? 'selected' : '' }}>Contract</option>
-                    <option value="Internship" {{ old('contract_type', $progress->contract_type) === 'Internship' ? 'selected' : '' }}>Internship</option>
-                    <option value="Probation" {{ old('contract_type', $progress->contract_type) === 'Probation' ? 'selected' : '' }}>Probation</option>
-                    <option value="Full-time" {{ old('contract_type', $progress->contract_type) === 'Full-time' ? 'selected' : '' }}>Full-time</option>
-                </select>
+                @if ($stage === 'cv_screening')
+                    <select name="contract_type" class="form-control">
+                        <option value="">-- Select Contract Type --</option>
+                        <option value="Contract" {{ old('contract_type', $progress->contract_type) === 'Contract' ? 'selected' : '' }}>Contract</option>
+                        <option value="Internship" {{ old('contract_type', $progress->contract_type) === 'Internship' ? 'selected' : '' }}>Internship</option>
+                        <option value="Probation" {{ old('contract_type', $progress->contract_type) === 'Probation' ? 'selected' : '' }}>Probation</option>
+                        <option value="Full-time" {{ old('contract_type', $progress->contract_type) === 'Full-time' ? 'selected' : '' }}>Full-time</option>
+                    </select>
+                @else
+                    <input type="text" class="form-control" value="{{ $contractType ?? '-' }}" disabled>
+                @endif
             </div>
         </div>
 
@@ -179,12 +184,15 @@
             </div>
         </div>
 
+        {{-- Slik Recap only for HC Interview --}}
+        @if ($stage === 'hc_interview')
         <div class="detail-row">
             <div class="detail-label">Slik Recap</div>
             <div class="input-wrapper">
                 <input type="text" name="slik_recap" class="form-control" value="{{ old('slik_recap', $progress->slik_recap) }}">
             </div>
         </div>
+        @endif
 
         <div class="action-buttons">
             <a href="{{ route('recruitment.stage.show', [$applicant->id, $stage]) }}" class="btn-cancel">Cancel</a>
@@ -193,3 +201,34 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const statusSelect = document.querySelector('select[name="offering_status"]');
+        const rejectedReasonWrapper = document.getElementById('rejected_reason_wrapper');
+        const statusDateInput = document.getElementById('status_date');
+
+        // Simpan nilai awal
+        const initialStatus = statusSelect.value;
+        const initialDate = statusDateInput.value;
+
+        function toggleRejectedReason() {
+            rejectedReasonWrapper.style.display = (statusSelect.value === 'rejected') ? 'flex' : 'none';
+        }
+
+        function handleStatusChange() {
+            toggleRejectedReason();
+
+            if (statusSelect.value !== initialStatus) {
+                statusDateInput.value = '';
+            } else {
+                statusDateInput.value = initialDate;
+            }
+        }
+
+        statusSelect.addEventListener('change', handleStatusChange);
+        toggleRejectedReason(); // jalankan sekali di awal
+    });
+</script>
+@endpush
