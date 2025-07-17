@@ -67,6 +67,13 @@
             </div>
         </div>
 
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+         @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
         <div class="detail-container">
             <div class="detail-column left-column">
                 <!-- Employee Detail Card -->
@@ -103,13 +110,6 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        @if (session('success'))
-                            <div class="alert alert-success">{{ session('success') }}</div>
-                        @endif
-                        @if (session('error'))
-                            <div class="alert alert-danger">{{ session('error') }}</div>
-                        @endif
-
                         @if (!$careerProjection)
                             <p>No career projection available for this employee.</p>
                         @else
