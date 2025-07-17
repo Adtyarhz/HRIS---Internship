@@ -188,7 +188,7 @@
                     <td>
                         <a href="{{ route('recruitment-progress.show', $applicant) }}" class="link-applicant">See Recruitment Progress</a>
                     </td>
-                    <td><a href="#">See Interview Schedule</a></td>
+                    <td><a href="{{ route('interview-schedule.index', $applicant) }}">See Interview Schedule</a></td>
                 </tr>
             @empty
                 <tr>
