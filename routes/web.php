@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\CareerHistoryController;
+use App\Http\Controllers\CareerProjectionController;
 use App\Http\Controllers\FamilyDependentController;
 use App\Http\Controllers\HealthRecordController;
 use Illuminate\Support\Facades\Route;
@@ -13,8 +15,6 @@ use App\Http\Controllers\InsuranceController;
 use App\Http\Controllers\EducationHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
-use App\Http\Controllers\CareerHistoryController;
-use App\Http\Controllers\CareerProjectionController;
 
 Route::get('/', function () {
     return view('welcome');
