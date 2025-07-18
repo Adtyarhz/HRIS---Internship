@@ -65,14 +65,14 @@ public function store(Request $request, Employee $employee)
 {
     $validated = $request->validate([
         'company_name' => 'required|string|max:150',
-        'company_address' => 'nullable|string',
-        'company_phone' => 'nullable|string|max:20',
+        'company_address' => 'required|string',
+        'company_phone' => 'required|string|max:20',
         'position_title' => 'required|string|max:100',
         'start_date' => 'required|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'responsibilities' => 'nullable|string',
-        'reason_to_leave' => 'nullable|string',
-        'last_salary' => 'nullable|numeric',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'responsibilities' => 'required|string',
+        'reason_to_leave' => 'required|string',
+        'last_salary' => 'required|numeric',
         'reference_letter_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,jpeg',
         'salary_slip_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,jpeg',
     ]);
