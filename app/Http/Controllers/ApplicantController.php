@@ -43,7 +43,7 @@ class ApplicantController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:applicants,email',
-            'phone' => 'required',
+            'phone' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
             'address' => 'required',
             'resume_file' => 'required|file|mimes:pdf,doc,docx',
             'applied_position' => 'required',
@@ -75,7 +75,7 @@ class ApplicantController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:applicants,email,' . $applicant->id,
-            'phone' => 'required',
+            'phone' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
             'address' => 'required',
             'resume_file' => 'nullable|file|mimes:pdf,doc,docx',
             'applied_position' => 'required',

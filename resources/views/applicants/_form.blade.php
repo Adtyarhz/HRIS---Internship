@@ -47,7 +47,10 @@
     <input type="email" name="email" class="form-control" required value="{{ old('email', $applicant->email ?? '') }}">
 
     <label class="required">Phone</label>
-    <input type="text" name="phone" class="form-control" required value="{{ old('phone', $applicant->phone ?? '') }}">
+    <input type="tel" name="phone" class="form-control"
+        required pattern="^\+?[0-9]{10,15}$"
+        title="Please enter a valid phone number (10–15 digits, optionally starts with +)"
+        value="{{ old('phone', $applicant->phone ?? '') }}">
 
     <label class="required">Address</label>
     <input type="text" name="address" class="form-control" required value="{{ old('address', $applicant->address ?? '') }}">
