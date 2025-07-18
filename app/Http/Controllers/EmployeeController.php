@@ -6,6 +6,7 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use App\Models\CareerHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -158,7 +159,21 @@ class EmployeeController extends Controller
                 $validateData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
 
-            Employee::create($validateData);
+            $employee = Employee::create($validateData);
+
+            // Create initial CareerHistory entry
+            if ($validateData['position_id'] && $validateData['division_id']) {
+                CareerHistory::create([
+                    'employee_id' => $employee->id,
+                    'position_id' => $validateData['position_id'],
+                    'division_id' => $validateData['division_id'],
+                    'employee_type' => $validateData['employee_type'],
+                    'start_date' => $validateData['hire_date'],
+                    'end_date' => null,
+                    'type' => 'Awal Masuk',
+                    'notes' => '',
+                ]);
+            }
 
             DB::commit();
             return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil ditambahkan.');

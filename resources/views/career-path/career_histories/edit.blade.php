@@ -6,8 +6,13 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    {{-- Memuat CSS khusus untuk form ini --}}
     <link rel="stylesheet" href="{{ asset('css/career-path.css') }}">
+@endpush
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 @endpush
 
 @section('content')
@@ -26,7 +31,7 @@
 
                 <form
                     action="{{ isset($careerHistory) ? route('employees.career_histories.update', [$employee, $careerHistory]) : route('employees.career_histories.store', $employee) }}"
-                    method="POST">
+                    method="POST" id="careerHistoryForm">
                     @csrf
                     @if (isset($careerHistory))
                         @method('PUT')
@@ -42,17 +47,42 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="form-buttons-container">
-                                <form action="{{ route('employees.career_histories.destroy', [$employee, $careerHistory]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this career history?');" style="display: inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-delete">Delete</button>
-                                </form>
+                                @if (isset($careerHistory))
+                                    <button type="button" class="btn btn-delete" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                                @endif
                                 <a href="{{ route('employees.career_histories.index', $employee) }}" class="btn btn-cancel">Cancel</a>
                                 <button type="submit" class="btn btn-submit">Save</button>
                             </div>
                         </div>
                     </div>
                 </form>
+
+                @if (isset($careerHistory))
+                    <!-- Modal -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Penghapusan</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    Apakah Anda yakin ingin menghapus riwayat karir ini?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                    <form action="{{ route('employees.career_histories.destroy', [$employee, $careerHistory]) }}" method="POST" id="deleteCareerHistoryForm">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

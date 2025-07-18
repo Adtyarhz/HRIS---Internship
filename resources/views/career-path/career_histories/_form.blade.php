@@ -92,7 +92,8 @@
                 <div class="input-group date-input-group">
                     <input type="date" name="end_date" id="end_date"
                         class="form-control @error('end_date') is-invalid @enderror"
-                        value="{{ old('end_date', optional($careerHistory)->end_date ? $careerHistory->end_date->format('Y-m-d') : '') }}">
+                        value="{{ old('end_date', optional($careerHistory)->end_date ? $careerHistory->end_date->format('Y-m-d') : '') }}"
+                        @if (isset($careerHistory) && is_null($careerHistory->end_date)) disabled @endif>
                     <label for="end_date" class="input-group-append">
                         <span class="input-group-text">
                             <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">
@@ -102,6 +103,9 @@
                 @error('end_date')
                     <span class="invalid-feedback d-block">{{ $message }}</span>
                 @enderror
+                @if (isset($careerHistory) && is_null($careerHistory->end_date))
+                    <small class="form-text text-muted">End date untuk entri aktif akan diatur otomatis saat membuat entri baru.</small>
+                @endif
             </div>
         </div>
 

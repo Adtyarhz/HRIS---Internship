@@ -7,8 +7,10 @@ use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Division;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class CareerHistoryController extends Controller
 {
@@ -57,15 +59,42 @@ public function index(Employee $employee)
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only([
-            'position_id', 'division_id', 'employee_type',
-            'start_date', 'end_date', 'type', 'notes'
-        ]);
-        $data['employee_id'] = $employee->id;
+        try {
+            DB::beginTransaction();
 
-        CareerHistory::create($data);
-        return redirect()->route('employees.showCareer', $employee)
-            ->with('success', 'Career history created successfully.');
+            $data = $request->only([
+                'position_id', 'division_id', 'employee_type',
+                'start_date', 'end_date', 'type', 'notes'
+            ]);
+            $data['employee_id'] = $employee->id;
+
+            // Tutup CareerHistory aktif sebelumnya (jika ada)
+            $activeCareerHistory = CareerHistory::where('employee_id', $employee->id)
+                ->whereNull('end_date')
+                ->first();
+
+            if ($activeCareerHistory) {
+                $activeCareerHistory->update([
+                    'end_date' => Carbon::today(),
+                ]);
+            }
+
+            CareerHistory::create($data);
+
+            // Perbarui data Employee berdasarkan CareerHistory terbaru
+            $employee->update([
+                'position_id' => $data['position_id'],
+                'division_id' => $data['division_id'],
+                'employee_type' => $data['employee_type'],
+            ]);
+
+            DB::commit();
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('success', 'Riwayat karir berhasil ditambahkan dan data karyawan diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -105,15 +134,65 @@ public function index(Employee $employee)
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only([
-            'position_id', 'division_id', 'employee_type',
-            'start_date', 'end_date', 'type', 'notes'
-        ]);
-        $data['employee_type'] = $employee->employee_type;
+        try {
+            DB::beginTransaction();
 
-        $careerHistory->update($data);
-        return redirect()->route('employees.showCareer', $employee)
-            ->with('success', 'Career history updated successfully.');
+            $data = $request->only([
+                'position_id', 'division_id', 'employee_type',
+                'start_date', 'end_date', 'type', 'notes'
+            ]);
+
+            // Cek apakah ada perubahan pada position_id, division_id, atau employee_type
+            $hasChanges = $careerHistory->position_id != $data['position_id'] ||
+                          $careerHistory->division_id != $data['division_id'] ||
+                          $careerHistory->employee_type != $data['employee_type'];
+
+            // Jika CareerHistory ini aktif (end_date null) dan ada perubahan,
+            // tutup CareerHistory ini dan buat yang baru
+            if (is_null($careerHistory->end_date) && $hasChanges) {
+                $careerHistory->update([
+                    'end_date' => Carbon::today(),
+                ]);
+
+                // Buat CareerHistory baru dengan data baru
+                CareerHistory::create([
+                    'employee_id' => $employee->id,
+                    'position_id' => $data['position_id'],
+                    'division_id' => $data['division_id'],
+                    'employee_type' => $data['employee_type'],
+                    'start_date' => Carbon::today(),
+                    'end_date' => null,
+                    'type' => $data['type'], // Gunakan tipe dari input
+                    'notes' => $data['notes'],
+                ]);
+
+                // Perbarui data Employee berdasarkan CareerHistory baru
+                $employee->update([
+                    'position_id' => $data['position_id'],
+                    'division_id' => $data['division_id'],
+                    'employee_type' => $data['employee_type'],
+                ]);
+            } else {
+                // Jika tidak ada perubahan atau CareerHistory tidak aktif, update saja
+                $careerHistory->update($data);
+
+                // Jika CareerHistory ini aktif (end_date null), perbarui data Employee
+                if (is_null($careerHistory->end_date)) {
+                    $employee->update([
+                        'position_id' => $data['position_id'],
+                        'division_id' => $data['division_id'],
+                        'employee_type' => $data['employee_type'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('success', 'Riwayat karir berhasil diperbarui dan data karyawan diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -125,8 +204,41 @@ public function index(Employee $employee)
             abort(404);
         }
 
-        $careerHistory->delete();
-        return redirect()->route('employees.showCareer', $employee)
-            ->with('success', 'Career history deleted successfully.');
+        try {
+            DB::beginTransaction();
+
+            // Jika CareerHistory yang dihapus adalah aktif (end_date null),
+            // perbarui Employee ke CareerHistory aktif terbaru (jika ada)
+            if (is_null($careerHistory->end_date)) {
+                $latestCareerHistory = CareerHistory::where('employee_id', $employee->id)
+                    ->whereNotNull('end_date')
+                    ->orderBy('end_date', 'desc')
+                    ->first();
+
+                if ($latestCareerHistory) {
+                    $employee->update([
+                        'position_id' => $latestCareerHistory->position_id,
+                        'division_id' => $latestCareerHistory->division_id,
+                        'employee_type' => $latestCareerHistory->employee_type,
+                    ]);
+                } else {
+                    // Jika tidak ada CareerHistory lain, set ke null
+                    $employee->update([
+                        'position_id' => null,
+                        'division_id' => null,
+                        'employee_type' => $employee->employee_type, // Pertahankan employee_type
+                    ]);
+                }
+            }
+
+            $careerHistory->delete();
+        DB::commit();
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('success', 'Riwayat karir berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('employees.showCareer', $employee)
+                ->with('error', 'Gagal menghapus riwayat karir: ' . $e->getMessage());
+        }
     }
 }
