@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Division;
+use App\Models\Position;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -25,5 +27,11 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+        
+        // Generate beberapa divisi
+        Division::factory()->count(8)->create();
+
+        // Generate beberapa posisi
+        Position::factory()->count(9)->create();
     }
 }

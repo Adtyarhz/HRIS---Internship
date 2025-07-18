@@ -29,9 +29,9 @@
 <div class="form-group row align-items-center">
     <label for="phone_number" class="col-md-2 col-form-label">Phone Number <span class="text-danger">*</span> :</label>
     <div class="col-md-3">
-        <input type="text" class="form-control @error('phone_number') is-invalid @enderror" id="phone_number"
+        <input type="tel" class="form-control @error('phone_number') is-invalid @enderror" id="phone_number"
             name="phone_number" value="{{ old('phone_number', $familyDependent->phone_number ?? '') }}"
-            placeholder="Input phone number" required>
+            placeholder="Input phone number" inputmode="tel" maxlength="20" required>
         @error('phone_number')
             <span class="invalid-feedback d-block">{{ $message }}</span>
         @enderror

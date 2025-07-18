@@ -35,7 +35,7 @@ class FamilyDependentController extends Controller
         $validatedData = $request->validate([
             'contact_name' => 'required|string|max:100',
             'relationship' => 'required|string|max:50',
-            'phone_number' => 'required|string|max:20|unique:family_dependents,phone_number',
+            'phone_number' => ['required', 'string', 'max:20', 'unique:family_dependents,phone_number', 'regex:/^\+?[0-9]{8,20}$/'],
             'address' => 'required|string',
             'city' => 'required|string|max:50',
             'province' => 'required|string|max:50',
@@ -67,7 +67,7 @@ class FamilyDependentController extends Controller
         $validatedData = $request->validate([
             'contact_name' => 'required|string|max:100',
             'relationship' => 'required|string|max:50',
-            'phone_number' => ['required', 'string', 'max:20', Rule::unique('family_dependents')->ignore($familyDependent->id)],
+            'phone_number' => ['required', 'string', 'max:20', Rule::unique('family_dependents')->ignore($familyDependent->id), 'regex:/^\+?[0-9]{8,20}$/'],
             'address' => 'required|string',
             'city' => 'required|string|max:50',
             'province' => 'required|string|max:50',
