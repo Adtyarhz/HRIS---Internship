@@ -111,7 +111,7 @@
         </div>
 
         <div class="detail-row">
-            <div class="detail-label">Result</div>
+            <div class="detail-label">Description</div>
             <div class="detail-value">{{ $schedule->result ?? '-' }}</div>
         </div>
 

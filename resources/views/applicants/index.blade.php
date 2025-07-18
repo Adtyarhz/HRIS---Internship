@@ -1,7 +1,8 @@
 @extends('layouts.admin')
 
 @section('title', 'Applicant Management')
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 @push('styles')
 <style>
     .header-with-icon {
@@ -138,6 +139,20 @@
         color: #999;
         cursor: not-allowed;
     }
+    .filter-btn {
+        background-color: #DFD9B6;
+        transition: background-color 0.2s ease;
+        border-radius: 6px;
+    }
+
+    .filter-btn:hover,
+    .filter-btn:focus {
+        background-color: #fff;
+    }
+
+    .filter-btn.show {
+        background-color: #fff !important;
+    }
 </style>
 @endpush
 
@@ -170,7 +185,36 @@
             <tr>
                 <th>No</th>
                 <th>Applicant Fullname</th>
-                <th>Applied Position</th>
+                <th>
+    <div class="dropdown d-inline-block">
+        <span>Applied Position</span>
+        <button class="btn btn-sm border-0 dropdown-toggle filter-btn" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-filter" style="font-size: 1rem; color: #000;"></i>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+            <li>
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => 'asc'])) }}">
+                    <i class="bi bi-hash"></i> ID (Asc)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => 'desc'])) }}">
+                    <i class="bi bi-hash"></i> ID (Desc)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'applied_position', 'direction' => 'asc'])) }}">
+                    <i class="bi bi-sort-alpha-down"></i> A to Z
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'applied_position', 'direction' => 'desc'])) }}">
+                    <i class="bi bi-sort-alpha-up"></i> Z to A
+                </a>
+            </li>
+        </ul>
+    </div>
+</th>
                 <th>Recruitment Progress</th>
                 <th>Interview Schedule</th>
             </tr>

@@ -12,17 +12,26 @@ class ApplicantController extends Controller
     public function index(Request $request)
 {
     $search = $request->input('search');
+    $sortBy = $request->input('sort', 'created_at');
+    $direction = $request->input('direction', 'desc');
+
+    $allowedSorts = ['id', 'applied_position'];
+
+    if (!in_array($sortBy, $allowedSorts)) {
+        $sortBy = 'id';
+    }
 
     $applicants = Applicant::with('division')
         ->when($search, function ($query) use ($search) {
             $query->where('full_name', 'like', '%' . $search . '%');
         })
-        ->orderBy('created_at', 'desc')
+        ->orderBy($sortBy, $direction)
         ->paginate(10)
         ->withQueryString();
 
-    return view('applicants.index', compact('applicants'));
+    return view('applicants.index', compact('applicants', 'search', 'sortBy', 'direction'));
 }
+
     public function create()
     {
         $divisions = Division::all();

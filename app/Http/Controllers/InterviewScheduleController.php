@@ -31,7 +31,7 @@ class InterviewScheduleController extends Controller
 
         $applicant->interviewSchedules()->create($request->all());
 
-        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule created successfully.');
+        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has created.');
     }
 
     public function show(Applicant $applicant, InterviewSchedule $schedule)
@@ -56,12 +56,12 @@ class InterviewScheduleController extends Controller
 
         $schedule->update($request->all());
 
-        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule updated successfully.');
+        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has updated.');
     }
 
     public function destroy(Applicant $applicant, InterviewSchedule $schedule)
     {
         $schedule->delete();
-        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule deleted.');
+        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has deleted.');
     }
 }
