@@ -66,76 +66,6 @@
     .btn-delete:hover {
         background-color: #cc0000;
     }
-
-    .modal-content {
-        background-color: #FAFBEF;
-        border-radius: 12px;
-        border: none;
-    }
-
-    .modal-body {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 1rem 1.25rem;
-    }
-
-    .icon-wrapper {
-        background-color: #FFEA9F;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 40px;
-        min-height: 40px;
-    }
-
-    .icon-wrapper i {
-        color: #9A3B3B;
-        font-size: 24px;
-    }
-
-    .modal-body p {
-        margin: 0;
-        font-weight: bold;
-        font-size: 1rem;
-        color: #000000;
-        white-space: nowrap;
-    }
-
-    .modal-footer {
-        justify-content: center;
-        border: none;
-        padding-top: 16px;
-    }
-
-    .btn-cancel-modal {
-        background-color: #9A3B3B;
-        color: #FAFBEF;
-        border: none;
-        font-weight: bold;
-        min-width: 100px;
-        border-radius: 6px;
-        padding: 8px 16px;
-    }
-
-    .btn-cancel-modal:hover {
-        background-color: #7b2e2e;
-    }
-
-    .btn-yes-modal {
-        background-color: #F9FCE6;
-        color: #000000;
-        font-weight: bold;
-        border: 1px solid #ccc;
-        min-width: 100px;
-        border-radius: 6px;
-        padding: 8px 16px;
-    }
-
-    .btn-yes-modal:hover {
-        background-color: #e6f1c9;
-    }
 </style>
 @endpush
 
@@ -151,33 +81,18 @@
             @include('employees.educationhistory._form', ['education' => $educationHistory])
 
             <div class="form-actions">
-            <button type="button" class="btn btn-delete" data-toggle="modal" data-target="#deleteModal">
-            <i class="fas fa-trash-alt"></i> Delete</button>
+            <button type="button" class="btn btn-delete" onclick="showDeleteModal('education-history-{{ $educationHistory->id }}')">Delete</button>
             <a href="{{ route('employees.educationhistory.index', $employee) }}" class="btn btn-cancel">Cancel</a>
             <button type="submit" class="btn btn-submit">Submit</button>
             </div>
         </form>
     </div>
-    {{-- Modal Delete --}}
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content p-4">
-            <div class="modal-body">
-                <div class="icon-wrapper">
-                    <i class="fa-solid fa-trash-can"></i>
-                </div>
-                <p>Are you sure to delete this Education History?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-cancel-modal" data-dismiss="modal">Cancel</button>
-                <form action="{{ route('employees.educationhistory.destroy', [$employee, $educationHistory]) }}" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-yes-modal">Yes</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
+    {{-- Modal Delete Komponen --}}
+    <x-delete-modal
+        modalId="education-history-{{ $educationHistory->id }}" 
+        :action="route('employees.educationhistory.destroy', [$employee, $educationHistory])" 
+        message="Are you sure you want to delete this Education History?" 
+    />
 
 @endsection

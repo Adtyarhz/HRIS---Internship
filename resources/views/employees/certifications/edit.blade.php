@@ -48,33 +48,6 @@
             color: #eee;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            border-radius: 5px;
-            width: 30%;
-            text-align: center;
-        }
-
-        .modal-buttons {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
         .alert {
             margin-bottom: 20px;
         }
@@ -233,7 +206,7 @@
                                                         {{ Str::afterLast($material->file_path, '_') }}
                                                     </a>
                                                     <button type="button" class="btn btn-delete-material"
-                                                        onclick="showDeleteMaterialModal('{{ route('employees.certifications.materials.destroy', [$employee->id, $certification->id, $material->id]) }}')">Hapus</button>
+                                                        onclick="showDeleteModal('delete-material', '{{ route('employees.certifications.materials.destroy', [$employee->id, $certification->id, $material->id]) }}')">Delete File</button>
                                                 </li>
                                             @endforeach
                                         </ul>
@@ -266,49 +239,27 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="form-buttons-container">
-                                <button type="button" class="btn btn-delete" onclick="showDeleteModal()">Hapus
-                                    Sertifikasi</button>
+                                <button type="button" class="btn btn-delete" onclick="showDeleteModal('certification-{{ $certification->id }}')">Delete</button>
                                 <a href="{{ route('employees.certifications.index', $employee->id) }}"
-                                    class="btn btn-cancel">Batal</a>
-                                <button type="submit" class="btn btn-submit" form="updateForm">Simpan Perubahan</button>
+                                    class="btn btn-cancel">Cancel</a>
+                                <button type="submit" class="btn btn-submit" form="updateForm">Submit</button>
                             </div>
                         </div>
                     </div>
                 </form>
 
-                <!-- Modal Konfirmasi Hapus Sertifikasi -->
-                <div id="deleteModal" class="modal">
-                    <div class="modal-content">
-                        <h5>Konfirmasi Penghapusan Sertifikasi</h5>
-                        <p>Apakah Anda yakin ingin menghapus sertifikasi ini beserta semua filenya?</p>
-                        <div class="modal-buttons">
-                            <button class="btn btn-cancel" onclick="closeDeleteModal()">Batal</button>
-                            <form
-                                action="{{ route('employees.certifications.destroy', [$employee->id, $certification->id]) }}"
-                                method="POST" style="display: inline;">
-                                @csrf
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-delete">Hapus</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                <!-- Komponen Modal Delete -->
+                <x-delete-modal 
+                    modalId="certification-{{ $certification->id }}" 
+                    :action="route('employees.certifications.destroy', [$employee->id, $certification->id])" 
+                    message="Are you sure to delete this Certification and all its files?" 
+                />
 
-                <!-- Modal Konfirmasi Hapus File Materi -->
-                <div id="deleteMaterialModal" class="modal">
-                    <div class="modal-content">
-                        <h5>Konfirmasi Penghapusan File Materi</h5>
-                        <p>Apakah Anda yakin ingin menghapus file materi ini?</p>
-                        <div class="modal-buttons">
-                            <button class="btn btn-cancel" onclick="closeDeleteMaterialModal()">Batal</button>
-                            <form id="deleteMaterialForm" method="POST" style="display: inline;">
-                                @csrf
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-delete">Hapus</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                <!-- Komponen Modal Delete Mterial -->
+                <x-delete-modal-material 
+                    modalId="delete-material"
+                    message="Are you sure to delete this file?" 
+                />
             </div>
         </div>
     </div>
@@ -316,28 +267,6 @@
 
 @push('scripts')
     <script>
-        // Fungsi untuk menampilkan modal hapus sertifikasi
-        function showDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'block';
-        }
-
-        // Fungsi untuk menutup modal hapus sertifikasi
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-
-        // Fungsi untuk menampilkan modal hapus file materi
-        function showDeleteMaterialModal(url) {
-            const form = document.getElementById('deleteMaterialForm');
-            form.action = url; // Set rute penghapusan secara dinamis
-            document.getElementById('deleteMaterialModal').style.display = 'block';
-        }
-
-        // Fungsi untuk menutup modal hapus file materi
-        function closeDeleteMaterialModal() {
-            document.getElementById('deleteMaterialModal').style.display = 'none';
-        }
-
         // Nonaktifkan tombol submit saat pengiriman dan log data
         document.getElementById('updateForm').addEventListener('submit', function(e) {
             console.log('Form submitted with method: PUT');
