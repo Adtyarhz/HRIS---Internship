@@ -1,16 +1,39 @@
-@props(['modalId', 'message' => 'Are you sure to delete this item?', 'action'])
+@props([
+    'modalId',
+    'message' => 'Are you sure to delete this item?',
+    'action',
+    'iconClass' => 'gg--trash' // default icon
+    ])
 
 @push('styles')
 <style>
-.gg--trash {
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-repeat: no-repeat;
-  border-radius: 8px;
-  background-size: 100% 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%239A3B3B'%3E%3Cpath fill-rule='evenodd' d='M17 5V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v1H4a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2zm-2-1H9v1h6zm2 3H7v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1z' clip-rule='evenodd'/%3E%3Cpath d='M9 9h2v8H9zm4 0h2v8h-2z'/%3E%3C/g%3E%3C/svg%3E");
-}
+    .modal-icon {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    background-size: 100% 100%;
+    }
+
+    .gg--trash {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    background-size: 100% 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%239A3B3B'%3E%3Cpath fill-rule='evenodd' d='M17 5V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v1H4a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2zm-2-1H9v1h6zm2 3H7v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1z' clip-rule='evenodd'/%3E%3Cpath d='M9 9h2v8H9zm4 0h2v8h-2z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .tab-close-inactive {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    background-size: 100% 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%239A3B3B' d='M14 22v-2h4v2zm-6 0v-2h4v2zM4 10H2V6h2zm0 6H2v-4h2zm2 6H4q-.825 0-1.412-.587T2 20v-2h2v2h2zm5.9-8.5l2.1-2.1l2.1 2.1l1.4-1.4l-2.1-2.1l2.1-2.1l-1.4-1.4L14 8.6l-2.1-2.1l-1.4 1.4l2.1 2.1l-2.1 2.1zM8 18q-.825 0-1.412-.587T6 16V4q0-.825.588-1.412T8 2h12q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18z'/%3E%3C/svg%3E");
+    }
 </style>
 @endpush
 
@@ -45,7 +68,7 @@
                 justify-content: center;
                 align-items: center;
             ">
-                <span class="gg--trash" style="font-size: 10px; color:#9A3B3B"></span>
+                <span class="{{ $iconClass }}" style="font-size: 24px; color:#9A3B3B"></span>
             </div>
             <div style="font-size: 20px; font-family: Inter, sans-serif; font-weight: 600; color: black; white-space: nowrap;">
                 {{ $message }}
