@@ -30,6 +30,8 @@
                     <x-delete-modal 
                         modalId="deactivate-employee-{{ $employee->id }}" 
                         :action="route('employees.deactivate', $employee)" 
+                        method="POST" 
+                        title="Deactive Confirmation"
                         message="Are you sure you want to deactivate this employee?" 
                         iconClass="tab-close-inactive"
                     />
