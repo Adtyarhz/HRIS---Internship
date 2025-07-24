@@ -130,8 +130,8 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('organization_structure.*') ? ' active' : '' }}">
+                        <li class="nav-item"><a href="{{ route('organization.structure.index') }}"
+                                class="nav-link{{ request()->routeIs('organization.structure.*') ? ' active' : '' }}">
                                 <div class="nav-icon-text">
                                     <span class="fluent--organization-24-regular"></span>
                                     <p>Organization Structure</p>
