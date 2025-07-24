@@ -17,6 +17,7 @@ use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\RecruitmentProgressController;
 use App\Http\Controllers\InterviewScheduleController;
+use App\Http\Controllers\OrganizationalStructureController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,11 +33,9 @@ Route::get('employees/{employee}/address', [EmployeeController::class, 'editAddr
 // Route untuk tab kesehatan
 Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit'])->name('employees.health.edit');
 
-
 // Baris ini akan membuat semua route untuk Employee CRUD
 Route::resource('employees', EmployeeController::class);
 Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
-
 
 // Rute untuk Health Record yang terhubung dengan Employee
 Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
@@ -142,3 +141,9 @@ Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
     Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
     Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
 });
+
+// Menggunakan resource controller untuk menangani semua aksi CRUD Jabatan.
+// Parameter 'structure' akan secara otomatis terikat ke model 'Position'.
+Route::resource('organization/structure', OrganizationalStructureController::class)
+     ->parameters(['structure' => 'position']) // Mengubah nama parameter default 'structure' menjadi 'position'
+     ->names('organization.structure'); // Menetapkan nama prefix untuk rute
