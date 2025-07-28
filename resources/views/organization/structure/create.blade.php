@@ -38,6 +38,14 @@
                                     @error('parent_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </td>
                             </tr>
+                            <tr>
+                                <td class="table-label"><label for="depth">Kedalaman (Depth)</label></td>
+                                <td>
+                                    <input type="number" class="form-control @error('depth') is-invalid @enderror" id="depth" name="depth" value="{{ old('depth') }}" min="0">
+                                    <small class="form-text text-muted">Opsional. Kosongkan agar dihitung otomatis berdasarkan Jabatan Atasan (0 untuk jabatan puncak).</small>
+                                    @error('depth') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
