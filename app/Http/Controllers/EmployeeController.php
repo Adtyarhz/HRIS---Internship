@@ -20,86 +20,105 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        Employee::whereNotNull('separation_date')
-            ->where('separation_date', '<', Carbon::today())
-            ->where('status', '!=', 'Tidak Aktif')
-            ->update(['status' => 'Tidak Aktif']);
+public function index(Request $request)
+{
+    // Update status otomatis jika separation_date sudah lewat
+    Employee::whereNotNull('separation_date')
+        ->where('separation_date', '<', Carbon::today())
+        ->where('status', '!=', 'Tidak Aktif')
+        ->update(['status' => 'Tidak Aktif']);
 
+    $user = auth()->user();
+
+    // Jika superadmin, lihat semua karyawan aktif
+    if ($user->role === 'superadmin') {
         $query = Employee::where('status', 'Aktif');
-
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($request->filled('division_id')) {
-            $query->where('division_id', $request->division_id);
-        }
-
-        if ($request->filled('position_id')) {
-            $query->where('position_id', $request->position_id);
-        }
-
-        if ($request->filled('employee_type')) {
-            $query->where('employee_type', $request->employee_type);
-        }
-
-        if ($request->filled('office')) {
-            $query->where('office', $request->office);
-        }
-
-        $divisions = Division::orderBy('name')->get();
-        $positions = Position::orderBy('title')->get();
-
-        $employees = $query->latest()->paginate(9)->withQueryString();
-        return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+    } else {
+        // Jika user biasa, hanya lihat data karyawan miliknya (user_id)
+        $query = Employee::where('status', 'Aktif')
+                         ->where('user_id', $user->id);
     }
 
-    public function indexCareer(Request $request)
-    {
-        $query = Employee::query();
-        // Employee::whereNotNull('separation_date')
-        //     ->where('separation_date', '<', Carbon::today())
-        //     ->where('status', '!=', 'Tidak Aktif')
-        //     ->update(['status' => 'Tidak Aktif']);
-
-        $query = Employee::where('status', 'Aktif');
-
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($request->filled('division_id')) {
-            $query->where('division_id', $request->division_id);
-        }
-
-        if ($request->filled('position_id')) {
-            $query->where('position_id', $request->position_id);
-        }
-
-        if ($request->filled('employee_type')) {
-            $query->where('employee_type', $request->employee_type);
-        }
-
-        if ($request->filled('office')) {
-            $query->where('office', $request->office);
-        }
-
-        $divisions = Division::orderBy('name')->get();
-        $positions = Position::orderBy('title')->get();
-
-        $employees = $query->latest()->paginate(9)->withQueryString();
-        return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
+    // Filter pencarian jika ada
+    if ($request->has('search') && $request->search != '') {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('full_name', 'like', '%' . $search . '%')
+              ->orWhere('nik', 'like', '%' . $search . '%');
+        });
     }
+
+    if ($request->filled('division_id')) {
+        $query->where('division_id', $request->division_id);
+    }
+
+    if ($request->filled('position_id')) {
+        $query->where('position_id', $request->position_id);
+    }
+
+    if ($request->filled('employee_type')) {
+        $query->where('employee_type', $request->employee_type);
+    }
+
+    if ($request->filled('office')) {
+        $query->where('office', $request->office);
+    }
+
+    // Ambil data tambahan untuk filter
+    $divisions = Division::orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+
+    // Pagination
+    $employees = $query->latest()->paginate(9)->withQueryString();
+
+    return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+}
+
+   public function indexCareer(Request $request)
+{
+    $user = auth()->user();
+
+    // Cek role superadmin vs user biasa
+    if ($user->role === 'superadmin') {
+        $query = Employee::where('status', 'Aktif');
+    } else {
+        $query = Employee::where('status', 'Aktif')
+                         ->where('user_id', $user->id);
+    }
+
+    // Filter pencarian
+    if ($request->has('search') && $request->search != '') {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('full_name', 'like', '%' . $search . '%')
+              ->orWhere('nik', 'like', '%' . $search . '%');
+        });
+    }
+
+    // Filter tambahan
+    if ($request->filled('division_id')) {
+        $query->where('division_id', $request->division_id);
+    }
+
+    if ($request->filled('position_id')) {
+        $query->where('position_id', $request->position_id);
+    }
+
+    if ($request->filled('employee_type')) {
+        $query->where('employee_type', $request->employee_type);
+    }
+
+    if ($request->filled('office')) {
+        $query->where('office', $request->office);
+    }
+
+    $divisions = Division::orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+
+    $employees = $query->latest()->paginate(9)->withQueryString();
+
+    return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
+}
 
     /**
      * Show the form for creating a new resource.

@@ -27,6 +27,11 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        $this->call([
+        UserSeeder::class,
+        // Seeder lainnya kalau ada
+    ]);
         
         // Generate beberapa divisi
         Division::factory()->count(8)->create();

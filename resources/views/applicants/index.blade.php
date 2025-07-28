@@ -177,7 +177,9 @@
     <form method="GET" action="{{ route('applicants.index') }}" class="filter-form">
         <input type="text" name="search" placeholder="Search Applicant Fullname" value="{{ request('search') }}">
         <button type="submit" class="btn-filter">Search</button>
+        @if(auth()->user()->role === 'superadmin')
         <a href="{{ route('applicants.create') }}" class="btn-add" style="margin-left: auto;">+ Add New Applicant</a>
+        @endif
     </form>
 
     <table class="applicant-table">

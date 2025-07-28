@@ -71,7 +71,7 @@
                             <a href="{{-- route('logout') --}}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                                 class="btn btn-default btn-flat float-right">Sign out</a>
-                            <form id="logout-form" action="{{-- route('logout') --}}" method="POST" class="d-none">
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                 @csrf
                             </form>
                         </li>
@@ -93,92 +93,19 @@
             </a>
             <div class="sidebar">
                 <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
-                        data-accordion="false">
-                        <li class="nav-item">
-                            <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="mdi-light--home"></span>
-                                    <p>Dashboard</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('announcement.index') }}"
-                                class="nav-link{{ request()->routeIs('announcement.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="bi--list-ul"></span>
-                                    <p>Announcement</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('employees.index') }}"
-                                class="nav-link{{ request()->routeIs('employees.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="icon-park-outline--file-staff-one"></span>
-                                    <p>Employee Information</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#"
-                                class="nav-link{{ request()->routeIs('employee_request.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="charm--git-request"></span>
-                                    <p>Employee Request</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('organization_structure.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="fluent--organization-24-regular"></span>
-                                    <p>Organization Structure</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('career.index') }}" class="nav-link{{ request()->routeIs('career.index') || request()->routeIs('employees.showCareer') || request()->routeIs('employees.career_histories.*') || request()->routeIs('employees.career_projections.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="material-symbols--work-outline"></span>
-                                    <p>Careers Administration</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('time_attendance.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="mdi--clock-outline"></span>
-                                    <p>Time & Attendance</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item"><a href="{{ route('applicants.index') }}"
-                                class="nav-link{{ request()->routeIs('reimbursement.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="fluent-mdl2--recruitment-management"></span>
-                                    <p>Recruitment Applicant</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('payroll.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="ri--bill-line"></span>
-                                    <p>Payroll</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item"><a href="#"
-                                class="nav-link{{ request()->routeIs('setting.*') ? ' active' : '' }}">
-                                <div class="nav-icon-text">
-                                    <span class="uil--setting"></span>
-                                    <p>Setting</p>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+    @foreach ($menuItems ?? [] as $item)
+        <li class="nav-item">
+            <a href="{{ $item['route'] === '#' ? '#' : route($item['route']) }}"
+               class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}">
+                <div class="nav-icon-text">
+                    <span class="{{ $item['icon'] ?? 'fa fa-circle' }}"></span>
+                    <p>{{ $item['label'] }}</p>
+                </div>
+            </a>
+        </li>
+    @endforeach
+</ul>
                 </nav>
             </div>
         </aside>

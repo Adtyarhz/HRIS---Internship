@@ -15,13 +15,22 @@ class PollingController extends Controller
             'polling_option_id' => 'required|exists:polling_options,id',
         ]);
 
-        $userId = 1; // Gunakan ID test user "1" untuk sementara
+       // $userId = 1; // Gunakan ID test user "1" untuk sementara
+        $userId = Auth::id();
+        $userRole = Auth::user()->role; // pastikan ada field `role` di users
+
 
         $polling = Polling::with('announcement')->findOrFail($pollingId);
 
         // Cegah test user "1" (diasumsikan sebagai HC atau pembuat) untuk memberikan suara
+        $forbiddenRoles = ['superadmin'];
+
+        if (in_array($userRole, $forbiddenRoles)) {
+            return back()->with('error', 'Role Anda tidak diizinkan memberikan suara.');
+        }
+
         if ($polling->announcement->created_by === $userId) {
-            return back()->with('error', 'Anda tidak diizinkan memberikan suara pada polling ini.');
+            return back()->with('error', 'Anda tidak diizinkan memberikan suara pada polling yang Anda buat.');
         }
 
         // Cegah voting jika sudah lewat batas waktu
