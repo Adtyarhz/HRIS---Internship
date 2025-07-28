@@ -49,13 +49,21 @@ class OrganizationalStructureController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255|unique:positions,title',
             'parent_id' => 'nullable|exists:positions,id',
+            'depth' => 'nullable|integer|min:0',
         ]);
 
         $depth = 0;
-        if ($request->filled('parent_id')) {
+        if ($request->filled('depth')) {
+            // 1. Jika pengguna memasukkan depth, gunakan nilai tersebut.
+            $depth = $validatedData['depth'];
+        } elseif ($request->filled('parent_id')) {
+            // 2. Jika tidak, hitung secara otomatis berdasarkan parent.
             $parentPosition = Position::find($request->parent_id);
-            $depth = $parentPosition->depth + 1;
+            if ($parentPosition) {
+                $depth = $parentPosition->depth + 1;
+            }
         }
+        // Jika keduanya kosong, depth akan tetap 0 (jabatan puncak)
 
         Position::create([
             'title' => $validatedData['title'],
@@ -88,35 +96,31 @@ class OrganizationalStructureController extends Controller
         $validatedData = $request->validate([
             'title' => ['required', 'string', 'max:255', Rule::unique('positions')->ignore($position->id)],
             'parent_id' => ['nullable', 'exists:positions,id', Rule::notIn(array_merge([$position->id], $descendantIds))],
+            'depth' => 'nullable|integer|min:0',
         ]);
 
-        DB::beginTransaction();
-        try {
-            $oldParentId = $position->parent_id;
-            $newParentId = $request->parent_id;
-
-            $newDepth = 0;
-            if ($request->filled('parent_id')) {
-                $parentPosition = Position::find($request->parent_id);
-                $newDepth = $parentPosition->depth + 1;
+        $depth = 0;
+        if ($request->filled('depth')) {
+            // 1. Jika pengguna memasukkan depth, gunakan nilai tersebut.
+            $depth = $validatedData['depth'];
+        } elseif ($request->filled('parent_id')) {
+            // 2. Jika tidak, hitung secara otomatis berdasarkan parent.
+            $parentPosition = Position::find($request->parent_id);
+            if ($parentPosition) {
+                $depth = $parentPosition->depth + 1;
             }
-
-            $position->update([
-                'title' => $validatedData['title'],
-                'parent_id' => $validatedData['parent_id'],
-                'depth' => $newDepth,
-            ]);
-
-            if ($oldParentId != $newParentId) {
-                $this->updateChildrenDepth($position, $newDepth);
-            }
-
-            DB::commit();
-            return redirect()->route('organization.structure.index')->with('success', 'Struktur jabatan berhasil diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())->withInput();
         }
+        // Jika keduanya kosong, depth akan tetap 0.
+
+        $position->update([
+            'title' => $validatedData['title'],
+            'parent_id' => $validatedData['parent_id'],
+            'depth' => $depth,
+        ]);
+        
+        $this->updateChildrenDepth($position, $depth);
+
+        return redirect()->route('organization.structure.index')->with('success', 'Struktur jabatan berhasil diperbarui.');
     }
 
     /**
