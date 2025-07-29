@@ -49,10 +49,14 @@
     $allowedRoles = ['direksi', 'manager', 'section_head', 'staff_bisnis', 'staff_support'];
     $canVote = in_array($user->role, $allowedRoles);
 
+   $userVote = null;
+
+if ($isPolling && $polling) {
     $userVote = PollingVote::where('created_by', $user->id)
         ->whereHas('pollingOption', function ($q) use ($polling) {
             $q->where('polling_id', $polling->id);
         })->first();
+}
 @endphp
 
 <div style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 32px; background: #FEFEF9">
