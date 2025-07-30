@@ -21,12 +21,20 @@
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
                 <div class="right-actions">
-                    <form action="{{ route('employees.deactivate', $employee) }}" method="POST" style="display: inline;">
-                        @csrf
-                        <button type="submit" class="action-button btn-deactivet-data" onclick="return confirm('Yakin ingin nonaktifkan karyawan ini?')">
-                            <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
-                        </button>
-                    </form>
+                    <!-- Tombol Deactive -->
+                    <button type="button" class="action-button btn-deactivet-data" onclick="showDeleteModal('deactivate-employee-{{ $employee->id }}')">
+                        <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
+                    </button>
+
+                    <!-- Modal Deactive -->
+                    <x-delete-modal 
+                        modalId="deactivate-employee-{{ $employee->id }}" 
+                        :action="route('employees.deactivate', $employee)" 
+                        method="POST" 
+                        title="Deactive Confirmation"
+                        message="Are you sure you want to deactivate this employee?" 
+                        iconClass="tab-close-inactive"
+                    />
                     <a href="{{ route('employees.edit', $employee) }}" class="action-button btn-edit-data">
                         <i class="fas fa-edit"></i> Edit Employee Data
                     </a>
