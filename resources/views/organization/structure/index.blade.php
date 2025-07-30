@@ -6,17 +6,16 @@
 
 @push('styles')
     <style>
-        /* Kustomisasi Tampilan Node Bagan */
         .google-visualization-orgchart-node {
             border: 2px solid #337ab7 !important;
             border-radius: 8px !important;
             background-color: #f0f8ff;
             padding: 8px !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            cursor: pointer; /* Menambahkan cursor pointer untuk menandakan bisa diklik */
+            cursor: pointer;
         }
-        .google-visualization-orgchart-node-selected {
-            background-color: #d1eaff !important; /* Warna saat node dipilih */
+        .google-visualization-orgchart-node:hover {
+            background-color: #e6f0fa !important;
         }
     </style>
 @endpush
@@ -45,9 +44,8 @@
 
 @push('scripts')
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-
     <script type="text/javascript">
-        google.charts.load('current', {packages:['orgchart']});
+        google.charts.load('current', {packages: ['orgchart']});
         google.charts.setOnLoadCallback(drawChart);
 
         function drawChart() {
@@ -56,9 +54,8 @@
             data.addColumn('string', 'Manager');
             data.addColumn('string', 'ToolTip');
 
-            var dataRows = {!! json_encode($chartData) !!};
-            
-            var formattedRows = dataRows.map(function(row) {
+            var chartData = {!! json_encode($chartData) !!};
+            var formattedRows = chartData.nodes.map(function(row) {
                 return [row[0], row[1], row[2]];
             });
 
@@ -66,29 +63,29 @@
 
             var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
 
-            // ======================================================
-            // FIX: Tambahkan event listener untuk 'select' (klik)
-            // ======================================================
             google.visualization.events.addListener(chart, 'select', function() {
                 var selection = chart.getSelection();
                 if (selection.length > 0) {
-                    // Dapatkan ID dari node yang diklik (ID ada di properti 'v' dari objek node)
                     var nodeId = data.getRowProperties(selection[0].row).v;
-                    
-                    // Buat URL ke halaman detail
                     var urlTemplate = "{{ route('organization.structure.show', ['position' => ':id']) }}";
                     var redirectUrl = urlTemplate.replace(':id', nodeId);
-                    
-                    // Arahkan pengguna ke halaman detail
                     window.location.href = redirectUrl;
                 }
             });
-            
+
             chart.draw(data, {
-                'allowHtml': true,
-                'allowCollapse': true,
-                'nodeClass': 'google-visualization-orgchart-node'
+                allowHtml: true,
+                allowCollapse: true,
+                nodeClass: 'google-visualization-orgchart-node'
             });
+
+            // Tambahkan logika untuk menampilkan pengawasan tidak langsung
+            if (chartData.indirectLinks) {
+                chartData.indirectLinks.forEach(function(link) {
+                    console.log('Pengawasan tidak langsung dari ' + link.from + ' ke ' + link.to);
+                    // Di sini bisa ditambahkan anotasi visual seperti garis putus-putus (memerlukan custom library)
+                });
+            }
         }
     </script>
 @endpush
