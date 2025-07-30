@@ -40,6 +40,21 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td class="table-label"><label for="indirect_supervisor_id">Pengawas Tidak Langsung</label></td>
+                                <td>
+                                    <select class="form-control @error('indirect_supervisor_id') is-invalid @enderror" id="indirect_supervisor_id" name="indirect_supervisor_id">
+                                        <option value="">-- Tidak Ada --</option>
+                                        @foreach ($possibleParents as $parent)
+                                            <option value="{{ $parent->id }}" {{ old('indirect_supervisor_id', $position->indirect_supervisor_id) == $parent->id ? 'selected' : '' }}>
+                                                {{ $parent->title }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">Pilih jabatan yang mengawasi jabatan ini secara tidak langsung.</small>
+                                    @error('indirect_supervisor_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="table-label"><label for="depth">Kedalaman (Depth)</label></td>
                                 <td>
                                     <input type="number" class="form-control @error('depth') is-invalid @enderror" id="depth" name="depth" value="{{ old('depth', $position->depth) }}" min="0">
