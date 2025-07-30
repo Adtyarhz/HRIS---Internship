@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
 {
@@ -121,16 +122,31 @@ class AnnouncementController extends Controller
         return redirect()->route('announcement.index')->with('success', 'Announcement has been created');
     }
 
-    public function show($id, Request $request)
-    {
-        $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
-        $now = now();
-        $deadline = optional($announcement->polling)->deadline;
-        $isExpired = $deadline && $now->greaterThan($deadline);
-        $from = $request->query('from'); // Tambahan
+   public function show($id, Request $request)
+{
+    $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
+    $now = now();
+    $deadline = optional($announcement->polling)->deadline;
+    $isExpired = $deadline && $now->greaterThan($deadline);
+    $from = $request->query('from');
 
-        return view('announcement.show', compact('announcement', 'isExpired', 'from'));
+    // Cek apakah user login sudah vote
+    $userVote = null;
+    $userId = Auth::id();
+
+    if ($announcement->polling) {
+        foreach ($announcement->polling->options as $option) {
+            foreach ($option->votes as $vote) {
+                if ($vote->created_by == $userId) {
+                    $userVote = $vote;
+                    break 2;
+                }
+            }
+        }
     }
+
+    return view('announcement.show', compact('announcement', 'isExpired', 'from', 'userVote'));
+}
 
     public function edit($id)
     {

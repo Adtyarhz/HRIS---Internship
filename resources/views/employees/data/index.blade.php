@@ -25,10 +25,12 @@
                         <button type="button" class="btn-filter" id="filter-toggle-btn">
                             <i class="fas fa-filter"></i> Filter
                         </button>
+                        @if(auth()->user()->role === 'superadmin')
                         <a href="{{ route('employees.create') }}" class="add-employee-button">
                             <span class="add-icon">+</span>
                             Add New Employee
                         </a>
+                        @endif
                     </div>
                 </div>
             </header>

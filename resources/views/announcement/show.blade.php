@@ -38,10 +38,25 @@
 
 @section('content')
 @php
-    use Carbon\Carbon;
+   use Carbon\Carbon;
+    use App\Models\PollingVote;
+
     $polling = $announcement->polling;
     $isPolling = strtolower($announcement->announcement_type) === 'polling';
     $isExpired = $isPolling && $polling && $polling->deadline && now()->gt($polling->deadline);
+
+    $user = Auth::user();
+    $allowedRoles = ['direksi', 'manager', 'section_head', 'staff_bisnis', 'staff_support'];
+    $canVote = in_array($user->role, $allowedRoles);
+
+   $userVote = null;
+
+if ($isPolling && $polling) {
+    $userVote = PollingVote::where('created_by', $user->id)
+        ->whereHas('pollingOption', function ($q) use ($polling) {
+            $q->where('polling_id', $polling->id);
+        })->first();
+}
 @endphp
 
 <div style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 32px; background: #FEFEF9">
@@ -119,23 +134,49 @@
             <div style="margin-top: 24px; border-radius: 5px; outline: 1px rgba(0, 0, 0, 0.20) solid; outline-offset: -1px; padding: 16px; width: 100%; max-width: 640px">
                 <div style="font-size: 18px; font-weight: 600; margin-bottom: 16px">Temporary Poll Results :</div>
                 @foreach ($polling->options as $i => $option)
-                    <div style="display: flex; align-items: center; margin-bottom: 8px; font-family: 'Noto Sans Georgian', sans-serif;
-                            color: black">
-                        <input type="radio" name="option" id="option{{ $i }}" value="{{ $option->id }}" style="margin-right: 8px">
-                        <label for="option{{ $i }}">
-                            {{ $option->option_text }} (Votes: {{ $option->votes->count() }})
-                        </label>
-                    </div>
-                @endforeach
+    @php
+        $votedByUser = $userVote && $userVote->polling_option_id == $option->id;
+    @endphp
+    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+        <input type="radio"
+               name="option"
+               id="option{{ $i }}"
+               value="{{ $option->id }}"
+               style="margin-right: 8px"
+               {{ $votedByUser ? 'checked' : '' }}
+               {{ $userVote ? 'disabled' : '' }}>
+        <label for="option{{ $i }}">
+            {{ $option->option_text }} (Votes: {{ $option->votes->count() }})
+            @if ($votedByUser)
+                <strong style="color: green; font-size: 13px;"> - You Voted</strong>
+            @endif
+        </label>
+    </div>
+@endforeach
             </div>
 
-            @if (!$isExpired)
-                <form action="{{ route('polling.vote', $polling->id) }}" method="POST" style="margin-top: 12px">
-                    @csrf
-                    <button type="submit" style="background: #367FA9; color: white; border: none; border-radius: 5px; padding: 10px 20px">Vote</button>
-                </form>
+        <form action="{{ route('polling.vote', $polling->id) }}" method="POST" style="margin-top: 12px" id="pollForm">
+    @csrf
+    <input type="hidden" name="polling_option_id" id="polling_option_id" value="">
+
+    <button type="submit"
+    id="voteBtn"
+    @if(!$canVote || $userVote || $isExpired)
+        disabled
+    @else
+        data-allowed="true"
+    @endif
+    style="background: {{ (!$canVote || $userVote || $isExpired) ? '#999' : '#367FA9' }};
+           color: white;
+           border: none;
+           border-radius: 5px;
+           padding: 10px 20px;
+           cursor: {{ (!$canVote || $userVote || $isExpired) ? 'not-allowed' : 'pointer' }};">
+    Vote
+</button>
+</form>
+
             @endif
-        @endif
     
         {{-- Tombol Edit dan Delete --}}
         @if (!isset($from) || $from !== 'dashboard')
@@ -266,6 +307,41 @@
         if (event.target === overlay) {
             hideDeleteModal();
         }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const radios = document.querySelectorAll('input[name="option"]');
+    const inputHidden = document.querySelector('input[name="polling_option_id"]');
+    const voteBtn = document.getElementById('voteBtn');
+
+    function checkVoteEligibility() {
+        const selected = Array.from(radios).some(r => r.checked);
+        if (selected && voteBtn.hasAttribute('data-allowed')) {
+            voteBtn.disabled = false;
+            voteBtn.style.background = '#367FA9';
+            voteBtn.style.cursor = 'pointer';
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            inputHidden.value = this.value;
+            checkVoteEligibility();
+        });
+    });
+});
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const radios = document.querySelectorAll('input[name="option"]');
+        const inputHidden = document.querySelector('input[name="polling_option_id"]');
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                inputHidden.value = this.value;
+            });
+        });
     });
 </script>
 @endpush

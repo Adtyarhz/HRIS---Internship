@@ -38,7 +38,7 @@
                     <a href="{{ route('employees.edit', $employee) }}" class="action-button btn-edit-data">
                         <i class="fas fa-edit"></i> Edit Employee Data
                     </a>
-                    <a href="#" class="action-button btn-edit-login">
+                    <a href="{{ route('employees.data.edit_login', $employee->id) }}" class="action-button btn-edit-login">
                         <i class="fas fa-user-cog"></i> Edit Login Account
                     </a>
                 </div>

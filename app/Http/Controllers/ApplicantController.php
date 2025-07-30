@@ -21,13 +21,19 @@ class ApplicantController extends Controller
         $sortBy = 'id';
     }
 
-    $applicants = Applicant::with('division')
-        ->when($search, function ($query) use ($search) {
-            $query->where('full_name', 'like', '%' . $search . '%');
-        })
-        ->orderBy($sortBy, $direction)
-        ->paginate(10)
-        ->withQueryString();
+    $user = auth()->user();
+
+$applicants = Applicant::with('division')
+    ->when($search, function ($query) use ($search) {
+        $query->where('full_name', 'like', '%' . $search . '%');
+    })
+    ->when($user->role !== 'superadmin', function ($query) use ($user) {
+        // Filter berdasarkan division dari relasi employee
+        $query->where('division_id', optional($user->employee)->division_id);
+    })
+    ->orderBy($sortBy, $direction)
+    ->paginate(10)
+    ->withQueryString();
 
     return view('applicants.index', compact('applicants', 'search', 'sortBy', 'direction'));
 }
