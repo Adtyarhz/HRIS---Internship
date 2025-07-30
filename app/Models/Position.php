@@ -15,6 +15,7 @@ class Position extends Model
     protected $fillable = [
         'title',
         'parent_id',
+        'indirect_supervisor_id',
         'depth'
     ];
 
@@ -26,6 +27,16 @@ class Position extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Position::class, 'parent_id');
+    }
+
+    public function indirectSupervisor(): BelongsTo
+    {
+        return $this->belongsTo(Position::class, 'indirect_supervisor_id');
+    }
+
+    public function indirectSubordinates(): HasMany
+    {
+        return $this->hasMany(Position::class, 'indirect_supervisor_id');
     }
 
     public function employees(): HasMany
