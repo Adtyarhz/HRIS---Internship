@@ -64,7 +64,6 @@ class Position extends Model
 
     protected function getRelativeYPosition()
     {
-        $siblingCount = Position::where('parent_id', $this->parent_id)->count();
         $siblingIndex = Position::where('parent_id', $this->parent_id)
             ->where('id', '<=', $this->id)
             ->count() - 1;

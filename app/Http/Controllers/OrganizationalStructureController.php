@@ -175,7 +175,7 @@ class OrganizationalStructureController extends Controller
                 'depth' => $position->depth, // <-- Menambahkan data depth untuk D3
                 'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
                 'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
-                'tooltip' => "Jabatan: {$position->title}\nKedalaman: {$position->depth}" .
+                'tooltip' => "Jabatan: {$position->title}" .
                     ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
                     ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
             ];
