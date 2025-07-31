@@ -53,4 +53,21 @@ class Position extends Model
     {
         return $this->hasOne(CareerProjection::class, 'projected_position_id');
     }
+
+    public function getCoordinatesAttribute()
+    {
+        return [
+            'x' => $this->depth * 200,
+            'y' => $this->getRelativeYPosition()
+        ];
+    }
+
+    protected function getRelativeYPosition()
+    {
+        $siblingCount = Position::where('parent_id', $this->parent_id)->count();
+        $siblingIndex = Position::where('parent_id', $this->parent_id)
+            ->where('id', '<=', $this->id)
+            ->count() - 1;
+        return ($siblingIndex * 80) + 50;
+    }
 }
