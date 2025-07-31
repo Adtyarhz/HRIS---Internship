@@ -147,37 +147,37 @@ class OrganizationalStructureController extends Controller
     }
 
     /**
-     * Menyiapkan data untuk Google Org Chart dengan tooltip.
+     * Menyiapkan data untuk D3.js chart dengan koordinat dan tooltip.
      */
     private function getChartData($positions)
     {
-        $data = [];
-        $indirectLinks = [];
+        $data = ['nodes' => [], 'indirectLinks' => []];
+
         foreach ($positions as $position) {
-            $detailUrl = route('organization.structure.show', $position->id);
-            $nodeContent = '<a href="' . $detailUrl . '" style="text-decoration: none; color: inherit;">' .
-                '<div><strong>' . $position->title . '</strong></div>' .
-                ($position->employees->isNotEmpty() ? '<div>' . $position->employees->pluck('full_name')->join(', ') . '</div>' : '') .
-                ($position->indirectSupervisor ? '<div>(Diawasi oleh: ' . $position->indirectSupervisor->title . ')</div>' : '') .
-                '</a>';
+            $data['nodes'][] = [
+                'id' => (string) $position->id,
+                'title' => $position->title,
+                'parent_id' => $position->parent_id ? (string) $position->parent_id : null,
+                'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
+                'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
+                'coordinates' => $position->getCoordinatesAttribute(),
+                'tooltip' => "Jabatan: {$position->title}" .
+                    ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
+                    ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
+            ];
+        }
 
-            $node = ['v' => (string) $position->id, 'f' => $nodeContent];
-            $parent = $position->parent_id ? (string) $position->parent_id : '';
-            $tooltip = 'Jabatan: ' . $position->title . 
-                ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
-                ($position->indirectSupervisor ? "\nDiawasi oleh: " . $position->indirectSupervisor->title : '');
-
-            $data[] = [$node, $parent, $tooltip];
-
+        // Fetch indirect supervisor relationships from the database
+        $indirectSupervisors = Position::whereNotNull('indirect_supervisor_id')->get();
+        foreach ($indirectSupervisors as $position) {
             if ($position->indirect_supervisor_id) {
-                $indirectLinks[] = [
+                $data['indirectLinks'][] = [
                     'from' => (string) $position->indirect_supervisor_id,
                     'to' => (string) $position->id,
-                    'style' => 'dashed'
                 ];
             }
         }
-        return ['nodes' => $data, 'indirectLinks' => $indirectLinks];
+        return $data;
     }
 
     /**
