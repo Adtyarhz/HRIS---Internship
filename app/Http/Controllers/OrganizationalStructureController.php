@@ -50,12 +50,18 @@ class OrganizationalStructureController extends Controller
             'title' => 'required|string|max:255|unique:positions,title',
             'parent_id' => 'nullable|exists:positions,id',
             'indirect_supervisor_id' => 'nullable|exists:positions,id',
+            'depth' => 'nullable|integer|min:0', // Validasi untuk depth manual
         ]);
 
-        $depth = 0;
-        if ($request->filled('parent_id')) {
-            $parentPosition = Position::find($request->parent_id);
-            $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+        // Prioritaskan depth manual jika diberikan, jika tidak, hitung dari parent.
+        if ($request->filled('depth')) {
+            $depth = $validatedData['depth'];
+        } else {
+            $depth = 0; // Default depth
+            if ($request->filled('parent_id')) {
+                $parentPosition = Position::find($request->parent_id);
+                $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+            }
         }
 
         DB::beginTransaction();
@@ -97,12 +103,18 @@ class OrganizationalStructureController extends Controller
             'title' => ['required', 'string', 'max:255', Rule::unique('positions')->ignore($position->id)],
             'parent_id' => ['nullable', 'exists:positions,id', Rule::notIn(array_merge([$position->id], $descendantIds))],
             'indirect_supervisor_id' => ['nullable', 'exists:positions,id'],
+            'depth' => 'nullable|integer|min:0', // Validasi untuk depth manual
         ]);
 
-        $depth = 0;
-        if ($request->filled('parent_id')) {
-            $parentPosition = Position::find($request->parent_id);
-            $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+        // Prioritaskan depth manual jika diberikan, jika tidak, hitung dari parent.
+        if ($request->filled('depth')) {
+            $depth = $validatedData['depth'];
+        } else {
+            $depth = 0; // Default depth
+            if ($request->filled('parent_id')) {
+                $parentPosition = Position::find($request->parent_id);
+                $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+            }
         }
 
         DB::beginTransaction();
@@ -113,6 +125,7 @@ class OrganizationalStructureController extends Controller
                 'indirect_supervisor_id' => $validatedData['indirect_supervisor_id'],
                 'depth' => $depth,
             ]);
+            // Selalu perbarui depth anak-anak setelah parent diubah
             $this->updateChildrenDepth($position, $depth);
             DB::commit();
             return redirect()->route('organization.structure.index')->with('success', 'Jabatan berhasil diperbarui.');
@@ -134,6 +147,7 @@ class OrganizationalStructureController extends Controller
         DB::beginTransaction();
         try {
             foreach ($position->children as $child) {
+                // Saat parent dihapus, anak-anaknya menjadi root level dengan depth 0
                 $child->update(['parent_id' => null, 'depth' => 0]);
                 $this->updateChildrenDepth($child, 0);
             }
@@ -158,16 +172,15 @@ class OrganizationalStructureController extends Controller
                 'id' => (string) $position->id,
                 'title' => $position->title,
                 'parent_id' => $position->parent_id ? (string) $position->parent_id : null,
+                'depth' => $position->depth, // <-- Menambahkan data depth untuk D3
                 'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
                 'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
-                'coordinates' => $position->getCoordinatesAttribute(),
-                'tooltip' => "Jabatan: {$position->title}" .
+                'tooltip' => "Jabatan: {$position->title}\nKedalaman: {$position->depth}" .
                     ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
                     ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
             ];
         }
 
-        // Fetch indirect supervisor relationships from the database
         $indirectSupervisors = Position::whereNotNull('indirect_supervisor_id')->get();
         foreach ($indirectSupervisors as $position) {
             if ($position->indirect_supervisor_id) {
@@ -186,13 +199,13 @@ class OrganizationalStructureController extends Controller
     private function getDescendantIds(Position $position): array
     {
         $ids = [];
-        $children = $position->children;
-        foreach ($children as $child) {
+        foreach ($position->children as $child) {
             $ids[] = $child->id;
             $ids = array_merge($ids, $this->getDescendantIds($child));
         }
         return $ids;
     }
+
     /**
      * Memperbarui depth anak-anak secara rekursif.
      */
