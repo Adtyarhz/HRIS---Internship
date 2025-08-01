@@ -78,87 +78,105 @@ class RecruitmentProgressController extends Controller
         ]);
     }
 
-    public function stageEdit(Applicant $applicant, string $stage)
-    {
-        if (!in_array($stage, $this->stages)) {
-            abort(404);
-        }
+   public function stageEdit(Applicant $applicant, string $stage)
+{
+    if (!in_array($stage, $this->stages)) {
+        abort(404);
+    }
 
-        $currentIndex = array_search($stage, $this->stages);
+    // Validasi role berdasarkan stage
+    if (!$this->canEditStage($stage, auth()->user()->role)) {
+        abort(403, 'Anda tidak memiliki izin untuk mengakses tahap ini.');
+    }
 
-        if ($currentIndex > 0) {
-            $previousStage = $this->stages[$currentIndex - 1];
-            $previousProgress = RecruitmentProgress::where('applicant_id', $applicant->id)
-                ->where('stage', $previousStage)
-                ->first();
+    $currentIndex = array_search($stage, $this->stages);
 
-            if (!$previousProgress || $previousProgress->offering_status !== 'accepted') {
-                return redirect()->back()->with('error', 'You must complete the previous stage and mark it as accepted.');
-            }
-        }
-
-        $progress = RecruitmentProgress::firstOrNew([
-            'applicant_id' => $applicant->id,
-            'stage' => $stage
-        ]);
-
-        // Ambil contract_type dari CV Screening jika stage bukan cv_screening
-        $cvProgress = RecruitmentProgress::where('applicant_id', $applicant->id)
-            ->where('stage', 'cv_screening')
+    if ($currentIndex > 0) {
+        $previousStage = $this->stages[$currentIndex - 1];
+        $previousProgress = RecruitmentProgress::where('applicant_id', $applicant->id)
+            ->where('stage', $previousStage)
             ->first();
 
-        $contractType = $cvProgress->contract_type ?? null;
-
-        return view('recruitment_progress.edit', compact('applicant', 'progress', 'stage', 'contractType'));
+        if (!$previousProgress || $previousProgress->offering_status !== 'accepted') {
+            return redirect()->back()->with('error', 'Anda harus menyelesaikan tahap sebelumnya dan menandainya sebagai accepted.');
+        }
     }
+
+    $progress = RecruitmentProgress::firstOrNew([
+        'applicant_id' => $applicant->id,
+        'stage' => $stage
+    ]);
+
+    // Ambil contract_type dari CV Screening jika stage bukan cv_screening
+    $cvProgress = RecruitmentProgress::where('applicant_id', $applicant->id)
+        ->where('stage', 'cv_screening')
+        ->first();
+
+    $contractType = $cvProgress->contract_type ?? null;
+
+    return view('recruitment_progress.edit', compact('applicant', 'progress', 'stage', 'contractType'));
+}
 
     public function stageUpdate(Request $request, Applicant $applicant)
-    {
-        $validated = $request->validate([
-            'stage' => 'required|string|in:' . implode(',', $this->stages),
-            'offering_status' => 'required|string|in:accepted,rejected,in_progress',
-            'status_date' => 'required|date',
-            'notes' => 'nullable|string',
-            'rejected_reason' => 'nullable|required_if:offering_status,rejected|string',
-            'contract_type' => 'nullable|string',
-            'test_result' => 'nullable|string',
-            'score' => 'nullable|string',
-            'slik_recap' => 'nullable|string',
-            'result_file' => 'nullable|file|mimes:pdf,doc,docx',
-        ]);
+{
+    $validated = $request->validate([
+        'stage' => 'required|string|in:' . implode(',', $this->stages),
+        'offering_status' => 'required|string|in:accepted,rejected,in_progress',
+        'status_date' => 'required|date',
+        'notes' => 'nullable|string',
+        'rejected_reason' => 'nullable|required_if:offering_status,rejected|string',
+        'contract_type' => 'nullable|string',
+        'test_result' => 'nullable|string',
+        'score' => 'nullable|string',
+        'slik_recap' => 'nullable|string',
+        'result_file' => 'nullable|file|mimes:pdf,doc,docx',
+    ]);
 
-        $stage = $validated['stage'];
+    $stage = $validated['stage'];
 
-        // Handle file upload
-        if ($request->hasFile('result_file')) {
-            $file = $request->file('result_file');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $validated['result_file'] = $file->storeAs('result_files', $filename, 'public');
-        }
-
-        // Contract type hanya bisa diisi di cv_screening
-        if ($stage !== 'cv_screening') {
-            $cvScreening = RecruitmentProgress::where('applicant_id', $applicant->id)
-                ->where('stage', 'cv_screening')
-                ->first();
-
-            $validated['contract_type'] = $cvScreening->contract_type ?? null;
-        }
-
-        // slik_recap hanya bisa disimpan jika di stage hc_interview
-        if ($stage !== 'hc_interview') {
-            unset($validated['slik_recap']);
-        }
-
-        RecruitmentProgress::updateOrCreate(
-            [
-                'applicant_id' => $applicant->id,
-                'stage' => $stage
-            ],
-            array_merge($validated, ['applicant_id' => $applicant->id])
-        );
-
-        return redirect()->route('recruitment.stage.show', [$applicant->id, $stage])
-            ->with('success', 'Progress has updated.');
+    // Validasi role
+    if (!$this->canEditStage($stage, auth()->user()->role)) {
+        abort(403, 'Anda tidak memiliki izin untuk memperbarui tahap ini.');
     }
+
+    // File upload
+    if ($request->hasFile('result_file')) {
+        $file = $request->file('result_file');
+        $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+        $validated['result_file'] = $file->storeAs('result_files', $filename, 'public');
+    }
+
+    if ($stage !== 'cv_screening') {
+        $cvScreening = RecruitmentProgress::where('applicant_id', $applicant->id)
+            ->where('stage', 'cv_screening')
+            ->first();
+        $validated['contract_type'] = $cvScreening->contract_type ?? null;
+    }
+
+    if ($stage !== 'hc_interview') {
+        unset($validated['slik_recap']);
+    }
+
+    RecruitmentProgress::updateOrCreate(
+        ['applicant_id' => $applicant->id, 'stage' => $stage],
+        array_merge($validated, ['applicant_id' => $applicant->id])
+    );
+
+    return redirect()->route('recruitment.stage.show', [$applicant->id, $stage])
+        ->with('success', 'Progress berhasil diperbarui.');
+}
+private function canEditStage(string $stage, string $role): bool
+{
+    $permissions = [
+        'cv_screening' => ['superadmin', 'hc'],
+        'general_knowledge_test' => ['superadmin', 'hc'],
+        'user_assessment' => ['superadmin', 'manager', 'section_head'],
+        'hc_interview' => ['superadmin', 'hc'],
+        'bod_interview' => ['superadmin', 'direksi', 'hc'],
+        'offering_letter' => ['superadmin','hc'],
+    ];
+
+    return in_array($role, $permissions[$stage] ?? []);
+}
+
 }

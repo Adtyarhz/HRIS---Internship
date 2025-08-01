@@ -31,7 +31,8 @@ public function index(Request $request)
     $user = auth()->user();
 
     // Jika superadmin, lihat semua karyawan aktif
-    if ($user->role === 'superadmin') {
+    if (in_array($user->role, ['superadmin', 'hc']))
+ {
         $query = Employee::where('status', 'Aktif');
     } else {
         // Jika user biasa, hanya lihat data karyawan miliknya (user_id)
@@ -79,7 +80,7 @@ public function index(Request $request)
     $user = auth()->user();
 
     // Cek role superadmin vs user biasa
-    if ($user->role === 'superadmin') {
+    if (in_array($user->role, ['superadmin', 'hc'])){
         $query = Employee::where('status', 'Aktif');
     } else {
         $query = Employee::where('status', 'Aktif')
@@ -244,77 +245,93 @@ public function index(Request $request)
      * Show the form for editing the specified resource.
      */
     public function edit(Employee $employee)
-    {
-        $divisions = Division::orderBy('name')->get();
-        $positions = Position::orderBy('title')->get();
-        $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
-        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
+{
+    $user = auth()->user();
+
+    // Bukan superadmin -> hanya bisa edit milik sendiri
+   if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+        abort(403, 'Anda tidak memiliki akses untuk mengedit data ini.');
     }
+
+    $divisions = Division::orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+    $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
+
+    return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
+}
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Employee $employee)
-    {
-        $validatedData = $request->validate([
-            'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-            'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-            'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-            'full_name' => 'required|string|max:100',
-            'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
-            'religion' => 'required|string|max:50',
-            'birth_place' => 'required|string|max:50',
-            'birth_date' => 'required|date',
-            'marital_status' => ['required', Rule::in(['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])],
-            'dependents' => 'required|integer|min:0',
-            'ktp_address' => 'required|string',
-            'current_address' => 'required|string',
-            'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
-            'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
-            'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
-            'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
-            'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
-            'hire_date' => 'required|date',
-            'separation_date' => 'nullable|date|after_or_equal:hire_date',
-            'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'division_id' => 'nullable|exists:divisions,id',
-            'position_id' => 'nullable|exists:positions,id',
-            'user_id' => ['nullable', 'exists:users,id', Rule::unique('employees')->ignore($employee->id)],
-        ]);
+{
+    $user = auth()->user();
 
-        try {
-            DB::beginTransaction();
-
-            if ($request->hasFile('cv_file')) {
-                if ($employee->cv_file) {
-                    Storage::disk('public')->delete($employee->cv_file);
-                }
-
-                $file = $request->file('cv_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
-            }
-
-            if ($request->hasFile('photo')) {
-                if ($employee->photo) {
-                    Storage::disk('public')->delete($employee->photo);
-                }
-
-                $file = $request->file('photo');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
-            }
-
-            $employee->update($validatedData);
-
-            DB::commit();
-            return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
-        }
+    // Bukan superadmin -> hanya bisa update milik sendiri
+    if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+        abort(403, 'Anda tidak memiliki akses untuk mengupdate data ini.');
     }
+
+    // Validasi seperti sebelumnya
+    $validatedData = $request->validate([
+        'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+        'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+        'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+        'full_name' => 'required|string|max:100',
+        'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
+        'religion' => 'required|string|max:50',
+        'birth_place' => 'required|string|max:50',
+        'birth_date' => 'required|date',
+        'marital_status' => ['required', Rule::in(['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])],
+        'dependents' => 'required|integer|min:0',
+        'ktp_address' => 'required|string',
+        'current_address' => 'required|string',
+        'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
+        'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
+        'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
+        'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
+        'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
+        'hire_date' => 'required|date',
+        'separation_date' => 'nullable|date|after_or_equal:hire_date',
+        'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'division_id' => 'nullable|exists:divisions,id',
+        'position_id' => 'nullable|exists:positions,id',
+        'user_id' => ['nullable', 'exists:users,id', Rule::unique('employees')->ignore($employee->id)],
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        if ($request->hasFile('cv_file')) {
+            if ($employee->cv_file) {
+                Storage::disk('public')->delete($employee->cv_file);
+            }
+
+            $file = $request->file('cv_file');
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
+        }
+
+        if ($request->hasFile('photo')) {
+            if ($employee->photo) {
+                Storage::disk('public')->delete($employee->photo);
+            }
+
+            $file = $request->file('photo');
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
+        }
+
+        $employee->update($validatedData);
+
+        DB::commit();
+       return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
+    }
+}
 
     /**
      * Remove the specified resource from storage.

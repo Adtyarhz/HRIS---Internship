@@ -151,9 +151,15 @@
     <h2>Interview Schedules of {{ $applicant->full_name }}</h2>
 </div>
 
+@php
+    $userRole = Auth::user()->role;
+@endphp
+
+@if(in_array($userRole, ['superadmin', 'hc']))
 <div style="text-align: right; margin-bottom: 1rem;">
     <a href="{{ route('interview-schedule.create', $applicant->id) }}" class="btn-add">+ Add Interview Schedule</a>
 </div>
+@endif
 <table class="interview-table">
     <thead>
         <tr>

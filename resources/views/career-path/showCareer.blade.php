@@ -60,11 +60,17 @@
             <h1 class="page-title">
                 Employee Career
             </h1>
-            <div class="page-header-actions">
-                <a href="{{ route('career.index') }}" class="action-button btn-back">
-                    <i class="fas fa-arrow-left"></i> Back to Career Path
-                </a>
-            </div>
+            @php
+    $role = auth()->user()->role;
+@endphp
+
+@if (in_array($role, ['superadmin', 'direksi','hc']))
+    <div class="page-header-actions">
+        <a href="{{ route('career.index') }}" class="action-button btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Career Path
+        </a>
+    </div>
+@endif
         </div>
 
         @if (session('success'))

@@ -78,9 +78,13 @@ if ($isPolling && $polling) {
             <span class="iconify" data-icon="fa6-solid:triangle-exclamation" style="color: #FFC107; font-size: 20px;"></span>
                 <span>
                     Polling Has Ended, Download Poll?
-                    <a href='{{ route('announcement.export_polling', $announcement->id) }}' style="color: #C70000; text-decoration: underline">
-                    <span class="iconify" data-icon="fa6-solid:file-arrow-down" style="color: black; font-size: 20px;"></span>
-                    </a>
+                   @auth
+    @if (in_array(Auth::user()->role, ['superadmin', 'hc']))
+        <a href='{{ route('announcement.export_polling', $announcement->id) }}' style="color: #C70000; text-decoration: underline">
+            <span class="iconify" data-icon="fa6-solid:file-arrow-down" style="color: black; font-size: 20px;"></span>
+        </a>
+    @endif
+@endauth
                 </span>
             </div>
         @endif

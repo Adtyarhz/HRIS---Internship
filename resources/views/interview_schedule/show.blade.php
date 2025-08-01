@@ -116,14 +116,16 @@
         </div>
 
         <div class="action-buttons">
-            <a href="{{ route('interview-schedule.edit', [$applicant->id, $schedule->id]) }}" class="btn btn-warning">Edit</a>
-            <form action="{{ route('interview-schedule.destroy', [$applicant->id, $schedule->id]) }}" method="POST" class="d-inline">
-                @csrf
-                @method('DELETE')
-                <button onclick="return confirm('Are you sure?')" class="btn btn-danger">Delete</button>
-            </form>
-            <a href="{{ route('interview-schedule.index', $applicant->id) }}" class="btn btn-secondary">Back</a>
-        </div>
+    @if(in_array(Auth::user()->role, ['superadmin', 'hc']))
+        <a href="{{ route('interview-schedule.edit', [$applicant->id, $schedule->id]) }}" class="btn btn-warning">Edit</a>
+        <form action="{{ route('interview-schedule.destroy', [$applicant->id, $schedule->id]) }}" method="POST" class="d-inline">
+            @csrf
+            @method('DELETE')
+            <button onclick="return confirm('Are you sure?')" class="btn btn-danger">Delete</button>
+        </form>
+    @endif
+    <a href="{{ route('interview-schedule.index', $applicant->id) }}" class="btn btn-secondary">Back</a>
+</div>
     </div>
 </div>
 @endsection
