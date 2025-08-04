@@ -18,7 +18,6 @@ use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\RecruitmentProgressController;
 use App\Http\Controllers\InterviewScheduleController;
-use App\Http\Controllers\OrganizationalStructureController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -154,7 +153,4 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
     });
 
-    Route::resource('organization/structure', OrganizationalStructureController::class)
-        ->parameters(['structure' => 'position'])
-        ->names('organization.structure');
 });
