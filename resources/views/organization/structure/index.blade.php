@@ -160,6 +160,20 @@
                 <p>Belum ada data jabatan untuk ditampilkan. Silakan tambahkan jabatan pertama.</p>
             </div>
         @endif
+
+        {{-- Modal Detail for Organizational Node --}}
+        @foreach ($chartData['nodes'] as $node)
+            @include('organization.components.detail-modal', [
+                'modalId' => 'position-'.$node['id'],
+                'position' => [
+                    'title' => $node['title'],
+                    'parent' => optional(collect($chartData['nodes'])->firstWhere('id', $node['parent_id']))['title'] ?? null,
+                    'indirect_supervisor' => $node['indirect_supervisor'] ?? null,
+                    'employees' => $node['employees'] ?? [],
+                ],
+                'editRoute' => route('organization.structure.edit', $node['id']),
+            ])
+        @endforeach
     </div>
 @endsection
 
@@ -390,7 +404,8 @@
                     </div>
                 `)
                 .on("click", (event, d) => {
-                    window.location.href = "{{ route('organization.structure.show', ['position' => ':id']) }}".replace(':id', d.id);
+                    const modalId = `position-${d.id}`;
+                    showDetailModal(modalId);
                 });
 
             // --- Tooltip Setup ---
