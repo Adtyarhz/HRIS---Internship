@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
 @section('title', 'Struktur Organisasi')
-@section('header_icon', 'icon-park-outline--branch-one')
-@section('content_header', 'Struktur Organisasi')
+@section('header_icon', 'fluent--organization-24-regular-01')
+@section('content_header', 'Organization Structure')
 
 @push('styles')
     <style>
-        .node rect {
+        .organization-structure .node rect {
             fill: #FFFDEF;
             stroke: #7E1F0E;
             stroke-width: 2px;
@@ -14,24 +14,24 @@
             ry: 12px;
         }
 
-        .node:hover rect {
+        .organization-structure .node:hover rect {
             fill: #edead4;
         }
 
-        .link {
+        .organization-structure .link {
             fill: none;
             stroke: #000000;
             stroke-width: 1px;
         }
 
-        .indirect-link {
+        .organization-structure .indirect-link {
             fill: none;
             stroke: #d9534f;
             stroke-width: 2px;
             stroke-dasharray: 5, 5;
         }
 
-        .node-content {
+        .organization-structure .node-content {
             cursor: pointer;
             text-align: center;
             display: flex;
@@ -43,12 +43,12 @@
             box-sizing: border-box;
             font-size: 14px;
         }
-        
-        .node-content strong {
+
+        .organization-structure .node-content strong {
             font-size: 1em;
         }
 
-        .node-content .employee-name {
+        .organization-structure .node-content .employee-name {
             font-size: 0.85em;
             color: #555;
             margin-top: 4px;
@@ -56,7 +56,7 @@
             word-wrap: break-word;
         }
 
-        .node-content .supervisor-info {
+        .organization-structure .node-content .supervisor-info {
             font-size: 0.75em;
             color: #777;
             margin-top: 2px;
@@ -75,24 +75,24 @@
             z-index: 1000;
         }
 
-        .card-body {
+        .organization-structure .card-body {
             padding: 1rem;
             background-color: #FEFEF9;
         }
 
-        .card-tools {
+        .organization-structure .card-tools {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 1rem;
         }
 
-        svg {
+        .organization-structure svg {
             display: block;
             width: 100%;
             height: auto;
         }
 
-        .btn-add {
+        .organization-structure .btn-add {
             background-color: #9A3B3B;
             color: white;
             padding: 10px 20px;
@@ -102,12 +102,12 @@
             transition: background-color 0.3s;
         }
 
-        .btn-add:hover {
+        .organization-structure .btn-add:hover {
             background-color: #7a2f2f;
             color: white;
         }
 
-        .org-title {
+        .organization-structure .org-title {
             position: relative;
             width: 100%;
             max-width: 1312px;
@@ -123,16 +123,18 @@
         }
 
         @media (max-width: 1024px) {
-            .node-content {
+            .organization-structure .node-content {
                 font-size: 12px;
             }
         }
+
         @media (max-width: 768px) {
-            .org-title {
+            .organization-structure .org-title {
                 font-size: 24px;
                 line-height: 36px;
             }
-            .node-content {
+
+            .organization-structure .node-content {
                 font-size: 11px;
             }
         }
@@ -140,40 +142,48 @@
 @endpush
 
 @section('content')
-    <div class="card-body">
-        <div class="card-tools">
-            <a href="{{ route('organization.structure.create') }}" class="btn-add">
-                <i class="fas fa-plus" style="padding-right: 10px"></i>Add Position
-            </a>
-        </div>
-
-        <div class="org-title">
-            ORGANIZATIONAL STRUCTURE OF BPR PERDANA DAYA NUSANTARA
-        </div>
-
-        @if (!empty($chartData) && !empty($chartData['nodes']))
-            <div id="chart_div">
-                <svg></svg>
+    <div class="organization-structure">
+        <div class="card-body">
+            <div class="card-tools">
+                @php $role = auth()->user()->role; @endphp
+                @if (in_array($role, ['superadmin', 'hc']))
+                    <a href="{{ route('organization.structure.create') }}" class="btn-add">
+                        <i class="fas fa-plus" style="padding-right: 10px"></i>Add Position
+                    </a>
+                @endif
             </div>
-        @else
-            <div class="text-center p-4">
-                <p>Belum ada data jabatan untuk ditampilkan. Silakan tambahkan jabatan pertama.</p>
-            </div>
-        @endif
 
-        {{-- Modal Detail for Organizational Node --}}
-        @foreach ($chartData['nodes'] as $node)
-            @include('organization.components.detail-modal', [
-                'modalId' => 'position-'.$node['id'],
-                'position' => [
-                    'title' => $node['title'],
-                    'parent' => optional(collect($chartData['nodes'])->firstWhere('id', $node['parent_id']))['title'] ?? null,
-                    'indirect_supervisor' => $node['indirect_supervisor'] ?? null,
-                    'employees' => $node['employees'] ?? [],
-                ],
-                'editRoute' => route('organization.structure.edit', $node['id']),
-            ])
-        @endforeach
+            <div class="org-title">
+                ORGANIZATIONAL STRUCTURE OF BPR PERDANA DAYA NUSANTARA
+            </div>
+
+            @if (!empty($chartData) && !empty($chartData['nodes']))
+                <div id="chart_div">
+                    <svg></svg>
+                </div>
+            @else
+                <div class="text-center p-4">
+                    <p>Belum ada data jabatan untuk ditampilkan. Silakan tambahkan jabatan pertama.</p>
+                </div>
+            @endif
+
+            {{-- Modal Detail for Organizational Node --}}
+            @foreach ($chartData['nodes'] as $node)
+                @include('organization.components.detail-modal', [
+                    'modalId' => 'position-' . $node['id'],
+                    'position' => [
+                        'title' => $node['title'],
+                        'parent' =>
+                            optional(collect($chartData['nodes'])->firstWhere('id', $node['parent_id']))[
+                                'title'
+                            ] ?? null,
+                        'indirect_supervisor' => $node['indirect_supervisor'] ?? null,
+                        'employees' => $node['employees'] ?? [],
+                    ],
+                    'editRoute' => route('organization.structure.edit', $node['id']),
+                ])
+            @endforeach
+        </div>
     </div>
 @endsection
 
@@ -196,7 +206,12 @@
                         nodeHeight: 90,
                         verticalSpacing: 130,
                         horizontalSpacing: 30,
-                        margin: { top: 40, right: 20, bottom: 40, left: 20 }
+                        margin: {
+                            top: 40,
+                            right: 20,
+                            bottom: 40,
+                            left: 20
+                        }
                     };
                 } else if (screenWidth < 1024) { // Tablet
                     return {
@@ -204,7 +219,12 @@
                         nodeHeight: 90,
                         verticalSpacing: 140,
                         horizontalSpacing: 40,
-                        margin: { top: 60, right: 30, bottom: 40, left: 30 }
+                        margin: {
+                            top: 60,
+                            right: 30,
+                            bottom: 40,
+                            left: 30
+                        }
                     };
                 } else { // Desktop
                     return {
@@ -212,13 +232,24 @@
                         nodeHeight: 100,
                         verticalSpacing: 150,
                         horizontalSpacing: 50,
-                        margin: { top: 80, right: 40, bottom: 40, left: 40 }
+                        margin: {
+                            top: 80,
+                            right: 40,
+                            bottom: 40,
+                            left: 40
+                        }
                     };
                 }
             }
 
             const config = getResponsiveConfig();
-            const { nodeWidth, nodeHeight, verticalSpacing, horizontalSpacing, margin } = config;
+            const {
+                nodeWidth,
+                nodeHeight,
+                verticalSpacing,
+                horizontalSpacing,
+                margin
+            } = config;
 
             // --- Data Augmentation with Dummy Nodes ---
             const augmentedNodes = [];
@@ -226,18 +257,28 @@
             const nodeMap = new Map(chartData.nodes.map(n => [n.id, n]));
 
             chartData.nodes.forEach(node => {
-                const finalNode = { ...node };
+                const finalNode = {
+                    ...node
+                };
                 if (node.parent_id) {
                     const parentNode = nodeMap.get(node.parent_id);
                     if (parentNode) {
-                        originalLinks.push({ sourceId: parentNode.id, targetId: node.id });
+                        originalLinks.push({
+                            sourceId: parentNode.id,
+                            targetId: node.id
+                        });
                         const depthDiff = node.depth - parentNode.depth;
                         if (depthDiff > 1) {
                             let lastParentId = parentNode.id;
                             for (let i = 1; i < depthDiff; i++) {
                                 const dummyDepth = parentNode.depth + i;
                                 const dummyId = `dummy-${parentNode.id}-${node.id}-${i}`;
-                                augmentedNodes.push({ id: dummyId, parent_id: lastParentId, depth: dummyDepth, isDummy: true });
+                                augmentedNodes.push({
+                                    id: dummyId,
+                                    parent_id: lastParentId,
+                                    depth: dummyDepth,
+                                    isDummy: true
+                                });
                                 lastParentId = dummyId;
                             }
                             finalNode.parent_id = lastParentId;
@@ -249,7 +290,7 @@
 
             // --- D3 Hierarchy Setup on Augmented Data ---
             const root = d3.stratify().id(d => d.id).parentId(d => d.parent_id)(augmentedNodes);
-            
+
             // --- Simplified and Consistent Layout Algorithm ---
             let nextX = 0;
             root.eachAfter(node => {
@@ -267,9 +308,13 @@
                         const leftNode = node.children[i];
                         const rightNode = node.children[i + 1];
                         let rightmost = leftNode.x;
-                        leftNode.each(n => { rightmost = Math.max(rightmost, n.x); });
+                        leftNode.each(n => {
+                            rightmost = Math.max(rightmost, n.x);
+                        });
                         let leftmost = rightNode.x;
-                        rightNode.each(n => { leftmost = Math.min(leftmost, n.x); });
+                        rightNode.each(n => {
+                            leftmost = Math.min(leftmost, n.x);
+                        });
                         const requiredShift = (rightmost - leftmost) + nodeWidth + horizontalSpacing;
                         if (requiredShift > 0) {
                             function shift(n, amount) {
@@ -294,7 +339,7 @@
                 source: root.find(n => n.id === link.sourceId),
                 target: root.find(n => n.id === link.targetId),
             })).filter(l => l.source && l.target);
-            
+
             const realNodes = descendants.filter(d => !d.data.isDummy);
 
             descendants.forEach(n => {
@@ -302,7 +347,10 @@
             });
 
             // --- Dynamic SVG Sizing using viewBox ---
-            let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+            let xMin = Infinity,
+                xMax = -Infinity,
+                yMin = Infinity,
+                yMax = -Infinity;
             realNodes.forEach(d => {
                 xMin = Math.min(xMin, d.x);
                 xMax = Math.max(xMax, d.x);
@@ -318,7 +366,7 @@
             svg.selectAll("*").remove();
 
             svg.attr("viewBox", `0 0 ${viewBoxWidth} ${viewBoxHeight}`)
-               .attr("preserveAspectRatio", "xMidYMin meet");
+                .attr("preserveAspectRatio", "xMidYMin meet");
 
             const g = svg.append("g")
                 .attr("transform", `translate(${-xMin + margin.left + nodeWidth / 2}, ${margin.top})`);
@@ -332,12 +380,14 @@
                 const childXCoords = links.map(l => l.target.x);
                 const minX = d3.min(childXCoords);
                 const maxX = d3.max(childXCoords);
-                g.append("path").attr("class", "link").attr("d", `M${sourceNode.x},${sourceNode.y + nodeHeight / 2} V${junctionY}`);
+                g.append("path").attr("class", "link").attr("d",
+                    `M${sourceNode.x},${sourceNode.y + nodeHeight / 2} V${junctionY}`);
                 if (links.length > 1) {
                     g.append("path").attr("class", "link").attr("d", `M${minX},${junctionY} H${maxX}`);
                 }
                 links.forEach(link => {
-                    g.append("path").attr("class", "link").attr("d", `M${link.target.x},${junctionY} V${link.target.y - nodeHeight / 2}`);
+                    g.append("path").attr("class", "link").attr("d",
+                        `M${link.target.x},${junctionY} V${link.target.y - nodeHeight / 2}`);
                 });
             });
 
@@ -346,12 +396,19 @@
                 lanes: {},
                 getLane: function(startX, endX, startY) {
                     let y = startY;
-                    const x1 = Math.min(startX, endX), x2 = Math.max(startX, endX);
+                    const x1 = Math.min(startX, endX),
+                        x2 = Math.max(startX, endX);
                     while (true) {
                         const occupiedSpans = this.lanes[y];
-                        if (!occupiedSpans) { this.lanes[y] = [[x1, x2]]; return y; }
+                        if (!occupiedSpans) {
+                            this.lanes[y] = [
+                                [x1, x2]
+                            ];
+                            return y;
+                        }
                         if (!occupiedSpans.some(span => (x1 <= span[1] && x2 >= span[0]))) {
-                            this.lanes[y].push([x1, x2]); return y;
+                            this.lanes[y].push([x1, x2]);
+                            return y;
                         }
                         y -= 20;
                     }
