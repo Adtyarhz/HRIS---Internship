@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Position;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,8 @@ class OrganizationalStructureController extends Controller
      */
     public function show(Position $position)
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         $position->load([
             'employees' => function ($query) {
                 $query->where('status', 'Aktif')->with('division');
@@ -37,6 +40,8 @@ class OrganizationalStructureController extends Controller
      */
     public function create()
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         $positions = Position::orderBy('title')->get();
         return view('organization.structure.create', compact('positions'));
     }
@@ -46,14 +51,15 @@ class OrganizationalStructureController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         $validatedData = $request->validate([
             'title' => 'required|string|max:255|unique:positions,title',
             'parent_id' => 'nullable|exists:positions,id',
             'indirect_supervisor_id' => 'nullable|exists:positions,id',
-            'depth' => 'nullable|integer|min:0', // Validasi untuk depth manual
+            'depth' => 'nullable|integer|min:0',
         ]);
 
-        // Prioritaskan depth manual jika diberikan, jika tidak, hitung dari parent.
         if ($request->filled('depth')) {
             $depth = $validatedData['depth'];
         } else {
@@ -85,6 +91,8 @@ class OrganizationalStructureController extends Controller
      */
     public function edit(Position $position)
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         $descendantIds = $this->getDescendantIds($position);
         $possibleParents = Position::where('id', '!=', $position->id)
             ->whereNotIn('id', $descendantIds)
@@ -98,19 +106,20 @@ class OrganizationalStructureController extends Controller
      */
     public function update(Request $request, Position $position)
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         $descendantIds = $this->getDescendantIds($position);
         $validatedData = $request->validate([
             'title' => ['required', 'string', 'max:255', Rule::unique('positions')->ignore($position->id)],
             'parent_id' => ['nullable', 'exists:positions,id', Rule::notIn(array_merge([$position->id], $descendantIds))],
             'indirect_supervisor_id' => ['nullable', 'exists:positions,id'],
-            'depth' => 'nullable|integer|min:0', // Validasi untuk depth manual
+            'depth' => 'nullable|integer|min:0',
         ]);
 
-        // Prioritaskan depth manual jika diberikan, jika tidak, hitung dari parent.
         if ($request->filled('depth')) {
             $depth = $validatedData['depth'];
         } else {
-            $depth = 0; // Default depth
+            $depth = 0;
             if ($request->filled('parent_id')) {
                 $parentPosition = Position::find($request->parent_id);
                 $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
@@ -125,7 +134,6 @@ class OrganizationalStructureController extends Controller
                 'indirect_supervisor_id' => $validatedData['indirect_supervisor_id'],
                 'depth' => $depth,
             ]);
-            // Selalu perbarui depth anak-anak setelah parent diubah
             $this->updateChildrenDepth($position, $depth);
             DB::commit();
             return redirect()->route('organization.structure.index')->with('success', 'Jabatan berhasil diperbarui.');
@@ -140,6 +148,8 @@ class OrganizationalStructureController extends Controller
      */
     public function destroy(Position $position)
     {
+        $this->authorizeRole(['superadmin', 'hc']);
+
         if ($position->employees()->exists()) {
             return back()->with('error', 'Jabatan tidak dapat dihapus karena masih ditempati karyawan.');
         }
@@ -147,7 +157,6 @@ class OrganizationalStructureController extends Controller
         DB::beginTransaction();
         try {
             foreach ($position->children as $child) {
-                // Saat parent dihapus, anak-anaknya menjadi root level dengan depth 0
                 $child->update(['parent_id' => null, 'depth' => 0]);
                 $this->updateChildrenDepth($child, 0);
             }
@@ -160,42 +169,73 @@ class OrganizationalStructureController extends Controller
         }
     }
 
-    /**
-     * Menyiapkan data untuk D3.js chart dengan koordinat dan tooltip.
-     */
-    private function getChartData($positions)
+    private function authorizeRole(array $roles)
     {
-        $data = ['nodes' => [], 'indirectLinks' => []];
-
-        foreach ($positions as $position) {
-            $data['nodes'][] = [
-                'id' => (string) $position->id,
-                'title' => $position->title,
-                'parent_id' => $position->parent_id ? (string) $position->parent_id : null,
-                'depth' => $position->depth, // <-- Menambahkan data depth untuk D3
-                'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
-                'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
-                // 'tooltip' => "Jabatan: {$position->title}" .
-                //     ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
-                //     ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
-            ];
+        if (!in_array(Auth::user()->role, $roles)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
-
-        $indirectSupervisors = Position::whereNotNull('indirect_supervisor_id')->get();
-        foreach ($indirectSupervisors as $position) {
-            if ($position->indirect_supervisor_id) {
-                $data['indirectLinks'][] = [
-                    'from' => (string) $position->indirect_supervisor_id,
-                    'to' => (string) $position->id,
-                ];
-            }
-        }
-        return $data;
     }
 
     /**
-     * Mendapatkan ID turunan secara rekursif untuk validasi.
+     * Menyiapkan data untuk D3.js chart dengan "Super Root" jika diperlukan.
      */
+    private function getChartData($positions)
+    {
+        $nodes = [];
+        foreach ($positions as $position) {
+            $nodes[] = [
+                'id' => (string) $position->id,
+                'title' => $position->title,
+                'parent_id' => $position->parent_id ? (string) $position->parent_id : null,
+                'depth' => $position->depth,
+                'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
+                'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
+                // RESTORED: Tooltip data is generated here
+                'tooltip' => "Jabatan: {$position->title}" .
+                    ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
+                    ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
+            ];
+        }
+
+        // NEW: Super Root Logic to handle multiple parentless nodes
+        $roots = array_filter($nodes, fn($node) => $node['parent_id'] === null);
+
+        if (count($roots) > 1) {
+            $superRootId = 'super-root-0';
+            $superRoot = [
+                'id' => $superRootId,
+                'parent_id' => null,
+                'depth' => -1,
+                'title' => 'Virtual Root',
+                'isSuperRoot' => true, // Flag for JS
+                'employees' => [],
+                'indirect_supervisor' => null,
+                'tooltip' => ''
+            ];
+            array_unshift($nodes, $superRoot);
+
+            // Re-parent the original roots to the new super root
+            foreach ($nodes as &$node) {
+                if ($node['parent_id'] === null && $node['id'] !== $superRootId) {
+                    $node['parent_id'] = $superRootId;
+                }
+            }
+            unset($node);
+        }
+
+        // Prepare indirect links
+        $indirectLinks = [];
+        $indirectSupervisors = $positions->whereNotNull('indirect_supervisor_id');
+        foreach ($indirectSupervisors as $position) {
+            $indirectLinks[] = [
+                'from' => (string) $position->indirect_supervisor_id,
+                'to' => (string) $position->id,
+            ];
+        }
+
+        return ['nodes' => $nodes, 'indirectLinks' => $indirectLinks];
+    }
+
     private function getDescendantIds(Position $position): array
     {
         $ids = [];
@@ -206,9 +246,6 @@ class OrganizationalStructureController extends Controller
         return $ids;
     }
 
-    /**
-     * Memperbarui depth anak-anak secara rekursif.
-     */
     private function updateChildrenDepth(Position $position, int $parentDepth): void
     {
         foreach ($position->children as $child) {
