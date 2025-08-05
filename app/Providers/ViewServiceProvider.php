@@ -18,12 +18,12 @@ class ViewServiceProvider extends ServiceProvider
             if ($user) {
                 switch ($user->role) {
                     case 'superadmin':
-                      $menu = [
+                        $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
                             ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
                             ['label' => 'Employee Request', 'route' => '#', 'icon' => 'charm:git-request'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
@@ -32,12 +32,12 @@ class ViewServiceProvider extends ServiceProvider
                         ];
                         break;
                     case 'hc':
-                         $menu = [
+                        $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
                             ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
                             ['label' => 'Employee Request', 'route' => '#', 'icon' => 'charm:git-request'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
@@ -51,7 +51,7 @@ class ViewServiceProvider extends ServiceProvider
                             $employeeId
                             ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
@@ -65,7 +65,7 @@ class ViewServiceProvider extends ServiceProvider
                             $employeeId
                             ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
@@ -76,12 +76,12 @@ class ViewServiceProvider extends ServiceProvider
                         ];
                         break;
                     case 'section_head':
-                       $menu = [
+                        $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
                             ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
@@ -97,7 +97,7 @@ class ViewServiceProvider extends ServiceProvider
                             $employeeId
                             ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
@@ -112,7 +112,7 @@ class ViewServiceProvider extends ServiceProvider
                             $employeeId
                             ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => '#', 'icon' => 'fluent:organization-24-regular'],
+                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
