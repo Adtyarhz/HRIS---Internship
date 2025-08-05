@@ -241,17 +241,28 @@
             </div>
         @endforeach
     </div>
+    @php
+    $permissions = [
+        'cv_screening' => ['superadmin', 'hc'],
+        'general_knowledge_test' => ['superadmin', 'hc'],
+        'user_assessment' => ['superadmin', 'manager', 'section_head', 'hc'],
+        'hc_interview' => ['superadmin', 'hc'],
+        'bod_interview' => ['superadmin','direksi', 'hc'],
+        'offering_letter' => ['superadmin', 'hc'],
+    ];
 
+    $canEdit = isset($permissions[$stage]) && in_array(Auth::user()->role, $permissions[$stage]);
+@endphp
     <!-- Stage Detail -->
     <div class="stage-content">
         @if ($progress)
-            @if ($progress->offering_status !== 'rejected')
-                <div class="edit-button-wrapper">
-                    <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                        <i class="fas fa-id-card"></i> Edit Recruitment Data
-                    </a>
-                </div>
-            @endif
+            @if ($progress && $progress->offering_status !== 'rejected' && $canEdit)
+    <div class="edit-button-wrapper">
+        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+            <i class="fas fa-id-card"></i> Edit Recruitment Data
+        </a>
+    </div>
+@endif
 
             <div class="stage-grid">
                 <div class="label">Recruitment Status:</div>
@@ -306,11 +317,13 @@
                 @endif
             </div>
         @else
-            <div class="edit-button-wrapper">
-                <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                    <i class="fas fa-id-card"></i> Fill Recruitment Data
-                </a>
-            </div>
+           @if (!$progress && $canEdit)
+    <div class="edit-button-wrapper">
+        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+            <i class="fas fa-id-card"></i> Fill Recruitment Data
+        </a>
+    </div>
+@endif
             <p class="text-center text-muted">No data available for this stage.</p>
         @endif
     </div>

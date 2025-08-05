@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HRIS Perdana</title>
+</head>
 <body style="margin: 0; padding: 0; overflow: hidden; font-family: 'Roboto', sans-serif">
     <div style="display: flex; height: 100vh; width: 100vw;">
 
@@ -62,16 +69,36 @@
         {{-- Login Title --}}
         <h2 style="text-align: center; font-size: 36px; font-weight: 800; font-family: Oswald, sans-serif; margin-bottom: 32px;">Login</h2>
 
+        {{-- Error Messages --}}
+        @if(session('error'))
+            <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+                {{ session('success') }}
+            </div>
+        @endif
+
         {{-- Login Form --}}
         <form method="POST" action="{{ route('login.submit') }}">
             @csrf
-            @if(session('error'))
-                <div class="alert alert-danger">{{ session('error') }}</div>
+            
+            @if ($errors->any())
+                <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
 
             <div class="mb-4" style="margin-bottom: 20px;">
-                <label for="username" style="font-size: 12px; color: #333; padding-left: 8px;">Username</label>
-                <input type="text" name="name" id="username" placeholder="Enter username"
+                <label for="login" style="font-size: 12px; color: #333; padding-left: 8px;">Username atau Email</label>
+                <input type="text" name="login" id="username" placeholder="Enter username" value="{{ old('name') }}"
                     style="width: 100%; background: #F2F2F2; border: 1px solid #E5E5E5; border-radius: 6px; height: 44px; padding: 0 14px; font-size: 14px; color: #333;" required>
             </div>
 
@@ -82,7 +109,7 @@
             </div>
 
             <button type="submit"
-                style="width: 100%; padding: 10px 24px; background: #9A3B3B; color: white; font-weight: 700; font-size: 14px; border-radius: 6px; border: none;">
+                style="width: 100%; padding: 10px 24px; background: #9A3B3B; color: white; font-weight: 700; font-size: 14px; border-radius: 6px; border: none; cursor: pointer;">
                 Sign in
             </button>
         </form>
@@ -95,3 +122,4 @@
 </div>
     </div>
 </body>
+</html>

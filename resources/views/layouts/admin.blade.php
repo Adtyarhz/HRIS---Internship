@@ -53,13 +53,24 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown user-menu">
                     <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                        <img src="https://placehold.co/160x160" class="user-image img-circle elevation-2"
-                            alt="User Image">
+                        @php
+                            $user = Auth::user();
+                            $employee = $user?->employee;
+                        @endphp
+
+                        <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
+                            class="user-image img-circle elevation-2" alt="User Image">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                         <!-- User image -->
                         <li class="user-header">
-                            <img src="https://placehold.co/160x160" class="img-circle elevation-2" alt="User Image">
+                            @php
+                                $user = Auth::user();
+                                $employee = $user?->employee;
+                            @endphp
+
+                            <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
+                                class="user-image img-circle elevation-2" alt="User Image">
                             <p>
                                 {{ Auth::user()->name ?? 'Admin User' }}
                                 <small>Member since {{ (Auth::user()->created_at ?? now())->format('M. Y') }}</small>
@@ -67,7 +78,19 @@
                         </li>
                         <!-- Menu Footer-->
                         <li class="user-footer">
-                            <a href="#" class="btn btn-default btn-flat">Profile</a>
+                            @php
+                                $user = Auth::user();
+                                $employee = $user?->employee;
+                                $isSuperadmin = $user && $user->role === 'superadmin';
+                            @endphp
+
+                            @if ($isSuperadmin)
+                                <a href="#" class="btn btn-default btn-flat" onclick="alert('Superadmin tidak memiliki data pribadi')">Profile</a>
+                            @elseif ($employee)
+                                <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-default btn-flat">Profile</a>
+                            @else
+                                <a href="#" class="btn btn-default btn-flat" onclick="alert('Data karyawan belum tersedia')">Profile</a>
+                            @endif
                             <a href="{{-- route('logout') --}}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                                 class="btn btn-default btn-flat float-right">Sign out</a>
@@ -88,21 +111,34 @@
                 <img src="{{ asset('img/logo.png') }}" alt="HRIS Logo" class="brand-image">
                 <div class="brand-text-wrapper">
                     <span class="brand-text brand-title">HRIS</span>
-                    <span class="brand-text brand-subtitle">Super Admin</span>
+                    <span class="brand-text brand-subtitle">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'User')) }}</span>
                 </div>
             </a>
             <div class="sidebar">
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-    @foreach ($menuItems ?? [] as $item)
+    @foreach ($menu ?? [] as $item)
         <li class="nav-item">
-            <a href="{{ $item['route'] === '#' ? '#' : route($item['route']) }}"
-               class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}">
-                <div class="nav-icon-text">
-                    <span class="{{ $item['icon'] ?? 'fa fa-circle' }}"></span>
-                    <p>{{ $item['label'] }}</p>
-                </div>
-            </a>
+            @php
+    $url = '#';
+    if ($item['route'] !== '#') {
+        try {
+            $url = isset($item['params']) 
+                ? route($item['route'], $item['params']) 
+                : route($item['route']);
+        } catch (Exception $e) {
+            $url = '#';
+        }
+    }
+@endphp
+<a href="{{ $url }}"
+   class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}"
+   @if($url === '#') onclick="alert('Fitur ini sedang dalam pengembangan')" @endif>
+    <div class="nav-icon-text d-flex align-items-center">
+        <span class="iconify mr-2" data-icon="{{ $item['icon'] ?? 'mdi:alert' }}" style="font-size: 18px;"></span>
+        <p class="mb-0">{{ $item['label'] }}</p>
+    </div>
+</a>
         </li>
     @endforeach
 </ul>

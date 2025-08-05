@@ -26,131 +26,172 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/employee/{id}/edit-login', [LoginController::class, 'editLogin'])->name('employees.data.edit_login');
 Route::post('/employee/{id}/update-login', [LoginController::class, 'updateLogin'])->name('employees.data.update_login');
 
-
 // === PROTECTED ROUTES ===
 Route::middleware('auth')->group(function () {
+    Route::post('/employees/{id}/reset-password', [LoginController::class, 'resetPassword'])->name('employees.reset_password');
 
     Route::get('/', function () {
         return redirect()->route('dashboard');
     });
 
-    // Employee tab: address
-    Route::get('employees/{employee}/address', [EmployeeController::class, 'editAddress'])->name('employees.address.edit');
-
-    // Employee tab: health
-    Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit'])->name('employees.health.edit');
-
-    // Employee CRUD
-    Route::resource('employees', EmployeeController::class);
-    Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
-
-    // Health Record
-    Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
-        Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
-        Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-        Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
-    });
-
-    // Work Experience
-    Route::prefix('employees/{employee}/work-experience')->name('employees.work-experience.')->group(function () {
-        Route::get('/', [WorkExperienceController::class, 'index'])->name('index');
-        Route::get('/create', [WorkExperienceController::class, 'create'])->name('create');
-        Route::post('/', [WorkExperienceController::class, 'store'])->name('store');
-        Route::get('/{workExperience}/edit', [WorkExperienceController::class, 'edit'])->name('edit');
-        Route::put('/{workExperience}', [WorkExperienceController::class, 'update'])->name('update');
-        Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy');
-    });
-
-    // Certifications
-    Route::prefix('employees/{employee}/certifications')->name('employees.certifications.')->group(function () {
-        Route::get('/', [CertificationController::class, 'index'])->name('index');
-        Route::get('/create', [CertificationController::class, 'create'])->name('create');
-        Route::post('/', [CertificationController::class, 'store'])->name('store');
-        Route::get('/{certification}/edit', [CertificationController::class, 'edit'])->name('edit');
-        Route::put('/{certification}', [CertificationController::class, 'update'])->name('update');
-        Route::delete('/{certification}', [CertificationController::class, 'destroy'])->name('destroy');
-        Route::delete('/{certification}/materials/{material}', [CertificationController::class, 'destroyMaterial'])->name('materials.destroy');
-    });
-
-    // Insurance
-    Route::prefix('employees/{employee}/insurance')->name('employees.insurance.')->group(function () {
-        Route::get('/', [InsuranceController::class, 'index'])->name('index');
-        Route::get('/create', [InsuranceController::class, 'create'])->name('create');
-        Route::post('/', [InsuranceController::class, 'store'])->name('store');
-        Route::get('/{insurance}/edit', [InsuranceController::class, 'edit'])->name('edit');
-        Route::put('/{insurance}', [InsuranceController::class, 'update'])->name('update');
-        Route::delete('/{insurance}', [InsuranceController::class, 'destroy'])->name('destroy');
-    });
-
-    // Education History
-    Route::prefix('employees/{employee}/educationhistory')->name('employees.educationhistory.')->group(function () {
-        Route::get('/', [EducationHistoryController::class, 'index'])->name('index');
-        Route::get('/create', [EducationHistoryController::class, 'create'])->name('create');
-        Route::post('/', [EducationHistoryController::class, 'store'])->name('store');
-        Route::get('/{educationHistory}/edit', [EducationHistoryController::class, 'edit'])->name('edit');
-        Route::put('/{educationHistory}', [EducationHistoryController::class, 'update'])->name('update');
-        Route::delete('/{educationHistory}', [EducationHistoryController::class, 'destroy'])->name('destroy');
-    });
-
-    // Training History
-    Route::prefix('employees/{employee}/training-histories')->name('employees.training-histories.')->group(function () {
-        Route::get('/', [TrainingHistoryController::class, 'index'])->name('index');
-        Route::get('/create', [TrainingHistoryController::class, 'create'])->name('create');
-        Route::post('/', [TrainingHistoryController::class, 'store'])->name('store');
-        Route::get('/{trainingHistory}/edit', [TrainingHistoryController::class, 'edit'])->name('edit');
-        Route::put('/{trainingHistory}', [TrainingHistoryController::class, 'update'])->name('update');
-        Route::delete('/{trainingHistory}', [TrainingHistoryController::class, 'destroy'])->name('destroy');
-        Route::delete('/{trainingHistory}/materials/{material}', [TrainingHistoryController::class, 'destroyMaterial'])->name('materials.destroy');
-    });
-
-    // Family Dependents
-    Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
-
-    // Career Path
-    Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
-    Route::get('employees/{employee}/career', [EmployeeController::class, 'showCareer'])->name('employees.showCareer');
-
-    // Career History
-    Route::resource('employees.career_histories', CareerHistoryController::class)
-        ->parameters(['career_histories' => 'careerHistory'])
-        ->except(['show']);
-
-    // Career Projection
-    Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
-        Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-        Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-        Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-    });
-
-    // Announcement
-    Route::resource('announcement', AnnouncementController::class);
-    Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
-    Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
-    Route::post('/announcements/{id}/vote', [AnnouncementController::class, 'vote'])->name('announcement.vote');
-
-    // Dashboard
+    // Dashboard - Semua role bisa akses
     Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
 
-    // Applicants
-    Route::resource('applicants', ApplicantController::class);
-
-    // Recruitment Progress
-    Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {
-        Route::get('/', [RecruitmentProgressController::class, 'show'])->name('recruitment-progress.show');
-        Route::get('/stage/{stage}', [RecruitmentProgressController::class, 'stageShow'])->name('recruitment.stage.show');
-        Route::get('/stage/{stage}/edit', [RecruitmentProgressController::class, 'stageEdit'])->name('recruitment.stage.edit');
-        Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
+    // === SUPERADMIN ONLY ROUTES ===
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+        // Employee CRUD - Hanya superadmin
+        Route::resource('employees', EmployeeController::class);
+        Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
     });
-
-    // Interview Schedule
-    Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
-        Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
-        Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
-        Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
-        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
-        Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
-        Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
-        Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
-    });
-
+    // === Route khusus untuk user biasa mengedit data mereka sendiri ===
+Route::middleware('auth')->group(function () {
+    Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
 });
+
+    // === SUPERADMIN, DIREKSI, MANAGER, SECTION_HEAD ROUTES ===
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
+        // Applicants - Superadmin, direksi, manager, section_head
+        Route::resource('applicants', ApplicantController::class);
+        
+        // Recruitment Progress - Superadmin, direksi, manager, section_head
+        Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {
+            Route::get('/', [RecruitmentProgressController::class, 'show'])->name('recruitment-progress.show');
+            Route::get('/stage/{stage}', [RecruitmentProgressController::class, 'stageShow'])->name('recruitment.stage.show');
+            Route::get('/stage/{stage}/edit', [RecruitmentProgressController::class, 'stageEdit'])->name('recruitment.stage.edit');
+            Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
+        });
+
+      Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
+    Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
+
+        // Yang bisa diakses semua role terkait (view only)
+        Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
+
+        // Yang hanya boleh superadmin
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+            Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
+            Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
+            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
+            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
+            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+        });
+
+        // Route ini harus diletakkan paling akhir
+        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
+    });
+});
+
+    });
+
+    // === SUPERADMIN & DIREKSI ROUTES ===
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+        // Announcement - Superadmin dan direksi
+        Route::resource('announcement', AnnouncementController::class);
+        Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
+    });
+    Route::get('announcement/{announcement}', [AnnouncementController::class, 'show'])->name('announcement.show');
+
+    // === SUPERADMIN, DIREKSI, MANAGER, SECTION_HEAD ROUTES ===
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,direksi,hc')->group(function () {
+        // Career Path - Superadmin, direksi, manager, section_head
+        Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
+    });
+
+    // === ALL AUTHENTICATED USERS ROUTES ===
+    // Employee view - Semua user bisa lihat data employee mereka sendiri
+    Route::get('employees/{employee}/career', [EmployeeController::class, 'showCareer'])->name('employees.showCareer');
+    Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+
+    // Employee Management - Semua role bisa akses sesuai dengan menu
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head,staff_bisnis,staff_support')->group(function () {
+        // Employee tab: address
+        Route::get('employees/{employee}/address', [EmployeeController::class, 'editAddress'])->name('employees.address.edit');
+
+        // Employee tab: health
+        Route::get('/employees/{employee}/health', [HealthRecordController::class, 'edit'])->name('employees.health.edit');
+
+        // Health Record
+        Route::prefix('employees/{employee}/health-record')->name('health-records.')->group(function () {
+            Route::get('/', [HealthRecordController::class, 'edit'])->name('edit');
+            Route::post('/', [HealthRecordController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+            Route::delete('/', [HealthRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        // Work Experience
+        Route::prefix('employees/{employee}/work-experience')->name('employees.work-experience.')->group(function () {
+            Route::get('/', [WorkExperienceController::class, 'index'])->name('index');
+            Route::get('/create', [WorkExperienceController::class, 'create'])->name('create');
+            Route::post('/', [WorkExperienceController::class, 'store'])->name('store');
+            Route::get('/{workExperience}/edit', [WorkExperienceController::class, 'edit'])->name('edit');
+            Route::put('/{workExperience}', [WorkExperienceController::class, 'update'])->name('update');
+            Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy');
+        });
+
+        // Certifications
+        Route::prefix('employees/{employee}/certifications')->name('employees.certifications.')->group(function () {
+            Route::get('/', [CertificationController::class, 'index'])->name('index');
+            Route::get('/create', [CertificationController::class, 'create'])->name('create');
+            Route::post('/', [CertificationController::class, 'store'])->name('store');
+            Route::get('/{certification}/edit', [CertificationController::class, 'edit'])->name('edit');
+            Route::put('/{certification}', [CertificationController::class, 'update'])->name('update');
+            Route::delete('/{certification}', [CertificationController::class, 'destroy'])->name('destroy');
+            Route::delete('/{certification}/materials/{material}', [CertificationController::class, 'destroyMaterial'])->name('materials.destroy');
+        });
+
+        // Insurance
+        Route::prefix('employees/{employee}/insurance')->name('employees.insurance.')->group(function () {
+            Route::get('/', [InsuranceController::class, 'index'])->name('index');
+            Route::get('/create', [InsuranceController::class, 'create'])->name('create');
+            Route::post('/', [InsuranceController::class, 'store'])->name('store');
+            Route::get('/{insurance}/edit', [InsuranceController::class, 'edit'])->name('edit');
+            Route::put('/{insurance}', [InsuranceController::class, 'update'])->name('update');
+            Route::delete('/{insurance}', [InsuranceController::class, 'destroy'])->name('destroy');
+        });
+
+        // Education History
+        Route::prefix('employees/{employee}/educationhistory')->name('employees.educationhistory.')->group(function () {
+            Route::get('/', [EducationHistoryController::class, 'index'])->name('index');
+            Route::get('/create', [EducationHistoryController::class, 'create'])->name('create');
+            Route::post('/', [EducationHistoryController::class, 'store'])->name('store');
+            Route::get('/{educationHistory}/edit', [EducationHistoryController::class, 'edit'])->name('edit');
+            Route::put('/{educationHistory}', [EducationHistoryController::class, 'update'])->name('update');
+            Route::delete('/{educationHistory}', [EducationHistoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Training History
+        Route::prefix('employees/{employee}/training-histories')->name('employees.training-histories.')->group(function () {
+            Route::get('/', [TrainingHistoryController::class, 'index'])->name('index');
+            Route::get('/create', [TrainingHistoryController::class, 'create'])->name('create');
+            Route::post('/', [TrainingHistoryController::class, 'store'])->name('store');
+            Route::get('/{trainingHistory}/edit', [TrainingHistoryController::class, 'edit'])->name('edit');
+            Route::put('/{trainingHistory}', [TrainingHistoryController::class, 'update'])->name('update');
+            Route::delete('/{trainingHistory}', [TrainingHistoryController::class, 'destroy'])->name('destroy');
+            Route::delete('/{trainingHistory}/materials/{material}', [TrainingHistoryController::class, 'destroyMaterial'])->name('materials.destroy');
+        });
+
+        // Family Dependents
+        Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
+
+        // Career History
+        Route::resource('employees.career_histories', CareerHistoryController::class)
+            ->parameters(['career_histories' => 'careerHistory'])
+            ->except(['show']);
+
+        // Career Projection
+        Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
+            Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
+            Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+            Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // === ALL AUTHENTICATED USERS ROUTES ===
+    // Polling - Semua user yang login bisa vote
+    Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
+    Route::post('/announcements/{id}/vote', [AnnouncementController::class, 'vote'])->name('announcement.vote');
+});
+
+// === GUEST ROUTES ===
+// Routes yang tidak memerlukan authentication bisa ditambahkan di sini

@@ -5,9 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\InterviewSchedule;
 use App\Models\Applicant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InterviewScheduleController extends Controller
 {
+   private function canAccessSchedule($schedule)
+{
+    $user = Auth::user();
+
+    if (in_array($user->role, ['superadmin', 'hc'])) {
+        return true;
+    }
+
+    switch ($schedule->interview_type) {
+        case 'User':
+            return $user->role === 'section_head' && $user->division_id === $schedule->applicant->division_id;
+        case 'Direksi':
+            return in_array($user->role, ['manager', 'direktur']);
+        default:
+            return false;
+    }
+}
+
     public function index(Applicant $applicant)
     {
         $schedules = $applicant->interviewSchedules()->latest()->paginate(10);
@@ -16,11 +35,14 @@ class InterviewScheduleController extends Controller
 
     public function create(Applicant $applicant)
     {
+        $this->authorizeAccessByRole('create');
         return view('interview_schedule.create', compact('applicant'));
     }
 
     public function store(Request $request, Applicant $applicant)
     {
+        $this->authorizeAccessByRole('create');
+
         $request->validate([
             'interview_type' => 'required|in:User,HC,Direksi',
             'interview_date' => 'required|date',
@@ -34,34 +56,73 @@ class InterviewScheduleController extends Controller
         return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has created.');
     }
 
-    public function show(Applicant $applicant, InterviewSchedule $schedule)
-    {
-        return view('interview_schedule.show', compact('schedule', 'applicant'));
+   public function show(Applicant $applicant, InterviewSchedule $schedule)
+{
+    $user = Auth::user();
+
+    if ($user->role === 'staff') {
+        abort(403, 'Unauthorized');
     }
 
-    public function edit(Applicant $applicant, InterviewSchedule $schedule)
-    {
-        return view('interview_schedule.edit', compact('schedule', 'applicant'));
+    return view('interview_schedule.show', compact('schedule', 'applicant'));
+}
+
+   public function edit(Applicant $applicant, InterviewSchedule $schedule)
+{
+    if (!$this->canAccessSchedule($schedule)) {
+        abort(403, 'Unauthorized');
     }
 
-    public function update(Request $request, Applicant $applicant, InterviewSchedule $schedule)
-    {
-        $request->validate([
-            'interview_type' => 'required|in:User,HC,Direksi',
-            'interview_date' => 'required|date',
-            'interviewer' => 'required',
-            'location' => 'required',
-            'result' => 'nullable',
-        ]);
+    return view('interview_schedule.edit', compact('schedule', 'applicant'));
+}
 
-        $schedule->update($request->all());
-
-        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has updated.');
+public function update(Request $request, Applicant $applicant, InterviewSchedule $schedule)
+{
+    if (!$this->canAccessSchedule($schedule)) {
+        abort(403, 'Unauthorized');
     }
 
-    public function destroy(Applicant $applicant, InterviewSchedule $schedule)
-    {
-        $schedule->delete();
-        return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has deleted.');
+    // Validasi input form
+    $request->validate([
+        'interview_type' => 'required|in:User,HC,Direksi',
+        'interview_date' => 'required|date',
+        'interviewer' => 'required|string|max:255',
+        'location' => 'required|string|max:255',
+        'result' => 'nullable|string',
+    ]);
+
+    // Simpan perubahan ke database
+    $schedule->update([
+        'interview_type' => $request->interview_type,
+        'interview_date' => $request->interview_date,
+        'interviewer' => $request->interviewer,
+        'location' => $request->location,
+        'result' => $request->result,
+    ]);
+
+    // Redirect ke halaman detail
+    return redirect()
+        ->route('interview-schedule.index', [$applicant->id, $schedule->id])
+        ->with('success', 'Interview schedule was updated.');
+}
+
+public function destroy(Applicant $applicant, InterviewSchedule $schedule)
+{
+    if (!$this->canAccessSchedule($schedule)) {
+        abort(403, 'Unauthorized');
     }
+
+    $schedule->delete();
+
+    return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has deleted.');
+}
+
+    private function authorizeAccessByRole($action)
+{
+    $user = Auth::user();
+
+    if ($user->role === 'staff') {
+        abort(403, 'Staff tidak memiliki akses untuk ' . $action);
+    }
+}
 }

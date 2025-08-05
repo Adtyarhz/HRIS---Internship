@@ -9,31 +9,30 @@ use Illuminate\Support\Str;
 
 class ApplicantController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
 {
     $search = $request->input('search');
     $sortBy = $request->input('sort', 'created_at');
     $direction = $request->input('direction', 'desc');
 
     $allowedSorts = ['id', 'applied_position'];
-
     if (!in_array($sortBy, $allowedSorts)) {
         $sortBy = 'id';
     }
 
     $user = auth()->user();
 
-$applicants = Applicant::with('division')
-    ->when($search, function ($query) use ($search) {
-        $query->where('full_name', 'like', '%' . $search . '%');
-    })
-    ->when($user->role !== 'superadmin', function ($query) use ($user) {
-        // Filter berdasarkan division dari relasi employee
-        $query->where('division_id', optional($user->employee)->division_id);
-    })
-    ->orderBy($sortBy, $direction)
-    ->paginate(10)
-    ->withQueryString();
+    $applicants = Applicant::with('division')
+        ->when($search, function ($query) use ($search) {
+            $query->where('full_name', 'like', '%' . $search . '%');
+        })
+        ->when($user->role === 'section_head', function ($query) use ($user) {
+            // Section Head hanya melihat berdasarkan divisi dirinya
+            $query->where('division_id', optional($user->employee)->division_id);
+        })
+        ->orderBy($sortBy, $direction)
+        ->paginate(10)
+        ->withQueryString();
 
     return view('applicants.index', compact('applicants', 'search', 'sortBy', 'direction'));
 }
