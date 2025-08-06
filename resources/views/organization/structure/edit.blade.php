@@ -118,7 +118,7 @@
 
                 {{-- Komponen Modal Delete --}}
                 <x-delete-modal modalId="position-{{ $position->id }}" :action="route('organization.structure.destroy', $position->id)"
-                    message="Are you sure you want to delete this position? This will affect all related positions." />
+                    message="Are you sure you want to delete this position?" />
             </div>
         </div>
     </div>
