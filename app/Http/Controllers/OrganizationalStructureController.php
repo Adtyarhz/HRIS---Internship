@@ -15,7 +15,15 @@ class OrganizationalStructureController extends Controller
      */
     public function index()
     {
-        $positions = Position::with(['parent', 'children', 'indirectSupervisor', 'indirectSubordinates', 'employees'])->get();
+        $positions = Position::with([
+            'parent',
+            'children',
+            'indirectSupervisor',
+            'indirectSubordinates',
+            'employees' => function ($query) {
+                $query->where('status', 'Aktif');
+            }
+        ])->get();
         $chartData = $this->getChartData($positions);
         return view('organization.structure.index', compact('positions', 'chartData'));
     }
@@ -190,10 +198,6 @@ class OrganizationalStructureController extends Controller
                 'depth' => $position->depth,
                 'employees' => $position->employees->isNotEmpty() ? $position->employees->pluck('full_name')->toArray() : [],
                 'indirect_supervisor' => $position->indirectSupervisor ? $position->indirectSupervisor->title : null,
-                // RESTORED: Tooltip data is generated here
-                'tooltip' => "Jabatan: {$position->title}" .
-                    ($position->employees->isNotEmpty() ? "\nDiisi oleh: " . $position->employees->pluck('full_name')->join(', ') : '') .
-                    ($position->indirectSupervisor ? "\nDiawasi oleh: {$position->indirectSupervisor->title}" : ''),
             ];
         }
 
@@ -210,7 +214,6 @@ class OrganizationalStructureController extends Controller
                 'isSuperRoot' => true, // Flag for JS
                 'employees' => [],
                 'indirect_supervisor' => null,
-                'tooltip' => ''
             ];
             array_unshift($nodes, $superRoot);
 
