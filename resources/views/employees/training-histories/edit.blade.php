@@ -104,10 +104,10 @@
                             </div>
 
                             <div class="form-group row">
-                                <label for="location" class="col-md-2 col-form-label">Description <span class="text-danger">*</span>:</label>
+                                <label for="description" class="col-md-2 col-form-label">Description <span class="text-danger">*</span>:</label>
                                 <div class="col-md-4">
-                                    <textarea class="form-control @error('location') is-invalid @enderror" id="location" name="location" rows="3">{{ old('location', $trainingHistory->location) }}</textarea>
-                                    @error('location')
+                                    <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3">{{ old('description', $trainingHistory->description) }}</textarea>
+                                    @error('description')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
