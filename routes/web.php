@@ -18,6 +18,8 @@ use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\RecruitmentProgressController;
 use App\Http\Controllers\InterviewScheduleController;
+use App\Http\Controllers\EmployeeEditRequestController;
+use App\Http\Controllers\NotificationController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -95,9 +97,9 @@ Route::middleware('auth')->group(function () {
 
     // === SUPERADMIN, DIREKSI, MANAGER, SECTION_HEAD ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,direksi,hc')->group(function () {
-        // Career Path - Superadmin, direksi, manager, section_head
-        Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
-    });
+    Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
+    Route::get('/career-path/{employee}', [EmployeeController::class, 'showCareer'])->name('career.show');
+});
 
     // === ALL AUTHENTICATED USERS ROUTES ===
     // Employee view - Semua user bisa lihat data employee mereka sendiri
@@ -175,22 +177,51 @@ Route::middleware('auth')->group(function () {
         Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
         // Career History
-        Route::resource('employees.career_histories', CareerHistoryController::class)
-            ->parameters(['career_histories' => 'careerHistory'])
-            ->except(['show']);
+
+// Akses lihat saja: superadmin, hc, direksi
+Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi')->group(function () {
+    Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
+        ->name('employees.career_histories.index');
+});
+
+// Akses tambah/edit/hapus hanya untuk superadmin dan hc
+Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+    Route::resource('employees.career_histories', CareerHistoryController::class)
+        ->parameters(['career_histories' => 'careerHistory'])
+        ->except(['index', 'show']);
+});
 
         // Career Projection
-        Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
-            Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-            Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-            Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-        });
+     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+    Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
+        Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
+        Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+        Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
+    });
+});
     });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
     // Polling - Semua user yang login bisa vote
     Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
     Route::post('/announcements/{id}/vote', [AnnouncementController::class, 'vote'])->name('announcement.vote');
+
+    // === EMPLOYEE EDIT REQUEST - Only HC & SUPERADMIN ===
+Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+    Route::prefix('employee-edit-requests')->name('employee-edit-requests.')->group(function () {
+        Route::get('/', [EmployeeEditRequestController::class, 'index'])->name('index');
+        Route::get('/{id}', [EmployeeEditRequestController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [EmployeeEditRequestController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [EmployeeEditRequestController::class, 'reject'])->name('reject');
+    });
+});
+// === REQUEST EDIT DATA PRIBADI - Untuk semua karyawan ===
+Route::middleware('auth')->group(function () {
+    Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
+});
+Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
 });
 
 // === GUEST ROUTES ===

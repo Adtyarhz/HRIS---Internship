@@ -58,4 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(CareerProjection::class, 'created_by');
     }
+
+    public function editRequests()
+    {
+        return $this->hasMany(EmployeeEditRequest::class, 'employee_id');
+    }
 }
