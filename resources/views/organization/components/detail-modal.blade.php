@@ -19,48 +19,51 @@
 
 <!-- Modal Detail -->
 <div id="detailModal-{{ $modalId }}"
-    style="display: none; position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; width: auto;">
+    style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
     <div
         style="background: #FAFBEF; border-radius: 12px; padding: 24px 32px; max-width: 90vw; box-shadow: 0 4px 20px rgba(63, 63, 63, 0.2);">
         <!-- Header: Icon + Title -->
         <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="background: #FFEA9F; border-radius: 8px; width: 48px; height: 48px; display: flex; justify-content: center; align-items: center;">
-                <span class="modal-detail-icon"></span>
-            </div>
             <div style="font-size: 20px; font-family: Inter, sans-serif; font-weight: 600; color: black;">
-                Detail Jabatan
+                Detail: {{ $position['title'] }}
             </div>
         </div>
 
         <!-- Content -->
         <div style="margin-top: 20px;">
-            <p><strong>Jabatan:</strong> {{ $position['title'] }}</p>
-
             @if (!empty($position['parent']))
-                <p><strong>Parent:</strong> {{ $position['parent'] }}</p>
+                <p><strong>Superior Position:</strong> {{ $position['parent'] }}</p>
             @endif
 
             @if (!empty($position['indirect_supervisor']))
-                <p><strong>Diawasi Oleh:</strong> {{ $position['indirect_supervisor'] }}</p>
+                <p><strong>Indirect Supervisor:</strong> {{ $position['indirect_supervisor'] }}</p>
             @endif
 
             @if (!empty($position['employees']))
-                <p><strong>Diisi oleh:</strong> {{ implode(', ', $position['employees']) }}</p>
+                <p><strong>Assigned To:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 4px;">
+                    @foreach ($position['employees'] as $employee)
+                        <li>{{ $employee }}</li>
+                    @endforeach
+                </ul>
             @else
-                <p><strong>Diisi oleh:</strong> <em>Belum ada</em></p>
+                <p><strong>Assigned To:</strong> <em>Unassigned</em></p>
             @endif
         </div>
 
         <!-- Buttons -->
         <div style="display: flex; justify-content: center; gap: 16px; margin-top: 24px;">
+            @php $role = auth()->user()->role; @endphp
+            @if (in_array($role, ['superadmin', 'hc']))
+                <a href="{{ $editRoute }}"
+                    style="width: 120px; height: 44px; background: #7D3014; border-radius: 8px; color: white; font-size: 14px; font-family: Inter, sans-serif; font-weight: 500; border: 1px solid rgba(0, 0, 0, 0.2); text-align:center; line-height:44px; text-decoration:none; ">
+                    Edit
+                </a>
+            @endif
             <button type="button" onclick="hideDetailModal('{{ $modalId }}')"
-                style="width: 120px; height: 44px; background: #9A3B3B; border-radius: 8px; color: white; font-size: 14px; font-family: Inter, sans-serif; font-weight: 500; border: 1px solid rgba(0, 0, 0, 0.2);">
-                Cancel
+                style="width: 120px; height: 44px; background: #367FA9; border-radius: 8px; color: white; font-size: 14px; font-family: Inter, sans-serif; font-weight: 500; border: 1px solid rgba(0, 0, 0, 0.2);">
+                OK
             </button>
-            <a href="{{ $editRoute }}"
-                style="width: 120px; height: 44px; background: #F9FCE6; border-radius: 8px; font-size: 14px; font-family: Inter, sans-serif; font-weight: 500; border: 1px solid rgba(0, 0, 0, 0.2); text-align:center; line-height:44px; text-decoration:none; color:black;">
-                Edit
-            </a>
         </div>
     </div>
 </div>

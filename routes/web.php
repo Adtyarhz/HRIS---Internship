@@ -20,6 +20,8 @@ use App\Http\Controllers\RecruitmentProgressController;
 use App\Http\Controllers\InterviewScheduleController;
 use App\Http\Controllers\EmployeeEditRequestController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrganizationalStructureController;
+
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -44,19 +46,28 @@ Route::middleware('auth')->group(function () {
         // Employee CRUD - Hanya superadmin
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+
+        // Struktur Organisasi: CRUD hanya superadmin & hc
+        Route::get('/organization/structure/create', [OrganizationalStructureController::class, 'create'])->name('organization.structure.create');
+        Route::post('/organization/structure', [OrganizationalStructureController::class, 'store'])->name('organization.structure.store');
+        Route::get('/organization/structure/{position}', [OrganizationalStructureController::class, 'show'])->name('organization.structure.show');
+        Route::get('/organization/structure/{position}/edit', [OrganizationalStructureController::class, 'edit'])->name('organization.structure.edit');
+        Route::put('/organization/structure/{position}', [OrganizationalStructureController::class, 'update'])->name('organization.structure.update');
+        Route::delete('/organization/structure/{position}', [OrganizationalStructureController::class, 'destroy'])->name('organization.structure.destroy');
     });
+
     // === Route khusus untuk user biasa mengedit data mereka sendiri ===
-Route::middleware('auth')->group(function () {
-    Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
-    Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-});
+    Route::middleware('auth')->group(function () {
+        Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+        Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    });
 
     // === SUPERADMIN, DIREKSI, MANAGER, SECTION_HEAD ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
         // Applicants - Superadmin, direksi, manager, section_head
         Route::resource('applicants', ApplicantController::class);
-        
+
         // Recruitment Progress - Superadmin, direksi, manager, section_head
         Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {
             Route::get('/', [RecruitmentProgressController::class, 'show'])->name('recruitment-progress.show');
@@ -65,25 +76,25 @@ Route::middleware('auth')->group(function () {
             Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
         });
 
-      Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
-    Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
+            Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
 
-        // Yang bisa diakses semua role terkait (view only)
-        Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
+                // Yang bisa diakses semua role terkait (view only)
+                Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
 
-        // Yang hanya boleh superadmin
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
-            Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
-            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
-            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
-            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+                // Yang hanya boleh superadmin
+                Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+                    Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
+                    Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
+                    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
+                    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
+                    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+                });
+
+                // Route ini harus diletakkan paling akhir
+                Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
+            });
         });
-
-        // Route ini harus diletakkan paling akhir
-        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
-    });
-});
 
     });
 
@@ -221,6 +232,10 @@ Route::middleware('auth')->group(function () {
 });
 Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
+
+    // Struktur Organisasi: Semua role bisa akses halaman index
+    Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
 
 });
 

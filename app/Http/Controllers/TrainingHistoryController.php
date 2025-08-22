@@ -47,12 +47,12 @@ class TrainingHistoryController extends Controller
         $validatedData = $request->validate([
             'training_name' => 'required|string|max:255',
             'provider' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'cost' => 'nullable|numeric|min:0',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
-            'certificate_number' => 'nullable|string|max:50',
+            'certificate_number' => 'required|string|max:50',
             'material_files' => 'nullable|array',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
         ]);
@@ -122,12 +122,12 @@ class TrainingHistoryController extends Controller
         $validatedData = $request->validate([
             'training_name' => 'required|string|max:255',
             'provider' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'cost' => 'nullable|numeric|min:0',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
-            'certificate_number' => 'nullable|string|max:50',
+            'certificate_number' => 'required|string|max:50',
             'material_files' => 'nullable|array',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
             'delete_materials' => 'nullable|array',
