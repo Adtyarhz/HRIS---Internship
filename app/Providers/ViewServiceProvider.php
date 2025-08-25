@@ -22,8 +22,10 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
                             ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Employee Request', 'route' => '#', 'icon' => 'charm:git-request'],
+
+                            ['label' => 'Employee Request', 'route' => 'employee-edit-requests.index', 'icon' => 'charm:git-request'],
                             ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                        
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
@@ -36,8 +38,10 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
                             ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Employee Request', 'route' => '#', 'icon' => 'charm:git-request'],
+
+                            ['label' => 'Employee Request', 'route' => 'employee-edit-requests.index', 'icon' => 'charm:git-request'],
                             ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                          
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],

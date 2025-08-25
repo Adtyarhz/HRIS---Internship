@@ -55,7 +55,7 @@
                                     <td>{{ $certification->expiry_date ? $certification->expiry_date->format('d F Y') : '-' }}</td>
                                     <td>
                                         @if ($certification->certificate_file)
-                                            <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}" target="_blank" class="file-link">
+                                            <a href="{{ asset('storage/' . $certification->certificate_file) }}" target="_blank" class="file-link">
                                                <i class="fas fa-file-alt"></i>
                                                {{ Str::afterLast($certification->certificate_file, '_') }}
                                             </a>

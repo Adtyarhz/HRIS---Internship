@@ -6,6 +6,7 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
+use App\Models\EmployeeEditRequest;
 use App\Models\CareerHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -80,7 +81,7 @@ public function index(Request $request)
     $user = auth()->user();
 
     // Cek role superadmin vs user biasa
-    if (in_array($user->role, ['superadmin', 'hc'])){
+    if (in_array($user->role, ['superadmin', 'hc', 'direksi'])){
         $query = Employee::where('status', 'Aktif');
     } else {
         $query = Employee::where('status', 'Aktif')
@@ -234,12 +235,20 @@ public function index(Request $request)
     /**
      * Display the specified resource for career path details.
      */
-    public function showCareer(Employee $employee)
-    {
-        $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
-        $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
-        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
+   public function showCareer(Employee $employee)
+{
+    $user = auth()->user();
+
+    // Hanya superadmin, hc, direksi, atau pemilik data yang bisa melihat
+    if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
+        abort(403, 'Anda tidak memiliki akses ke data ini.');
     }
+
+    $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
+    $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
+
+    return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
+}
 
     /**
      * Show the form for editing the specified resource.
@@ -267,12 +276,12 @@ public function index(Request $request)
 {
     $user = auth()->user();
 
-    // Bukan superadmin -> hanya bisa update milik sendiri
+    // Bukan superadmin/hc → hanya bisa update milik sendiri
     if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
         abort(403, 'Anda tidak memiliki akses untuk mengupdate data ini.');
     }
 
-    // Validasi seperti sebelumnya
+    // Validasi
     $validatedData = $request->validate([
         'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
         'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
@@ -303,30 +312,52 @@ public function index(Request $request)
     try {
         DB::beginTransaction();
 
+        // Handle file upload (jika ada), tapi simpan sementara, jangan update DB langsung jika bukan superadmin/hc
         if ($request->hasFile('cv_file')) {
-            if ($employee->cv_file) {
-                Storage::disk('public')->delete($employee->cv_file);
-            }
-
             $file = $request->file('cv_file');
             $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
         }
 
         if ($request->hasFile('photo')) {
-            if ($employee->photo) {
-                Storage::disk('public')->delete($employee->photo);
-            }
-
             $file = $request->file('photo');
             $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
         }
 
+        // Jika bukan superadmin/hc → buat request edit
+        if (!in_array($user->role, ['superadmin', 'hc'])) {
+
+      EmployeeEditRequest::create([
+                    'employee_id'   => $employee->id,
+                    'method'        => 'update',
+                    'model'         => Employee::class,
+                    'model_id'      => $employee->id,
+                    'original_data' => $employee->only(array_keys($validatedData)),
+                    'changed_data'  => $validatedData,
+                    'status'        => 'waiting',
+                    'requested_by'  => $user->id,
+                    'requested_at'  => now(),
+                ]);
+
+    DB::commit();
+    return redirect()->route('employees.show', $employee->id)
+        ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+}
+
+        // Jika superadmin / hc → langsung update ke database
+        if ($request->hasFile('cv_file') && $employee->cv_file) {
+            Storage::disk('public')->delete($employee->cv_file);
+        }
+
+        if ($request->hasFile('photo') && $employee->photo) {
+            Storage::disk('public')->delete($employee->photo);
+        }
+
         $employee->update($validatedData);
 
         DB::commit();
-       return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
+        return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
     } catch (\Exception $e) {
         DB::rollBack();
         return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
@@ -372,12 +403,25 @@ public function index(Request $request)
         return redirect()->back()->with('info', 'Karyawan sudah berstatus Tidak Aktif.');
     }
 
-    public function editAddress(Employee $employee)
-    {
-        $divisions = Division::orderBy('name')->get();
-        $positions = Position::orderBy('title')->get();
-        $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
+   public function editAddress(Employee $employee)
+{
+    $user = auth()->user();
 
-        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
+    // Jika bukan HC & Superadmin → hanya boleh akses datanya sendiri
+    if (!in_array($user->role, ['superadmin', 'hc'])) {
+        if (!$user->employee || $user->employee->id !== $employee->id) {
+            abort(403, 'Unauthorized access to address data.');
+        }
     }
+
+    $divisions = Division::orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+    $users = User::whereDoesntHave('employee')
+        ->orWhere('id', $employee->user_id)
+        ->orderBy('name')
+        ->get();
+
+    return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
+}
+
 }

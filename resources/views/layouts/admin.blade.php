@@ -17,6 +17,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Manrope:wght@400&family=Noto+Sans+Georgian:wght@400&display=swap"
         rel="stylesheet" />
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 
     <!-- Font Awesome -->
      <!-- Optional: Font Awesome CDN (v6) jika ikon tidak muncul) -->
@@ -50,57 +51,97 @@
                 </li>
             </ul>
             <!-- Right navbar links -->
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item dropdown user-menu">
-                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                        @php
-                            $user = Auth::user();
-                            $employee = $user?->employee;
-                        @endphp
+<ul class="navbar-nav ml-auto d-flex align-items-center">
 
-                        <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
-                            class="user-image img-circle elevation-2" alt="User Image">
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        <!-- User image -->
-                        <li class="user-header">
-                            @php
-                                $user = Auth::user();
-                                $employee = $user?->employee;
-                            @endphp
+    <!-- Notification Bell -->
+    <li class="nav-item dropdown d-flex align-items-center">
+        <a class="nav-link position-relative d-flex align-items-center justify-content-center rounded-circle bg-light mx-2"
+           style="width:45px; height:45px;"
+           data-toggle="dropdown" href="#">
+            <i class="far fa-bell" style="font-size:20px;"></i>
+            @if(auth()->user()->unreadNotifications->count() > 0)
+                <span class="badge badge-danger navbar-badge"
+                      style="font-size: 0.65rem; position: absolute; top: 6px; right: 6px;">
+                    {{ auth()->user()->unreadNotifications->count() }}
+                </span>
+            @endif
+        </a>
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+            <span class="dropdown-item dropdown-header">
+                {{ auth()->user()->notifications->count() }} Notifications
+            </span>
+            <div class="dropdown-divider"></div>
 
-                            <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
-                                class="user-image img-circle elevation-2" alt="User Image">
-                            <p>
-                                {{ Auth::user()->name ?? 'Admin User' }}
-                                <small>Member since {{ (Auth::user()->created_at ?? now())->format('M. Y') }}</small>
-                            </p>
-                        </li>
-                        <!-- Menu Footer-->
-                        <li class="user-footer">
-                            @php
-                                $user = Auth::user();
-                                $employee = $user?->employee;
-                                $isSuperadmin = $user && $user->role === 'superadmin';
-                            @endphp
+            @forelse(auth()->user()->notifications->take(5) as $notification)
+                <a href="#" class="dropdown-item d-flex align-items-start">
+                    <i class="fas fa-info-circle fa-2x text-primary mr-2"></i>
+                    <div class="notification-text" style="white-space: normal; max-width: 250px;">
+                        <div class="text-sm">
+                            {{ $notification->data['message'] ?? 'Notification' }}
+                        </div>
+                        <small class="text-muted">
+                            {{ $notification->created_at->diffForHumans() }}
+                        </small>
+                    </div>
+                </a>
+                <div class="dropdown-divider"></div>
+            @empty
+                <span class="dropdown-item text-center text-muted">No notifications</span>
+            @endforelse
 
-                            @if ($isSuperadmin)
-                                <a href="#" class="btn btn-default btn-flat" onclick="alert('Superadmin tidak memiliki data pribadi')">Profile</a>
-                            @elseif ($employee)
-                                <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-default btn-flat">Profile</a>
-                            @else
-                                <a href="#" class="btn btn-default btn-flat" onclick="alert('Data karyawan belum tersedia')">Profile</a>
-                            @endif
-                            <a href="{{-- route('logout') --}}"
-                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                                class="btn btn-default btn-flat float-right">Sign out</a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            <a href="{{ route('notifications.index') }}" class="dropdown-item dropdown-footer">
+                See All Notifications
+            </a>
+        </div>
+    </li>
+
+    <!-- Profile Menu -->
+    <li class="nav-item dropdown user-menu d-flex align-items-center">
+        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" data-toggle="dropdown">
+            @php
+                $user = Auth::user();
+                $employee = $user?->employee;
+            @endphp
+            <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
+                 class="user-image img-circle elevation-2"
+                 alt="User Image"
+                 style="width:45px; height:45px; object-fit:cover;">
+        </a>
+        <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+            <!-- User image -->
+            <li class="user-header">
+                <img src="{{ $employee && $employee->photo ? asset('storage/' . $employee->photo) : 'https://placehold.co/160x160/9A3B3B/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}"
+                     class="img-circle elevation-2"
+                     alt="User Image"
+                     style="width:90px; height:90px; object-fit:cover;">
+                <p>
+                    {{ Auth::user()->name ?? 'Admin User' }}
+                    <small>Member since {{ (Auth::user()->created_at ?? now())->format('M. Y') }}</small>
+                </p>
+            </li>
+            <!-- Menu Footer -->
+            <li class="user-footer">
+                @php
+                    $isSuperadmin = $user && $user->role === 'superadmin';
+                @endphp
+                @if ($isSuperadmin)
+                    <a href="#" class="btn btn-default btn-flat" onclick="alert('Superadmin tidak memiliki data pribadi')">Profile</a>
+                @elseif ($employee)
+                    <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-default btn-flat">Profile</a>
+                @else
+                    <a href="#" class="btn btn-default btn-flat" onclick="alert('Data karyawan belum tersedia')">Profile</a>
+                @endif
+                <a href="{{ route('logout') }}"
+                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                   class="btn btn-default btn-flat float-right">Sign out</a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
+            </li>
+        </ul>
+    </li>
+</ul>
+
         </nav>
         <!-- /.navbar -->
 

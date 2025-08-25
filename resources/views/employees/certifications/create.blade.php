@@ -83,13 +83,18 @@
                             </div>
 
                             {{-- Biaya (Rp) --}}
-                            <div class="form-group row align-items-center">
-                                <label for="cost" class="col-md-2 col-form-label">Biaya (Rp) :</label>
-                                <div class="col-md-3">
-                                    <input type="number" step="any" class="form-control @error('cost') is-invalid @enderror" id="cost" name="cost" value="{{ old('cost') }}">
-                                    @error('cost') <span class="invalid-feedback d-block">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
+<div class="form-group row align-items-center">
+    <label for="cost" class="col-md-2 col-form-label">
+        Biaya (Rp) <span class="text-danger">*</span> :
+    </label>
+    <div class="col-md-3">
+        <input type="number" step="any" class="form-control @error('cost') is-invalid @enderror" 
+               id="cost" name="cost" value="{{ old('cost') }}" required>
+        @error('cost') 
+            <span class="invalid-feedback d-block">{{ $message }}</span> 
+        @enderror
+    </div>
+</div>
 
                             {{-- File Sertifikat Utama --}}
                             <div class="form-group row align-items-center">

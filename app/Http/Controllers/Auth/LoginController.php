@@ -104,7 +104,7 @@ class LoginController extends Controller
     {
         $employee = Employee::findOrFail($id);
         $user = $employee->user;
-        $roles = ['superadmin', 'staff_bisnis', 'staff_support', 'manager', 'section_head', 'direksi', 'hc'];
+        $roles = ['staff_bisnis', 'staff_support', 'manager', 'section_head', 'direksi', 'hc'];
         return view('employees.data.edit_login', compact('employee', 'user', 'roles'));
     }
 

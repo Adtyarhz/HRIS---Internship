@@ -63,11 +63,17 @@
                     <h4 class="employee-career-history">Career Histories: </h4>
                 </div>
 
-                <div class="action-buttons">
-                    <a href="{{ route('employees.career_histories.create', $employee) }}" class="btn btn-add">
-                        <i class="fas fa-plus"></i> Add Career Histories
-                    </a>
-                </div>
+                @php
+    $role = auth()->user()->role;
+@endphp
+
+@if (!in_array($role, ['direksi']))
+    <div class="action-buttons">
+        <a href="{{ route('employees.career_histories.create', $employee) }}" class="btn btn-add">
+            <i class="fas fa-plus"></i> Add Career Histories
+        </a>
+    </div>
+@endif
 
                 @if (session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
@@ -112,11 +118,12 @@
                                             {{ $careerHistory->end_date ? \Carbon\Carbon::parse($careerHistory->end_date)->format('d/m/Y') : 'Present' }}
                                         </td>
                                         <td>
-                                            <a
-                                                href="{{ route('employees.career_histories.edit', [$employee, $careerHistory]) }}">
-                                                <span class="mdi--pencil"></span>
-                                            </a>
-                                        </td>
+    @if (!in_array($role, ['direksi']))
+        <a href="{{ route('employees.career_histories.edit', [$employee, $careerHistory]) }}">
+            <span class="mdi--pencil"></span>
+        </a>
+    @endif
+</td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -4,65 +4,174 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\EducationHistory;
+use App\Models\EmployeeEditRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EducationHistoryController extends Controller
 {
+    private function authorizeEmployeeAccess(Employee $employee)
+    {
+        $user = auth()->user();
+
+        // Jika bukan HC & Superadmin → hanya boleh akses miliknya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc'])) {
+            if (!$user->employee || $user->employee->id !== $employee->id) {
+                abort(403, 'Unauthorized access to this employee\'s education history.');
+            }
+        }
+    }
+
     public function index(Employee $employee)
     {
+        $this->authorizeEmployeeAccess($employee);
+
         $educationHistories = $employee->educationHistory;
         return view('employees.educationhistory.index', compact('employee', 'educationHistories'));
     }
 
     public function create(Employee $employee)
     {
+        $this->authorizeEmployeeAccess($employee);
         return view('employees.educationhistory.create', compact('employee'));
     }
 
     public function store(Request $request, Employee $employee)
     {
+        $this->authorizeEmployeeAccess($employee);
+
         $validated = $request->validate([
-            'education_level' => 'required|in:SD,SMP,SMA,D1,D2,D3,S1,S2,S3',
-            'institution_name' => 'required|string|max:150',
-            'institution_address' => 'required|string',
-            'major' => 'required|string|max:100',
-            'start_year' => 'required|digits:4|integer',
-            'end_year' => 'required|digits:4|integer|gte:start_year',
-            'gpa_or_score' => 'required|numeric|between:0,9999.99',
-            'certificate_number' => 'nullable|string|max:50',
+            'education_level'      => 'required|in:SD,SMP,SMA,D1,D2,D3,S1,S2,S3',
+            'institution_name'     => 'required|string|max:150',
+            'institution_address'  => 'required|string',
+            'major'                => 'required|string|max:100',
+            'start_year'           => 'required|digits:4|integer',
+            'end_year'             => 'required|digits:4|integer|gte:start_year',
+            'gpa_or_score'         => 'required|numeric|between:0,9999.99',
+            'certificate_number'   => 'nullable|string|max:50',
         ]);
 
-        $employee->educationHistory()->create($validated);
+        $user = auth()->user();
+        DB::beginTransaction();
 
-        return redirect()->route('employees.educationhistory.index', $employee)->with('success', 'Employee Education was Added.');
+        try {
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                EmployeeEditRequest::create([
+                    'employee_id'   => $employee->id,
+                    'method'        => 'create',
+                    'model'         => EducationHistory::class, 
+                    'model_id'      => null,
+                    'original_data' => null,
+                    'changed_data'  => $validated,
+                    'status'        => 'waiting',
+                    'requested_by'  => $user->id,
+                    'requested_at'  => now(),
+                ]);
+                DB::commit();
+                return redirect()->route('employees.educationhistory.index', $employee)
+                                 ->with('info', 'Permintaan penambahan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
+            }
+
+            // Superadmin/HC langsung simpan
+            $employee->educationHistory()->create($validated);
+            DB::commit();
+
+            return redirect()->route('employees.educationhistory.index', $employee)
+                             ->with('success', 'Employee Education was Added.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
+        }
     }
 
     public function edit(Employee $employee, EducationHistory $educationHistory)
     {
+        $this->authorizeEmployeeAccess($employee);
         return view('employees.educationhistory.edit', compact('employee', 'educationHistory'));
     }
 
     public function update(Request $request, Employee $employee, EducationHistory $educationHistory)
     {
+        $this->authorizeEmployeeAccess($employee);
+
         $validated = $request->validate([
-            'education_level' => 'required|in:SD,SMP,SMA,D1,D2,D3,S1,S2,S3',
-            'institution_name' => 'required|string|max:150',
-            'institution_address' => 'required|string',
-            'major' => 'required|string|max:100',
-            'start_year' => 'required|digits:4|integer',
-            'end_year' => 'required|digits:4|integer|gte:start_year',
-            'gpa_or_score' => 'required|numeric|between:0,9999.99',
-            'certificate_number' => 'nullable|string|max:50',
+            'education_level'      => 'required|in:SD,SMP,SMA,D1,D2,D3,S1,S2,S3',
+            'institution_name'     => 'required|string|max:150',
+            'institution_address'  => 'required|string',
+            'major'                => 'required|string|max:100',
+            'start_year'           => 'required|digits:4|integer',
+            'end_year'             => 'required|digits:4|integer|gte:start_year',
+            'gpa_or_score'         => 'required|numeric|between:0,9999.99',
+            'certificate_number'   => 'nullable|string|max:50',
         ]);
 
-        $educationHistory->update($validated);
+        $user = auth()->user();
+        DB::beginTransaction();
 
-        return redirect()->route('employees.educationhistory.index', $employee)->with('success', 'Employee Education was Updated.');
+        try {
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                EmployeeEditRequest::create([
+                    'employee_id'   => $employee->id,
+                    'method'        => 'update',
+                    'model'         => EducationHistory::class,
+                    'model_id'      => $educationHistory->id,
+                    'original_data' => $educationHistory->only(array_keys($validated)),
+                    'changed_data'  => $validated,
+                    'status'        => 'waiting',
+                    'requested_by'  => $user->id,
+                    'requested_at'  => now(),
+                ]);
+                DB::commit();
+                return redirect()->route('employees.educationhistory.index', $employee)
+                                 ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+            }
+
+            // Superadmin/HC langsung update
+            $educationHistory->update($validated);
+            DB::commit();
+
+            return redirect()->route('employees.educationhistory.index', $employee)
+                             ->with('success', 'Employee Education was Updated.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage())->withInput();
+        }
     }
 
     public function destroy(Employee $employee, EducationHistory $educationHistory)
     {
-        $educationHistory->delete();
-        return redirect()->route('employees.educationhistory.index', $employee)->with('success', 'Employee Education was Deleted.');
+        $this->authorizeEmployeeAccess($employee);
+
+        $user = auth()->user();
+        DB::beginTransaction();
+
+        try {
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                EmployeeEditRequest::create([
+                    'employee_id'   => $employee->id,
+                    'method'        => 'delete',
+                    'model'         => EducationHistory::class,
+                    'model_id'      => $educationHistory->id,
+                    'original_data' => $educationHistory->toArray(),
+                    'changed_data'  => null,
+                    'status'        => 'waiting',
+                    'requested_by'  => $user->id,
+                    'requested_at'  => now(),
+                ]);
+                DB::commit();
+                return redirect()->route('employees.educationhistory.index', $employee)
+                                 ->with('info', 'Permintaan penghapusan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
+            }
+
+            // Superadmin/HC langsung hapus
+            $educationHistory->delete();
+            DB::commit();
+
+            return redirect()->route('employees.educationhistory.index', $employee)
+                             ->with('success', 'Employee Education was Deleted.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
+        }
     }
 }
