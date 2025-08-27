@@ -25,6 +25,9 @@
                         <button type="button" class="btn-filter" id="filter-toggle-btn">
                             <i class="fas fa-filter"></i> Filter
                         </button>
+                        <a href="{{ route('employees.index') }}" class="btn-reset" id="filter-reset" style="display: none;">
+                            Reset
+                        </a>
                         @if(auth()->user()->role === 'superadmin')
                         <a href="{{ route('employees.create') }}" class="add-employee-button">
                             <span class="add-icon">+</span>
@@ -32,66 +35,65 @@
                         </a>
                         @endif
                     </div>
+
+                    {{-- Collapsible Filter Section --}}
+                    <div class="filter-section" id="filter-container" style="display: none;">
+                        <div class="filter-grid">
+                            <div class="filter-column">
+                                <div class="filter-item">
+                                    <label for="division_id">Division</label>
+                                    <select name="division_id" id="division_id" class="form-control">
+                                        <option value="">All Divisions</option>
+                                        @foreach ($divisions as $division)
+                                            <option value="{{ $division->id }}"
+                                                {{ request('division_id') == $division->id ? 'selected' : '' }}>
+                                                {{ $division->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="employee_type">Employment Type</label>
+                                    <select name="employee_type" id="employee_type" class="form-control">
+                                        <option value="">All Types</option>
+                                        <option value="Kontrak" {{ request('employee_type') == 'Kontrak' ? 'selected' : '' }}>
+                                            Kontrak</option>
+                                        <option value="Magang" {{ request('employee_type') == 'Magang' ? 'selected' : '' }}>Magang
+                                        </option>
+                                        <option value="Masa Percobaan"
+                                            {{ request('employee_type') == 'Masa Percobaan' ? 'selected' : '' }}>Masa Percobaan
+                                        </option>
+                                        <option value="Fulltime" {{ request('employee_type') == 'Fulltime' ? 'selected' : '' }}>
+                                            Fulltime</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-column">
+                                <div class="filter-item">
+                                    <label for="position_id">Position</label>
+                                    <select name="position_id" id="position_id" class="form-control">
+                                        <option value="">All Positions</option>
+                                        @foreach ($positions as $position)
+                                            <option value="{{ $position->id }}"
+                                                {{ request('position_id') == $position->id ? 'selected' : '' }}>
+                                                {{ $position->title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="office">Office</label>
+                                    <select name="office" id="office" class="form-control">
+                                        <option value="">All Offices</option>
+                                        <option value="Kantor Pusat" {{ request('office') == 'Kantor Pusat' ? 'selected' : '' }}>
+                                            Kantor Pusat</option>
+                                        <option value="Kantor Cabang" {{ request('office') == 'Kantor Cabang' ? 'selected' : '' }}>
+                                            Kantor Cabang</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
-
-            {{-- Collapsible Filter Section --}}
-            <div class="filter-section" id="filter-container" style="display: none;">
-                <div class="filter-grid">
-                    <div class="filter-column">
-                        <div class="filter-item">
-                            <label for="division_id">Division</label>
-                            <select name="division_id" id="division_id" class="form-control">
-                                <option value="">All Divisions</option>
-                                @foreach ($divisions as $division)
-                                    <option value="{{ $division->id }}"
-                                        {{ request('division_id') == $division->id ? 'selected' : '' }}>
-                                        {{ $division->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="employee_type">Employment Type</label>
-                            <select name="employee_type" id="employee_type" class="form-control">
-                                <option value="">All Types</option>
-                                <option value="Kontrak" {{ request('employee_type') == 'Kontrak' ? 'selected' : '' }}>
-                                    Kontrak</option>
-                                <option value="Magang" {{ request('employee_type') == 'Magang' ? 'selected' : '' }}>Magang
-                                </option>
-                                <option value="Masa Percobaan"
-                                    {{ request('employee_type') == 'Masa Percobaan' ? 'selected' : '' }}>Masa Percobaan
-                                </option>
-                                <option value="Fulltime" {{ request('employee_type') == 'Fulltime' ? 'selected' : '' }}>
-                                    Fulltime</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="filter-column">
-                        <div class="filter-item">
-                            <label for="position_id">Position</label>
-                            <select name="position_id" id="position_id" class="form-control">
-                                <option value="">All Positions</option>
-                                @foreach ($positions as $position)
-                                    <option value="{{ $position->id }}"
-                                        {{ request('position_id') == $position->id ? 'selected' : '' }}>
-                                        {{ $position->title }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="office">Office</label>
-                            <select name="office" id="office" class="form-control">
-                                <option value="">All Offices</option>
-                                <option value="Kantor Pusat" {{ request('office') == 'Kantor Pusat' ? 'selected' : '' }}>
-                                    Kantor Pusat</option>
-                                <option value="Kantor Cabang" {{ request('office') == 'Kantor Cabang' ? 'selected' : '' }}>
-                                    Kantor Cabang</option>
-                            </select>
-                            <a href="{{ route('employees.index') }}" class="btn-reset">Reset</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </form>
 
         <!-- Notifications -->
@@ -168,6 +170,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const filterToggleBtn = document.getElementById('filter-toggle-btn');
             const filterContainer = document.getElementById('filter-container');
+            const resetButton = document.getElementById('filter-reset');
 
             const urlParams = new URLSearchParams(window.location.search);
             const hasFilters = ['division_id', 'position_id', 'employee_type', 'office'].some(param =>
@@ -175,11 +178,19 @@
 
             if (hasFilters) {
                 filterContainer.style.display = 'block';
+                resetButton.style.display = 'flex';
             }
 
             filterToggleBtn.addEventListener('click', function(event) {
                 event.preventDefault();
-                filterContainer.style.display = filterContainer.style.display === 'none' ? 'block' : 'none';
+                
+                if (filterContainer.style.display === 'none' || filterContainer.style.display === '') {
+                    filterContainer.style.display = 'block';
+                    resetButton.style.display = 'flex';
+                } else {
+                    filterContainer.style.display = 'none';
+                    resetButton.style.display = 'none';
+                }
             });
         });
     </script>
