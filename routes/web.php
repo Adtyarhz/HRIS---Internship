@@ -21,6 +21,8 @@ use App\Http\Controllers\InterviewScheduleController;
 use App\Http\Controllers\EmployeeEditRequestController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationalStructureController;
+use App\Models\User;
+use App\Notifications\EmployeeEditRequestNotification;
 
 
 // === LOGIN & LOGOUT ROUTES ===
@@ -187,29 +189,26 @@ Route::middleware('auth')->group(function () {
         // Family Dependents
         Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
-        // Career History
-
-// Akses lihat saja: superadmin, hc, direksi
-Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi')->group(function () {
+        // Career History - semua user login bisa akses index, tapi cek dibatasi di controller
+Route::middleware('auth')->group(function () {
     Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
         ->name('employees.career_histories.index');
-});
 
-// Akses tambah/edit/hapus hanya untuk superadmin dan hc
-Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
     Route::resource('employees.career_histories', CareerHistoryController::class)
         ->parameters(['career_histories' => 'careerHistory'])
         ->except(['index', 'show']);
 });
 
-        // Career Projection
-     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-    Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
+
+       // Career Projection
+Route::prefix('employees/{employee}/career-projection')
+    ->name('employees.career_projection.')
+    ->group(function () {
         Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
         Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
         Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
     });
-});
+
     });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
@@ -236,7 +235,13 @@ Route::post('/notifications/read-all', [NotificationController::class, 'markAllA
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
+Route::get('/test-notif', function () {
+    $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 
+    $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
+
+    return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
+});
 });
 
 // === GUEST ROUTES ===

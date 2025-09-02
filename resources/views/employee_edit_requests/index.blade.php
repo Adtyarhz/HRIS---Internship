@@ -14,13 +14,13 @@
     <h1>Daftar Permintaan Perubahan Data Karyawan</h1>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success text-center">{{ session('success') }}</div>
     @elseif(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-danger text-center">{{ session('error') }}</div>
     @endif
 
-    <table class="table table-bordered">
-        <thead>
+    <table class="table table-bordered table-striped custom-table text-center">
+        <thead class="table-secondary">
             <tr>
                 <th>No</th>
                 <th>Karyawan</th>
@@ -59,3 +59,14 @@
     </table>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .custom-table tbody tr {
+        background-color: #f9f9f9; /* abu tipis */
+    }
+    .custom-table tbody tr:nth-child(even) {
+        background-color: #f1f1f1; /* sedikit lebih gelap */
+    }
+</style>
+@endpush

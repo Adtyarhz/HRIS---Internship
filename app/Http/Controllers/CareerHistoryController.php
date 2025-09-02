@@ -19,6 +19,12 @@ class CareerHistoryController extends Controller
      */
 public function index(Employee $employee)
 {
+     $user = auth()->user();
+
+        // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
+        }
     $careerHistories = CareerHistory::where('employee_id', $employee->id)
         ->with(['position', 'division'])
         ->orderBy('id')
@@ -35,6 +41,12 @@ public function index(Employee $employee)
      */
     public function create(Employee $employee)
     {
+         $user = auth()->user();
+
+        // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
+        }
         $positions = Position::orderBy('title')->get()->pluck('title', 'id');
         $divisions = Division::orderBy('name')->get()->pluck('name', 'id');
         return view('career-path.career_histories.create', compact('employee', 'positions', 'divisions'));
@@ -45,6 +57,12 @@ public function index(Employee $employee)
      */
     public function store(Request $request, Employee $employee)
     {
+         $user = auth()->user();
+
+        // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
+        }
         $validator = Validator::make($request->all(), [
             'position_id' => 'required|exists:positions,id',
             'division_id' => 'required|exists:divisions,id',
@@ -105,6 +123,11 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
+         $user = auth()->user();
+        // Bukan superadmin/hc -> hanya boleh edit miliknya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit riwayat karir ini.');
+        }
 
         $positions = Position::orderBy('title')->get()->pluck('title', 'id');
         $divisions = Division::orderBy('name')->get()->pluck('name', 'id');
@@ -119,7 +142,12 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-
+        
+        $user = auth()->user();
+        // Bukan superadmin/hc -> hanya boleh update miliknya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk memperbarui riwayat karir ini.');
+        }
         $validator = Validator::make($request->all(), [
             'position_id' => 'required|exists:positions,id',
             'division_id' => 'required|exists:divisions,id',
@@ -203,7 +231,11 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-
+         $user = auth()->user();
+        // Bukan superadmin/hc -> hanya boleh hapus miliknya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus riwayat karir ini.');
+        }
         try {
             DB::beginTransaction();
 
