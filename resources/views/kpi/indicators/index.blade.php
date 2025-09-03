@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Indicator Management')
-@section('header_icon', 'mdi--chart-box')
-@section('content_header', 'KPI Indicator Management')
+@section('title', 'KPI Performance Index')
+@section('header_icon', 'ri--bill-line-01')
+@section('content_header', 'KPI Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,6 +32,16 @@
             padding-bottom: 30px;
         }
 
+        .badge {
+            font-size: 12px;
+            font-weight: 500;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            padding-left: 7px;
+            padding-right: 7px;
+            border-radius: 8px;
+        }
+
         .add-button {
             display: flex;
             align-items: center;
@@ -49,7 +59,7 @@
             margin-left: auto;
         }
 
-        .btn-info, .btn-delete-indicator {
+        .btn-info {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -67,8 +77,6 @@
 
         .btn-info { background-color: #17a2b8; }
         .btn-info:hover { background-color: #098ba5; }
-        .btn-delete-indicator { background-color: #FF4242; }
-        .btn-delete-indicator:hover { background-color: #e63939; color: white; }
         .add-button:hover { background-color: #803030; color: #fff; }
 
         .action-buttons {
@@ -159,14 +167,6 @@
                                                 title="Edit Indicator">
                                                 <span class="material-symbols--edit"></span>Edit
                                             </a>
-                                            <button type="button" class="btn-delete-indicator"
-                                                onclick="showDeleteModal('kpi-indicator-{{ $indicator->id }}')">
-                                                <span class="gg--trash-indicator"></span>Delete
-                                            </button>
-
-                                            {{-- Delete Modal --}}
-                                            <x-delete-modal modalId="kpi-indicator-{{ $indicator->id }}" :action="route('kpi-indicators.destroy', [$indicator->id])"
-                                                message="Are you sure you want to delete this indicator?" />
                                         </div>
                                     </td>
                                 </tr>

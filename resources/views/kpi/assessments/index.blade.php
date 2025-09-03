@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'Performance Assessments (KPI)')
-@section('header_icon', 'icon-park-outline--chart-histogram')
-@section('content_header', 'Performance Assessments (KPI)')
+@section('title', 'KPI Performance Index')
+@section('header_icon', 'ri--bill-line-01')
+@section('content_header', 'KPI Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

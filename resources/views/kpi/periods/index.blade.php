@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Period Management')
-@section('header_icon', 'icon-park-outline--calendar')
-@section('content_header', 'KPI Period Management')
+@section('title', 'KPI Performance Index')
+@section('header_icon', 'ri--bill-line-01')
+@section('content_header', 'KPI Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,7 +50,7 @@
             margin-left: auto;
         }
 
-        .btn-info, .btn-delete-period {
+        .btn-info {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -69,8 +69,6 @@
 
         .btn-info:hover {background-color: #15b3d2; }
         .btn-info:hover {background-color: #098ba5; }
-        .btn-delete-period { background-color: #FF4242; }
-        .btn-delete-period:hover { background-color: #e63939; color: white; }
         .add-button:hover { background-color: #803030; color: #fff; }
 
         .action-buttons {
@@ -154,14 +152,6 @@
                                                 title="Edit Period">
                                                 <span class="material-symbols--edit"></span>Edit
                                             </a>
-                                            <button type="button" class="btn-delete-period"
-                                                onclick="showDeleteModal('kpi-period-{{ $period->id }}')">
-                                                <span class="gg--trash-period"></span>Delete
-                                            </button>
-
-                                            {{-- Delete Modal --}}
-                                            <x-delete-modal modalId="kpi-period-{{ $period->id }}" :action="route('kpi-periods.destroy', [$period->id])"
-                                                message="Are you sure you want to delete this period?" />
                                         </div>
                                     </td>
                                 </tr>
