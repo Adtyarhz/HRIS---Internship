@@ -108,7 +108,10 @@
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-chart-line"></i> Career Projection</h3>
                         @php $role = auth()->user()->role; @endphp
-@if (!in_array($role, ['direksi']))
+@if (
+    !in_array($role, ['direksi']) ||
+    (in_array($role, ['direksi']) && auth()->user()->employee && auth()->user()->employee->id === $employee->id)
+)
     <div class="card-actions">
         <a href="{{ route('employees.career_projection.form', $employee) }}"
             class="action-button-career btn-career-projection">
@@ -117,6 +120,7 @@
         </a>
     </div>
 @endif
+
                     </div>
                     <div class="card-content">
                         @if (!$careerProjection)
