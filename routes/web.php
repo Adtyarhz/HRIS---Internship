@@ -21,6 +21,8 @@ use App\Http\Controllers\InterviewScheduleController;
 use App\Http\Controllers\EmployeeEditRequestController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationalStructureController;
+use App\Models\User;
+use App\Notifications\EmployeeEditRequestNotification;
 use App\Http\Controllers\KpiPeriodController;
 use App\Http\Controllers\KpiIndicatorController;
 use App\Http\Controllers\KpiTemplateController;
@@ -206,29 +208,26 @@ Route::middleware('auth')->group(function () {
         // Family Dependents
         Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
-        // Career History
+        // Career History - semua user login bisa akses index, tapi cek dibatasi di controller
+Route::middleware('auth')->group(function () {
+    Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
+        ->name('employees.career_histories.index');
 
-        // Akses lihat saja: superadmin, hc, direksi
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi')->group(function () {
-            Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
-                ->name('employees.career_histories.index');
-        });
+    Route::resource('employees.career_histories', CareerHistoryController::class)
+        ->parameters(['career_histories' => 'careerHistory'])
+        ->except(['index', 'show']);
+});
 
-        // Akses tambah/edit/hapus hanya untuk superadmin dan hc
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::resource('employees.career_histories', CareerHistoryController::class)
-                ->parameters(['career_histories' => 'careerHistory'])
-                ->except(['index', 'show']);
-        });
 
-        // Career Projection
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::prefix('employees/{employee}/career-projection')->name('employees.career_projection.')->group(function () {
-                Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-                Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-                Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-            });
-        });
+       // Career Projection
+Route::prefix('employees/{employee}/career-projection')
+    ->name('employees.career_projection.')
+    ->group(function () {
+        Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
+        Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+        Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
+    });
+
     });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
@@ -244,7 +243,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/{id}/approve', [EmployeeEditRequestController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [EmployeeEditRequestController::class, 'reject'])->name('reject');
         });
-    });
+    })
     // === REQUEST EDIT DATA PRIBADI - Untuk semua karyawan ===
     Route::middleware('auth')->group(function () {
         Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
@@ -254,6 +253,14 @@ Route::middleware('auth')->group(function () {
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
+  Route::get('/test-notif', function () {
+    $target = User::whereIn('role', ['hc', 'superadmin'])->first();
+
+    $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
+
+    return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
+});
+
 });
 
 // Akses untuk semua role kecuali superadmin

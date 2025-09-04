@@ -184,13 +184,29 @@ class CertificationController extends Controller
         // Bagian non-HC/non-superadmin → simpan sebagai permintaan edit
         if (!in_array($user->role, ['hc', 'superadmin'])) {
 
-            // Pastikan certificate_file tetap terisi meskipun tidak upload baru
-            if (!isset($validatedData['certificate_file'])) {
-                $validatedData['certificate_file'] = $certification->certificate_file ?? null;
-            }
+            /// Handle file certificate_file jika ada upload
+if ($request->hasFile('certificate_file')) {
+    $file = $request->file('certificate_file');
+    $fileName = time() . '_cert_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+        . '.' . $file->getClientOriginalExtension();
+    $file->storeAs('certifications', $fileName, 'public');
+    $validatedData['certificate_file'] = $fileName;
+} else {
+    $validatedData['certificate_file'] = $certification->certificate_file ?? null;
+}
 
-            // Pastikan material_files selalu ada key meskipun kosong
-            $validatedData['material_files'] = $validatedData['material_files'] ?? [];
+// Handle file material_files jika ada upload
+$materialFiles = [];
+if ($request->hasFile('material_files')) {
+    foreach ($request->file('material_files') as $materialFile) {
+        $filename = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+            . '.' . $materialFile->getClientOriginalExtension();
+        $materialFile->storeAs('certifications/materials', $filename, 'public');
+        $materialFiles[] = $filename;
+    }
+}
+$validatedData['material_files'] = $materialFiles;
+
 
             EmployeeEditRequest::create([
                 'employee_id'   => $employee->id,

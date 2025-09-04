@@ -63,4 +63,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(EmployeeEditRequest::class, 'employee_id');
     }
+    // App\Models\User.php
+public function scopeAdmins($query)
+{
+    return $query->whereIn(\DB::raw('LOWER(role)'), ['hc', 'superadmin']);
+}
+
 }
