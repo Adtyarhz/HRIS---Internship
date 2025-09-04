@@ -15,7 +15,7 @@ class ViewServiceProvider extends ServiceProvider
             $employeeId = $user?->employee?->id;
             $menu = [];
 
-            if ($user) {
+            if ($user) {               
                 switch ($user->role) {
                     case 'superadmin':
                         $menu = [
@@ -29,7 +29,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -45,7 +45,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -59,7 +59,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -75,7 +75,7 @@ class ViewServiceProvider extends ServiceProvider
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -91,7 +91,7 @@ class ViewServiceProvider extends ServiceProvider
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -106,7 +106,7 @@ class ViewServiceProvider extends ServiceProvider
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
@@ -121,7 +121,7 @@ class ViewServiceProvider extends ServiceProvider
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
                             ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Payroll', 'route' => '#', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;

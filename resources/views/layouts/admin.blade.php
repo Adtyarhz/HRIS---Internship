@@ -17,10 +17,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Manrope:wght@400&family=Noto+Sans+Georgian:wght@400&display=swap"
         rel="stylesheet" />
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 
     <!-- Font Awesome -->
-     <!-- Optional: Font Awesome CDN (v6) jika ikon tidak muncul) -->
+    <!-- Optional: Font Awesome CDN (v6) jika ikon tidak muncul) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/plugins/fontawesome-free/css/all.min.css">
@@ -152,37 +151,46 @@
                 <img src="{{ asset('img/logo.png') }}" alt="HRIS Logo" class="brand-image">
                 <div class="brand-text-wrapper">
                     <span class="brand-text brand-title">HRIS</span>
-                    <span class="brand-text brand-subtitle">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'User')) }}</span>
+                    <span
+                        class="brand-text brand-subtitle">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'User')) }}</span>
                 </div>
             </a>
             <div class="sidebar">
                 <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-    @foreach ($menu ?? [] as $item)
-        <li class="nav-item">
-            @php
-    $url = '#';
-    if ($item['route'] !== '#') {
-        try {
-            $url = isset($item['params']) 
-                ? route($item['route'], $item['params']) 
-                : route($item['route']);
-        } catch (Exception $e) {
-            $url = '#';
-        }
-    }
-@endphp
-<a href="{{ $url }}"
-   class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}"
-   @if($url === '#') onclick="alert('Fitur ini sedang dalam pengembangan')" @endif>
-    <div class="nav-icon-text d-flex align-items-center">
-        <span class="iconify mr-2" data-icon="{{ $item['icon'] ?? 'mdi:alert' }}" style="font-size: 18px;"></span>
-        <p class="mb-0">{{ $item['label'] }}</p>
-    </div>
-</a>
-        </li>
-    @endforeach
-</ul>
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+                        data-accordion="false">
+                        @foreach ($menu ?? [] as $item)
+                            <li class="nav-item">
+                                @php
+                                    $url = '#';
+                                    if ($item['route'] !== '#') {
+                                        try {
+                                            $url = isset($item['params'])
+                                                ? route($item['route'], $item['params'])
+                                                : route($item['route']);
+                                        } catch (Exception $e) {
+                                            $url = '#';
+                                        }
+                                    }
+                                    $isActive =
+                                        request()->routeIs($item['route']) ||
+                                        (isset($item['submenu']) &&
+                                            collect($item['submenu'])->contains(function ($subitem) {
+                                                return request()->routeIs($subitem['route']);
+                                            }));
+                                @endphp
+                                <a href="{{ $url }}"
+                                    class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}"
+                                    @if ($url === '#') onclick="alert('Fitur ini sedang dalam pengembangan')" @endif>
+                                    <div class="nav-icon-text d-flex align-items-center">
+                                        <span class="iconify mr-2" data-icon="{{ $item['icon'] ?? 'mdi:alert' }}"
+                                            style="font-size: 18px;"></span>
+                                        <p class="mb-0">{{ $item['label'] }}</p>
+                                    </div>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </nav>
             </div>
         </aside>

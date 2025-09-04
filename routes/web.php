@@ -23,7 +23,10 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationalStructureController;
 use App\Models\User;
 use App\Notifications\EmployeeEditRequestNotification;
-
+use App\Http\Controllers\KpiPeriodController;
+use App\Http\Controllers\KpiIndicatorController;
+use App\Http\Controllers\KpiTemplateController;
+use App\Http\Controllers\KpiAssessmentController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -56,6 +59,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/organization/structure/{position}/edit', [OrganizationalStructureController::class, 'edit'])->name('organization.structure.edit');
         Route::put('/organization/structure/{position}', [OrganizationalStructureController::class, 'update'])->name('organization.structure.update');
         Route::delete('/organization/structure/{position}', [OrganizationalStructureController::class, 'destroy'])->name('organization.structure.destroy');
+
+        // ========================================================================
+        // KPI MANAGEMENT (SETUP)
+        // ========================================================================
+        // --- Rute untuk Manajemen Indikator KPI ---
+        Route::resource('kpi-indicators', KpiIndicatorController::class)->except('show');
+        // --- Rute untuk Manajemen Periode KPI ---
+        Route::resource('kpi-periods', KpiPeriodController::class)->except('show');
+        // --- Rute untuk Manajemen Templat KPI ---
+        Route::resource('kpi-templates', KpiTemplateController::class)->except(['edit', 'update']);
+        // Rute untuk mengelola item di dalam sebuah templat
+        Route::post('kpi-templates/{kpiTemplate}/items', [KpiTemplateController::class, 'storeItem'])->name('kpi-templates.items.store');
+        Route::delete('kpi-template-items/{kpiTemplateItem}', [KpiTemplateController::class, 'destroyItem'])->name('kpi-template-items.destroy');
+        // Rute untuk mengelola aturan skoring di dalam sebuah item
+        Route::post('kpi-template-items/{kpiTemplateItem}/rules', [KpiTemplateController::class, 'storeScoringRule'])->name('kpi-template-items.rules.store');
+        Route::delete('kpi-scoring-rules/{kpiScoringRule}', [KpiTemplateController::class, 'destroyScoringRule'])->name('kpi-scoring-rules.destroy');
     });
 
     // === Route khusus untuk user biasa mengedit data mereka sendiri ===
@@ -110,9 +129,9 @@ Route::middleware('auth')->group(function () {
 
     // === SUPERADMIN, DIREKSI, MANAGER, SECTION_HEAD ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,direksi,hc')->group(function () {
-    Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
-    Route::get('/career-path/{employee}', [EmployeeController::class, 'showCareer'])->name('career.show');
-});
+        Route::get('/career-path', [EmployeeController::class, 'indexCareer'])->name('career.index');
+        Route::get('/career-path/{employee}', [EmployeeController::class, 'showCareer'])->name('career.show');
+    });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
     // Employee view - Semua user bisa lihat data employee mereka sendiri
@@ -217,31 +236,39 @@ Route::prefix('employees/{employee}/career-projection')
     Route::post('/announcements/{id}/vote', [AnnouncementController::class, 'vote'])->name('announcement.vote');
 
     // === EMPLOYEE EDIT REQUEST - Only HC & SUPERADMIN ===
-Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-    Route::prefix('employee-edit-requests')->name('employee-edit-requests.')->group(function () {
-        Route::get('/', [EmployeeEditRequestController::class, 'index'])->name('index');
-        Route::get('/{id}', [EmployeeEditRequestController::class, 'show'])->name('show');
-        Route::post('/{id}/approve', [EmployeeEditRequestController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [EmployeeEditRequestController::class, 'reject'])->name('reject');
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+        Route::prefix('employee-edit-requests')->name('employee-edit-requests.')->group(function () {
+            Route::get('/', [EmployeeEditRequestController::class, 'index'])->name('index');
+            Route::get('/{id}', [EmployeeEditRequestController::class, 'show'])->name('show');
+            Route::post('/{id}/approve', [EmployeeEditRequestController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [EmployeeEditRequestController::class, 'reject'])->name('reject');
+        });
+    })
+    // === REQUEST EDIT DATA PRIBADI - Untuk semua karyawan ===
+    Route::middleware('auth')->group(function () {
+        Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
     });
-});
-// === REQUEST EDIT DATA PRIBADI - Untuk semua karyawan ===
-Route::middleware('auth')->group(function () {
-    Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
-});
-Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
-Route::get('/test-notif', function () {
+  Route::get('/test-notif', function () {
     $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 
     $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
 
     return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
 });
+
+});
+
+// Akses untuk semua role kecuali superadmin
+Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc,direksi,manager,section_head,staff_bisnis,staff_support')->group(function () {
+    // ========================================================================
+    // KPI ASSESSMENT PROCESS (SUPERVISOR & EMPLOYEE)
+    // ========================================================================
+    Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
 });
 
 // === GUEST ROUTES ===
