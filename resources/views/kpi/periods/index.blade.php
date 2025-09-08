@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Performance Index')
+@section('title', 'Key Performance Index')
 @section('header_icon', 'ri--bill-line-01')
-@section('content_header', 'KPI Performance Index')
+@section('content_header', 'Key Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
