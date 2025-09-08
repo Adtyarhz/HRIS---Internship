@@ -26,7 +26,7 @@
             color: #555;
         }
 
-        .btn-cancel-assess, .btn-secondary {
+        .btn-cancel-assess, .btn-cancel-only, .btn-secondary {
             border-radius: 5px;
             width: 110px;
             height: 37px;
@@ -41,38 +41,24 @@
             border: none;
         }
 
-        .btn-secondary {margin-right: 10px; margin-left: 10px;}
-        .btn-cancel-assess {background: #9a3b3b;}
-        .btn-cancel-assess:hover {background: #803030; color: white;}
+        .btn-secondary {margin-right: 10px;}
+        .btn-cancel-assess {background: #9a3b3b; margin-right: 10px;}
+        .btn-cancel-only {background: #9a3b3b;}
+        .btn-cancel-assess:hover, .btn-cancel-only:hover {background: #803030; color: white;}
     </style>
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
+
                 {{-- Header Info --}}
                 <div class="d-flex justify-content-between mb-3">
                     <span>Assessment for: <strong>{{ $kpiAssessment->employee->full_name }}</strong></span>
                     <span>Period: <strong>{{ $kpiAssessment->period->period_name }}</strong></span>
                 </div>
-
-                {{-- Alerts --}}
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
-                @endif
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
 
                 @php
                     $user = Auth::user();
@@ -228,12 +214,16 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="form-buttons-container">
-                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a>
+                                {{-- <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a> --}}
                                 @if ($canEditTarget)
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a>
                                     <button type="submit" class="btn btn-submit">Save</button>
                                 @elseif($canEditSelf || $canEditSupervisor)
+                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a>
                                     <button type="submit" name="action" value="save_draft" class="btn btn-secondary">Save Draft</button>
                                     <button type="submit" name="action" value="submit" class="btn btn-submit">Submit</button>
+                                @else
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-only">Cancel</a>
                                 @endif
                             </div>
                         </div>

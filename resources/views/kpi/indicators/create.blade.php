@@ -10,19 +10,10 @@
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form action="{{ route('kpi-indicators.store') }}" method="POST">
                     @csrf
                     @include('kpi.indicators._form', ['kpiIndicator' => new \App\Models\KpiIndicator()])

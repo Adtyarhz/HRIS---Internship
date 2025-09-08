@@ -10,23 +10,15 @@
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form action="{{ route('kpi-templates.store') }}" method="POST">
                     @csrf
                     <div class="row">
                         <div class="col-12">
+                            
                             <!-- Template Name -->
                             <div class="form-group row align-items-center">
                                 <label for="template_name" class="col-md-2 col-form-label">Template Name <span class="text-danger">*</span> :</label>

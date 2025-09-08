@@ -89,24 +89,16 @@
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
     <div class="container-fluid">
 
         {{-- Form tambah KPI Item --}}
         <div class="form-content-container mb-4">
             <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form action="{{ route('kpi-templates.items.store', $kpiTemplate->id) }}" method="POST">
                     @csrf
                     <div class="row">
+                        
                         <!-- Indicator -->
                         <div class="col-md-4">
                             <div class="form-group">
