@@ -209,24 +209,24 @@ Route::middleware('auth')->group(function () {
         Route::resource('employees.family-dependents', FamilyDependentController::class)->scoped();
 
         // Career History - semua user login bisa akses index, tapi cek dibatasi di controller
-Route::middleware('auth')->group(function () {
-    Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
-        ->name('employees.career_histories.index');
+        Route::middleware('auth')->group(function () {
+            Route::get('employees/{employee}/career_histories', [CareerHistoryController::class, 'index'])
+                ->name('employees.career_histories.index');
 
-    Route::resource('employees.career_histories', CareerHistoryController::class)
-        ->parameters(['career_histories' => 'careerHistory'])
-        ->except(['index', 'show']);
-});
+            Route::resource('employees.career_histories', CareerHistoryController::class)
+                ->parameters(['career_histories' => 'careerHistory'])
+                ->except(['index', 'show']);
+        });
 
 
-       // Career Projection
-Route::prefix('employees/{employee}/career-projection')
-    ->name('employees.career_projection.')
-    ->group(function () {
-        Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-        Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-        Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-    });
+        // Career Projection
+        Route::prefix('employees/{employee}/career-projection')
+            ->name('employees.career_projection.')
+            ->group(function () {
+                Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
+                Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
+                Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
+            });
 
     });
 
@@ -243,7 +243,7 @@ Route::prefix('employees/{employee}/career-projection')
             Route::post('/{id}/approve', [EmployeeEditRequestController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [EmployeeEditRequestController::class, 'reject'])->name('reject');
         });
-    })
+    });
     // === REQUEST EDIT DATA PRIBADI - Untuk semua karyawan ===
     Route::middleware('auth')->group(function () {
         Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
@@ -253,23 +253,22 @@ Route::prefix('employees/{employee}/career-projection')
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
-  Route::get('/test-notif', function () {
-    $target = User::whereIn('role', ['hc', 'superadmin'])->first();
+    Route::get('/test-notif', function () {
+        $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 
-    $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
+        $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
 
-    return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
+        return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
+    });
+
+    // Akses untuk semua role kecuali superadmin
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc,direksi,manager,section_head,staff_bisnis,staff_support')->group(function () {
+        // ========================================================================
+        // KPI ASSESSMENT PROCESS (SUPERVISOR & EMPLOYEE)
+        // ========================================================================
+        Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
+    });
+
 });
-
-});
-
-// Akses untuk semua role kecuali superadmin
-Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc,direksi,manager,section_head,staff_bisnis,staff_support')->group(function () {
-    // ========================================================================
-    // KPI ASSESSMENT PROCESS (SUPERVISOR & EMPLOYEE)
-    // ========================================================================
-    Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
-});
-
 // === GUEST ROUTES ===
 // Routes yang tidak memerlukan authentication bisa ditambahkan di sini
