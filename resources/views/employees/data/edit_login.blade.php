@@ -22,14 +22,17 @@
             <input type="text" name="name" class="form-control" value="{{ old('name', $user->name ?? '') }}" required>
         </div>
 
-        <div class="mb-3">
+       <div class="mb-3">
             <label for="email">Email Login</label>
-            <input type="email" name="email" class="form-control" value="{{ old('email', $user->email ?? '') }}" required>
+            <input type="email" name="email" class="form-control"
+                value="{{ old('email', $user->email ?? '') }}"
+                @if(!in_array(auth()->user()->role, ['superadmin', 'hc'])) readonly @endif required>
         </div>
 
         <div class="mb-3">
             <label for="role">Role</label>
-            <select name="role" class="form-control" required>
+            <select name="role" class="form-control"
+                    @if(!in_array(auth()->user()->role, ['superadmin', 'hc'])) disabled @endif required>
                 <option value="">-- Pilih Role --</option>
                 @foreach ($roles as $role)
                     <option value="{{ $role }}" {{ (isset($user) && $user->role === $role) ? 'selected' : '' }}>
@@ -38,7 +41,7 @@
                 @endforeach
             </select>
         </div>
-
+        
         <div class="mb-3">
             <label for="password">Password (Kosongkan jika tidak diganti)</label>
             <input type="password" name="password" class="form-control">

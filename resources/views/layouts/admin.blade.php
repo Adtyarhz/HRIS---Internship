@@ -29,6 +29,7 @@
     {{-- Link ke CSS Kustom Anda --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
     <!-- Iconify CDN -->
+     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <!-- BENAR -->
     <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
 
