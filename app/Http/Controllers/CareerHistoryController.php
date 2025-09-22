@@ -17,31 +17,31 @@ class CareerHistoryController extends Controller
     /**
      * Display a listing of the career histories.
      */
-public function index(Employee $employee)
-{
-     $user = auth()->user();
+    public function index(Employee $employee)
+    {
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
         }
-    $careerHistories = CareerHistory::where('employee_id', $employee->id)
-        ->with(['position', 'division'])
-        ->orderBy('id')
-        ->get();
+        $careerHistories = CareerHistory::where('employee_id', $employee->id)
+            ->with(['position', 'division'])
+            ->orderBy('id')
+            ->get();
 
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
 
-    return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
-}
+        return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
+    }
 
     /**
      * Show the form for creating a new career history.
      */
     public function create(Employee $employee)
     {
-         $user = auth()->user();
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
@@ -57,7 +57,7 @@ public function index(Employee $employee)
      */
     public function store(Request $request, Employee $employee)
     {
-         $user = auth()->user();
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
@@ -81,8 +81,13 @@ public function index(Employee $employee)
             DB::beginTransaction();
 
             $data = $request->only([
-                'position_id', 'division_id', 'employee_type',
-                'start_date', 'end_date', 'type', 'notes'
+                'position_id',
+                'division_id',
+                'employee_type',
+                'start_date',
+                'end_date',
+                'type',
+                'notes'
             ]);
             $data['employee_id'] = $employee->id;
 
@@ -123,7 +128,7 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-         $user = auth()->user();
+        $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh edit miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit riwayat karir ini.');
@@ -142,7 +147,7 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-        
+
         $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh update miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
@@ -166,14 +171,19 @@ public function index(Employee $employee)
             DB::beginTransaction();
 
             $data = $request->only([
-                'position_id', 'division_id', 'employee_type',
-                'start_date', 'end_date', 'type', 'notes'
+                'position_id',
+                'division_id',
+                'employee_type',
+                'start_date',
+                'end_date',
+                'type',
+                'notes'
             ]);
 
             // Cek apakah ada perubahan pada position_id, division_id, atau employee_type
             $hasChanges = $careerHistory->position_id != $data['position_id'] ||
-                          $careerHistory->division_id != $data['division_id'] ||
-                          $careerHistory->employee_type != $data['employee_type'];
+                $careerHistory->division_id != $data['division_id'] ||
+                $careerHistory->employee_type != $data['employee_type'];
 
             // Jika CareerHistory ini aktif (end_date null) dan ada perubahan,
             // tutup CareerHistory ini dan buat yang baru
@@ -231,7 +241,7 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-         $user = auth()->user();
+        $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh hapus miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk menghapus riwayat karir ini.');
@@ -264,7 +274,7 @@ public function index(Employee $employee)
             }
 
             $careerHistory->delete();
-        DB::commit();
+            DB::commit();
             return redirect()->route('employees.showCareer', $employee)
                 ->with('success', 'Riwayat karir berhasil dihapus.');
         } catch (\Exception $e) {
