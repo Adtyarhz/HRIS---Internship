@@ -231,7 +231,7 @@
                 @endif
 
                 {{-- Button cancel --}}
-                <div class="form-buttons-container">
+                <div class="form-buttons-container mt-3">
                     <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
                 </div>
 
