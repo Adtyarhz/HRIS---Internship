@@ -59,23 +59,6 @@
             margin-left: auto;
         }
 
-        .btn-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 120px;
-            height: 2.5rem;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 8px;
-            text-decoration: none;
-            border: none;
-        }
-
-        .btn-info { background-color: #17a2b8; }
         .btn-info:hover { background-color: #098ba5; }
         .add-button:hover { background-color: #803030; color: #fff; }
 

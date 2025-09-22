@@ -1,13 +1,31 @@
 @extends('layouts.admin')
 
-@section('title', 'Riwayat Kesehatan Karyawan')
-@section('header_icon', 'icon-park-outline--health')
-@section('content_header', 'Riwayat Kesehatan')
+@section('title', 'Employee Information')
+@section('header_icon', 'icon-park-outline--file-staff-one-01')
+@section('content_header', 'Employee Information')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {{-- Memuat CSS khusus untuk form ini --}}
     <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-buttons-container {
+                flex-direction: column-reverse;
+                gap: 15px;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .btn-submit {
+                margin-left: 0px;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -145,8 +163,8 @@
                             <div class="form-group row">
                                 <label for="checkup_loc" class="col-md-2 col-form-label">Location Checkup :</label>
                                 <div class="col-md-4">
-                                    <textarea class="form-control @error('checkup_loc') is-invalid @enderror" id="checkup_loc" name="checkup_loc" rows="4"
-                                        placeholder="....">{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
+                                    <textarea class="form-control @error('checkup_loc') is-invalid @enderror" id="checkup_loc" name="checkup_loc"
+                                        rows="4" placeholder="....">{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
                                     @error('notes')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror

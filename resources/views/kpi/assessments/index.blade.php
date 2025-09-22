@@ -55,6 +55,12 @@
             background-color: #803030;
             color: #fff;
         }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
     </style>
 @endpush
 
@@ -101,10 +107,12 @@
                                     <td>{{ $assessment->status }}</td>
                                     <td>{{ $assessment->final_score ?? '-' }}</td>
                                     <td>
-                                        <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
-                                            class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> View/Assess
-                                        </a>
+                                        <div class="action-buttons">
+                                            <a href="{{ route('kpi-assessments.show', $assessment->id) }}" class="btn-info"
+                                                title="View/Assess">
+                                                <i class="fas fa-eye"></i>View/Assess
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -126,10 +134,11 @@
             <div class="form-content-container">
                 <div class="card-body">
 
-                    <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's Assessment History
-                            <a href="{{ route('kpi-assessments.create') }}" class="add-button">
-                                <i class="fas fa-plus"></i>Add New Assessment
-                            </a>
+                    <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's
+                        Assessment History
+                        <a href="{{ route('kpi-assessments.create') }}" class="add-button">
+                            <i class="fas fa-plus"></i>Add New Assessment
+                        </a>
                     </div>
 
                     <div class="table-responsive">
@@ -155,10 +164,12 @@
                                         <td>{{ $assessment->status }}</td>
                                         <td>{{ $assessment->final_score ?? '-' }}</td>
                                         <td>
-                                            <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
-                                                class="btn btn-sm btn-info">
-                                                <i class="fas fa-eye"></i> View/Assess
-                                            </a>
+                                            <div class="action-buttons">
+                                                <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
+                                                    class="btn-info" title="View/Assess">
+                                                    <i class="fas fa-eye"></i>View/Assess
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

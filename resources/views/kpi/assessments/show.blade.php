@@ -26,7 +26,7 @@
             color: #555;
         }
 
-        .btn-cancel-assess, .btn-cancel-only, .btn-secondary {
+        .btn-secondary {
             border-radius: 5px;
             width: 110px;
             height: 37px;
@@ -41,10 +41,7 @@
             border: none;
         }
 
-        .btn-secondary {margin-right: 10px;}
-        .btn-cancel-assess {background: #9a3b3b; margin-right: 10px;}
-        .btn-cancel-only {background: #9a3b3b;}
-        .btn-cancel-assess:hover, .btn-cancel-only:hover {background: #803030; color: white;}
+        .btn-secondary {margin-left: 10px;}
     </style>
 @endpush
 
@@ -216,14 +213,14 @@
                             <div class="form-buttons-container">
                                 {{-- <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a> --}}
                                 @if ($canEditTarget)
-                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a>
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                     <button type="submit" class="btn btn-submit">Save</button>
                                 @elseif($canEditSelf || $canEditSupervisor)
-                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a>
+                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                     <button type="submit" name="action" value="save_draft" class="btn btn-secondary">Save Draft</button>
                                     <button type="submit" name="action" value="submit" class="btn btn-submit">Submit</button>
                                 @else
-                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-only">Cancel</a>
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                 @endif
                             </div>
                         </div>

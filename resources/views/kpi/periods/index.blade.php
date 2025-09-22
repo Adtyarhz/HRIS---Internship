@@ -50,24 +50,6 @@
             margin-left: auto;
         }
 
-        .btn-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 120px;
-            height: 2.5rem;
-            color: #fff;
-            font-family: "Noto Sans Georgian", sans-serif;
-            font-size: 15px;
-            font-weight: 500;
-            border-radius: 8px;
-            text-decoration: none;
-            border: none;
-        }
-
-        .btn-info:hover {background-color: #15b3d2; }
         .btn-info:hover {background-color: #098ba5; }
         .add-button:hover { background-color: #803030; color: #fff; }
 

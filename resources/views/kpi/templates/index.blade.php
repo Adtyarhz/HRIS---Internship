@@ -50,7 +50,7 @@
             margin-left: auto;
         }
 
-        .btn-info, .btn-delete-template {
+        .btn-delete-template {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -67,7 +67,6 @@
             border: none;
         }
 
-        .btn-info:hover {background-color: #15b3d2; }
         .btn-info:hover {background-color: #098ba5; }
         .btn-delete-template { background-color: #FF4242; }
         .btn-delete-template:hover { background-color: #e63939; color: white; }
