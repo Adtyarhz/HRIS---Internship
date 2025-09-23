@@ -332,8 +332,12 @@ class EmployeeController extends Controller
                     'method' => 'update',
                     'model' => Employee::class,
                     'model_id' => $employee->id,
-                    'original_data' => $employee->only(array_keys($validatedData)),
-                    'changed_data' => $validatedData,
+                    'original_data' => $employee->only(array_keys($validatedData) + ['position_id', 'division_id', 'employee_type']),
+                    'changed_data' => array_merge($validatedData, [
+                        'position_id' => $request->input('position_id', $employee->position_id),
+                        'division_id' => $request->input('division_id', $employee->division_id),
+                        'employee_type' => $request->input('employee_type', $employee->employee_type),
+                    ]),
                     'status' => 'waiting',
                     'requested_by' => $user->id,
                     'requested_at' => now(),
@@ -353,7 +357,8 @@ class EmployeeController extends Controller
                 Storage::disk('public')->delete($employee->photo);
             }
 
-            $oldPosition = \App\Models\Position::find($employee->position_id);
+            // Simpan data lama sebelum update
+            $oldPosition = $employee->position_id;
             $oldDivision = $employee->division_id;
             $oldType = $employee->employee_type;
 
@@ -366,7 +371,9 @@ class EmployeeController extends Controller
 
             $careerType = null;
 
-            if ($oldPosition && $newPosition && $oldPosition->id !== $newPosition->id) {
+            if (!$oldPosition && $newPosition) {
+                $careerType = 'Awal Masuk';
+            } elseif ($oldPosition && $newPosition && $oldPosition->id !== $newPosition->id) {
                 if ($newPosition->depth < $oldPosition->depth) {
                     $careerType = 'Promosi';
                 } elseif ($newPosition->depth > $oldPosition->depth) {
