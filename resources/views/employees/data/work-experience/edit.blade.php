@@ -1,79 +1,72 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Work Experience')
+@section('title', 'Employee Information')
 @section('header_icon', 'icon-park-outline--file-staff-one-01')
 @section('content_header', 'Employee Information')
 
 @push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-    .form-wrapper {
-        background-color: #FDFBEF;
-        padding: 30px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-    }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-buttons-container {
+                flex-direction: column-reverse;
+                gap: 15px;
+            }
 
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 20px;
-    }
+            .btn-submit,
+            .btn-cancel,
+            .btn-delete {
+                width: 100%;
+                max-width: 100%;
+            }
 
-    .btn-cancel {
-        background-color: #9A3B3B;
-        color: #fff;
-        border: none;
-    }
-
-    .btn-cancel:hover {
-        background-color: #7b2e2e;
-    }
-
-    .btn-submit {
-        background-color: #367FA9;
-        color: #fff;
-        border: none;
-    }
-
-    .btn-submit:hover {
-        background-color: #2b6282;
-    }
-
-    .btn-delete {
-        background-color: #FF0000;
-        color: #fff;
-        border: none;
-    }
-
-    .btn-delete:hover {
-        background-color: #cc0000;
-    }
-</style>
+            .btn-submit {
+                margin-left: 0px;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
-    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <div class="container-fluid">
+        {{-- Tab Menu --}}
+        @include('employees.partials.tab-menu', ['employee' => $employee])
 
-    <div class="form-wrapper">
-        <form id="updateForm" action="{{ route('employees.work-experience.update', [$employee, $workExperience]) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-            @include('employees.data.work-experience._form', ['workExperience' => $workExperience])
-        </form>
+        <div class="form-content-container">
+            <div class="card-body">
 
-        <div class="form-actions">
-            <button type="button" class="btn btn-delete" onclick="showDeleteModal('work-experience-{{ $workExperience->id }}')">Delete</button>
-            <a href="{{ route('employees.work-experience.index', $employee) }}" class="btn btn-cancel">Cancel</a>
-            <button type="submit" form="updateForm" class="btn btn-submit">Submit</button>
+                {{-- Form Update --}}
+                <form id="updateForm"
+                      action="{{ route('employees.work-experience.update', [$employee, $workExperience]) }}"
+                      method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    @include('employees.data.work-experience._form', ['workExperience' => $workExperience])
+
+                    {{-- Action Buttons --}}
+                    <div class="form-buttons-container mt-4">
+                        <button type="button" class="btn btn-delete"
+                                onclick="showDeleteModal('work-experience-{{ $workExperience->id }}')">
+                            Delete
+                        </button>
+                        <a href="{{ route('employees.work-experience.index', $employee) }}" class="btn btn-cancel">
+                            Cancel
+                        </a>
+                        <button type="submit" form="updateForm" class="btn btn-submit">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+
+                {{-- Modal Delete --}}
+                <x-delete-modal
+                    modalId="work-experience-{{ $workExperience->id }}"
+                    :action="route('employees.work-experience.destroy', [$employee, $workExperience])"
+                    message="Are you sure to delete this Work Experience?" 
+                />
+            </div>
         </div>
     </div>
-
-    <!-- Komponen Modal Delete -->
-    <x-delete-modal 
-        modalId="work-experience-{{ $workExperience->id }}" 
-        :action="route('employees.work-experience.destroy', [$employee, $workExperience])" 
-        message="Are you sure to delete this Work Experience?" 
-    />
 @endsection

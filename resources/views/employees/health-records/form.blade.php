@@ -82,11 +82,18 @@
                                 <label for="price_last_checkup" class="col-md-2 col-form-label">Price Last Checkup <span
                                         class="text-danger">*</span> :</label>
                                 <div class="col-md-3">
-                                    <input type="number"
-                                        class="form-control @error('price_last_checkup') is-invalid @enderror"
-                                        id="price_last_checkup" name="price_last_checkup"
-                                        value="{{ old('price_last_checkup', $healthRecord->price_last_checkup ?? '') }}"
-                                        placeholder="Input Your Medical Price Last Checkup" required>
+                                    <div class="input-group">
+                                        <input type="text" id="price_last_checkup" class="form-control"
+                                            placeholder="e.g., 300000,00"
+                                            value="{{ old('price_last_checkup', $healthRecord?->price_last_checkup)
+                                                ? number_format(old('price_last_checkup', $healthRecord?->price_last_checkup), 2, ',', '.')
+                                                : '' }}" required>
+                                        <input type="hidden" name="price_last_checkup" id="price_last_checkup"
+                                            value="{{ old('price_last_checkup', $healthRecord?->price_last_checkup) }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">IDR</span>
+                                        </div>
+                                    </div>
                                     @error('price_last_checkup')
                                         <span class="invalid-feedback d-block">{{ $message }}</span>
                                     @enderror
@@ -119,7 +126,7 @@
                                         class="text-danger">*</span> :</label>
                                 <div class="col-md-4">
                                     <textarea class="form-control @error('known_allergies') is-invalid @enderror" id="known_allergies"
-                                        name="known_allergies" rows="6" placeholder="Description of Your Allergies" required>{{ old('known_allergies', $healthRecord->known_allergies ?? '') }}</textarea>
+                                        name="known_allergies" rows="4" placeholder="Description of Your Allergies" required>{{ old('known_allergies', $healthRecord->known_allergies ?? '') }}</textarea>
                                     @error('known_allergies')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -131,7 +138,7 @@
                                 <label for="chronic_diseases" class="col-md-2 col-form-label">Chronic Diseases :</label>
                                 <div class="col-md-4">
                                     <textarea class="form-control @error('chronic_diseases') is-invalid @enderror" id="chronic_diseases"
-                                        name="chronic_diseases" rows="6" placeholder="Description of Your Chronic Diseases">{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
+                                        name="chronic_diseases" rows="4" placeholder="Description of Your Chronic Diseases">{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
                                     @error('chronic_diseases')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -141,7 +148,7 @@
                             {{-- Last Checkup --}}
                             <div class="form-group row align-items-center">
                                 <label for="last_checkup_date" class="col-md-2 col-form-label">Last Checkup :</label>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="input-group date-input-group">
                                         <input type="date"
                                             class="form-control @error('last_checkup_date') is-invalid @enderror"
@@ -164,7 +171,7 @@
                                 <label for="checkup_loc" class="col-md-2 col-form-label">Location Checkup :</label>
                                 <div class="col-md-4">
                                     <textarea class="form-control @error('checkup_loc') is-invalid @enderror" id="checkup_loc" name="checkup_loc"
-                                        rows="4" placeholder="....">{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
+                                        rows="3" placeholder="e.g., University of Indonesia Hospital - Jl. Prof. Dr. Bahder Djohan, Pondok Cina, Beji District, Depok City, West Java">{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
                                     @error('notes')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror

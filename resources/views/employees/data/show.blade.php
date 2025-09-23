@@ -10,12 +10,6 @@
 @endpush
 
 @section('content')
-@if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
-
     <div class="employee-detail-page">
         <!-- Custom Page Header -->
         <div class="page-header-container">
