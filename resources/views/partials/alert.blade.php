@@ -1,6 +1,6 @@
 @php
     $type = session()->has('success') ? 'success'
-           : (session()->has('error') ? 'danger'
+           : (session()->has('error') ? 'error'
            : (session()->has('warning') ? 'warning'
            : (session()->has('info') ? 'info' : null)));
 
@@ -8,7 +8,7 @@
 
     $icon = match($type) {
         'success' => '✅',
-        'danger'  => '❌',
+        'error'  => '❌',
         'warning' => '⚠️',
         'info'    => 'ℹ️',
         default   => ''
