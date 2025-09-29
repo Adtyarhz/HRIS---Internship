@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Employee extends Model
 {
@@ -40,11 +41,27 @@ class Employee extends Model
         'user_id',
     ];
 
-    protected $casts = [
-        'birth_date' => 'date',
-        'hire_date' => 'date',
-        'separation_date' => 'date',
-    ];
+     // ✅ Accessor untuk pastikan keluar string "YYYY-MM-DD"
+    protected function birthDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    protected function hireDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    protected function separationDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
 
     public function getCvFileUrlAttribute()
     {

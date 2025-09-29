@@ -63,14 +63,14 @@
                                             -
                                         @endif
                                     </td>
-                                    <td>
+                                   <td>
                                         @if ($certification->certificationMaterials->isNotEmpty())
                                             <ul class="file-list">
                                                 @foreach ($certification->certificationMaterials as $index => $material)
                                                     <li>
-                                                        <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}" target="_blank" class="file-link">
-                                                           <i class="fas fa-file-alt"></i>
-                                                           Certification Material File {{ $index + 1 }}
+                                                        <a href="{{ asset('storage/' . $material->file_path) }}" target="_blank" class="file-link">
+                                                            <i class="fas fa-file-alt"></i>
+                                                            {{ Str::afterLast($material->file_path, '_') }}
                                                         </a>
                                                     </li>
                                                 @endforeach

@@ -78,7 +78,7 @@
                     <label for="birth_date">Birth Date <span class="text-danger">*</span></label>
                     <input type="date" class="form-control @error('birth_date') is-invalid @enderror"
                         name="birth_date"
-                        value="{{ old('birth_date', $employee->birth_date ? $employee->birth_date->format('Y-m-d') : '') }}"
+                        value="{{ old('birth_date', $employee->birth_date) }}"
                         required>
                     @error('birth_date')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
@@ -262,12 +262,13 @@
                     @enderror
                 </div>
             </div>
+            <!-- Adjusted fields to align side by side below Division and Position -->
             <div class="col-md-6">
                 <div class="form-group">
                     <label for="hire_date">Date of Entry <span class="text-danger">*</span></label>
                     <input type="date" class="form-control @error('hire_date') is-invalid @enderror"
                         name="hire_date"
-                        value="{{ old('hire_date', $employee->hire_date ? $employee->hire_date->format('Y-m-d') : '') }}"
+                        value="{{ old('hire_date', $employee->hire_date) }}"
                         required>
                     @error('hire_date')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
@@ -279,13 +280,13 @@
                     <label for="separation_date">Exit Date</label>
                     <input type="date" class="form-control @error('separation_date') is-invalid @enderror"
                         name="separation_date"
-                        value="{{ old('separation_date', $employee->separation_date ? $employee->separation_date->format('Y-m-d') : '') }}">
+                        value="{{ old('separation_date', $employee->separation_date) }}">
                     @error('separation_date')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 offset-md-6">
                 <div class="form-group">
                     <label for="office">Office <span class="text-danger">*</span></label>
                     <select class="form-control @error('office') is-invalid @enderror" name="office" required>
@@ -301,7 +302,7 @@
                     @enderror
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 offset-md-6">
                 <div class="form-group">
                     <label for="user_id">Connect to User</label>
                     <select class="form-control @error('user_id') is-invalid @enderror" name="user_id">
@@ -322,7 +323,7 @@
     </div>
 </div>
 
-{{-- Hidden fields for data not in this form tab --}}
+<!-- Hidden fields and other sections remain unchanged -->
 <input type="hidden" name="ktp_address" value="{{ $employee->ktp_address ?? 'Default KTP Address' }}">
 <input type="hidden" name="current_address" value="{{ $employee->current_address ?? 'Default Current Address' }}">
 
