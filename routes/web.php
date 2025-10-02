@@ -119,6 +119,12 @@ Route::middleware('auth')->group(function () {
         });
 
     });
+
+    Route::post('/applicants/{id}/convert-to-employee', [ApplicantController::class, 'convertToEmployee'])
+    ->name('applicants.convertToEmployee');
+Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])
+    ->name('employees.convert');
+
     // tambahan khusus approve/reject
 Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
 Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');

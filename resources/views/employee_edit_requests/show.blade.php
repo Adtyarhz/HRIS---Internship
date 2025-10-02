@@ -50,6 +50,8 @@
 
     {{-- BAGIAN LOGIKA PERUBAHAN DATA --}}
     @php
+        use Illuminate\Support\Str;
+
         $originalData = is_string($editRequest->original_data) 
             ? json_decode($editRequest->original_data, true) ?? [] 
             : ($editRequest->original_data ?? []);
@@ -64,6 +66,8 @@
                     return is_array($v) ? $k . ': ' . json_encode($v) : $k . ': ' . $v;
                 }, $value, array_keys($value)));
             }
+
+            // Format tanggal
             if (!empty($value) && str_contains($field, 'date')) {
                 try {
                     return \Carbon\Carbon::parse($value)->format('Y-m-d');
@@ -71,8 +75,33 @@
                     return $value;
                 }
             }
+
+            // 🔥 Cek apakah value adalah file path
+            if (!empty($value) && is_string($value) && 
+                (str_contains($value, 'certifications/') || str_contains($value, 'storage/') || str_contains($value, '.png') || str_contains($value, '.jpg') || str_contains($value, '.pdf'))
+            ) {
+                // hapus prefix storage/
+                $cleanPath = Str::after($value, 'storage/');
+                $url = asset('storage/' . $cleanPath);
+
+                $ext = strtolower(pathinfo($cleanPath, PATHINFO_EXTENSION));
+                $filename = basename($cleanPath); // ✅ ambil nama file asli
+
+                // Kalau gambar → tampilkan preview + link dengan nama file
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                    return '<a href="'.$url.'" target="_blank">
+                                <img src="'.$url.'" alt="preview" style="max-height:80px; border:1px solid #ccc; padding:2px; border-radius:4px">
+                            </a>
+                            <div><a href="'.$url.'" download="'.$filename.'">'.$filename.'</a></div>';
+                }
+
+                // Kalau bukan gambar → link dengan nama file + force download
+                return '<a href="'.$url.'" download="'.$filename.'">'.$filename.'</a>';
+            }
+
             return $value ?? '-';
         }
+
     @endphp
 
     @if(!empty($changedData))
@@ -96,11 +125,27 @@
                             }
                         } else {
                             $oldValue = $originalData[$table][$recordId] ?? '-';
-                            $flattened[] = [
-                                'field' => $recordId,
-                                'old'   => $oldValue,
-                                'new'   => $fields,
-                            ];
+
+                            // mapping khusus untuk material files
+                            $fieldName = is_numeric($recordId) && $recordId == 0 ? 'Certification Supporting files' : $recordId;
+
+                            if ($fieldName === 'Material files') {
+                                $oldFiles = is_array($oldValue) ? $oldValue : (empty($oldValue) || $oldValue === '-' ? [] : [$oldValue]);
+                                $newFiles = is_array($fields) ? $fields : [$fields];
+
+                                $flattened[] = [
+                                    'field' => $fieldName,
+                                    // ambil file pertama saja biar formatValue bisa handle preview
+                                    'old'   => count($oldFiles) ? $oldFiles[0] : '-',
+                                    'new'   => count($newFiles) ? $newFiles[0] : '-',
+                                ];
+                            } else {
+                                $flattened[] = [
+                                    'field' => $fieldName,
+                                    'old'   => $oldValue,
+                                    'new'   => $fields,
+                                ];
+                            }
                         }
                     }
                 } else {
@@ -129,8 +174,8 @@
                         @foreach($flattened as $row)
                             <tr>
                                 <td>{{ ucfirst(str_replace('_', ' ', $row['field'])) }}</td>
-                                <td>{{ formatValue($row['field'], $row['old']) }}</td>
-                                <td>{{ formatValue($row['field'], $row['new']) }}</td>
+                                <td>{!! formatValue($row['field'], $row['old']) !!}</td>
+                                <td>{!! formatValue($row['field'], $row['new']) !!}</td>
                             </tr>
                         @endforeach
                     </tbody>

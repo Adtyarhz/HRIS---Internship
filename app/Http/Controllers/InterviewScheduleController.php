@@ -28,10 +28,24 @@ class InterviewScheduleController extends Controller
 }
 
     public function index(Applicant $applicant)
-    {
-        $schedules = $applicant->interviewSchedules()->latest()->paginate(10);
-        return view('interview_schedule.index', compact('schedules', 'applicant'));
-    }
+{
+    $schedules = $applicant->interviewSchedules()->latest()->paginate(10);
+    $role = auth()->user()->role;
+
+    // cek progress applicant
+    $hasRejected = $applicant->recruitmentProgresses()->where('offering_status', 'rejected')->exists();
+    $offeringAccepted = $applicant->recruitmentProgresses()
+        ->where('stage', 'offering_letter')
+        ->where('offering_status', 'accepted')
+        ->exists();
+
+    // hanya superadmin / hc boleh add, dan syarat belum accepted/rejected
+    $canAddInterview = in_array($role, ['superadmin', 'hc']) 
+        && !$offeringAccepted 
+        && !$hasRejected;
+
+    return view('interview_schedule.index', compact('schedules', 'applicant', 'canAddInterview'));
+}
 
     public function create(Applicant $applicant)
     {

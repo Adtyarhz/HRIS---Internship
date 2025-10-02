@@ -26,6 +26,15 @@ class Applicant extends Model
     {
         return $this->belongsTo(Division::class);
     }
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'applied_position');
+    }
+    public function employee()
+    {
+        return $this->hasOne(Employee::class, 'applicant_id');
+    }
+
     public function recruitmentProgresses()
     {
         return $this->hasMany(RecruitmentProgress::class);

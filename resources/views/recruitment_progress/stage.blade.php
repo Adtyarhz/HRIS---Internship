@@ -43,17 +43,13 @@
         position: relative;
     }
 
-        /* Hijau terang untuk yang sedang dibuka */
     .step.accepted.active .circle {
         background-color: #198038;
     }
-
-    /* Hijau blur untuk yang sudah accepted tapi bukan stage yang dibuka */
     .step.accepted:not(.active) .circle {
         background-color: #63c98cff;
     }
 
-        /* In Progress */
     .step.in_progress.active .circle {
         background-color: #263657;
     }
@@ -62,11 +58,11 @@
     }
     
     .step.rejected .circle {
-        background-color: #e74c3c; /* red */
+        background-color: #e74c3c;
     }
 
     .step.pending .circle {
-        background-color: #0043CE; /* gray */
+        background-color: #0043CE;
     }
 
     .step .label {
@@ -80,14 +76,14 @@
     }
 
     .stage-content {
-    position: relative;
-    background-color: #fdfdf5;
-    padding: 30px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    max-width: 900px;
-    margin: auto;
-}
+        position: relative;
+        background-color: #fdfdf5;
+        padding: 30px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        max-width: 900px;
+        margin: auto;
+    }
 
     .stage-content h5 {
         font-weight: bold;
@@ -103,76 +99,81 @@
         padding: 5px 8px;
         font-family: 'Manrope', sans-serif;
     }
+
     .edit-button-wrapper {
-    position: absolute;
-    top: 2px;
-    right: 15px;
-}
-.back-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 8px 30px;
-    font-family: 'Manrope', sans-serif;
-}
+        position: absolute;
+        top: 2px;
+        right: 15px;
+    }
 
-.back-container {
-    max-width: 900px;
-    margin: 20px auto 0 auto;
-    display: flex;
-    justify-content: flex-end;
-    padding-right: 15px; /* Geser ke kiri dari kanan */
-}
-.stage-grid {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    row-gap: 12px;
-    column-gap: 20px;
-    margin-top: 20px;
-}
+    .back-btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 30px;
+        font-family: 'Manrope', sans-serif;
+    }
 
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 12px;
-    font-size: 13px;
-    color: white;
-    border-radius: 6px;
-    height: 28px;
-    min-width: 80px;
-    text-align: center;
-}
-.stage-grid .label {
-    font-weight: bold;
-    align-self: center;
-}
+    .back-container {
+        max-width: 900px;
+        margin: 20px auto 0 auto;
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 15px;
+    }
 
-.stage-grid .value {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: normal;
-    word-break: break-word;
-    flex-wrap: wrap;
-}
+    .stage-grid {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        row-gap: 12px;
+        column-gap: 20px;
+        margin-top: 20px;
+    }
 
-.file-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #007bff;
-    text-decoration: none;
-    flex-wrap: wrap;
-    max-width: 100%;
-    word-break: break-word;
-    line-height: 1.4;
-}
-.schedule-header {
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 12px;
+        font-size: 13px;
+        color: white;
+        border-radius: 6px;
+        height: 28px;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .stage-grid .label {
+        font-weight: bold;
+        align-self: center;
+    }
+
+    .stage-grid .value {
         display: flex;
         align-items: center;
-        margin-bottom: 0.5rem; /* lebih kecil */
+        gap: 8px;
+        white-space: normal;
+        word-break: break-word;
+        flex-wrap: wrap;
+    }
+
+    .file-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #007bff;
+        text-decoration: none;
+        flex-wrap: wrap;
+        max-width: 100%;
+        word-break: break-word;
+        line-height: 1.4;
+    }
+
+    .schedule-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
     }
 
     .schedule-header h2 {
@@ -186,7 +187,6 @@
 
 @section('content_header')
     <div class="header-with-icon d-flex align-items-center">
-        <!-- Ikon Recruitment -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 2048 2048" class="mr-2">
             <path fill="currentColor"
                 d="M2048 1280v768H1024v-768h256v-256h512v256zm-640 0h256v-128h-256zm512 384h-128v128h-128v-128h-256v128h-128v-128h-128v256h768zm0-256h-768v128h768zm-355-512q-54-61-128-94t-157-34q-80 0-149 30t-122 82t-83 123t-30 149q0 92-41 173t-116 136q45 23 84 53t73 68v338q0-79-30-149t-82-122t-123-83t-149-30q-80 0-149 30t-122 82t-83 123t-30 149H0q0-73 20-141t57-129t90-108t118-81q-74-54-115-135t-42-174q0-79 30-149t82-122t122-83t150-30q92 0 173 41t136 116q38-75 97-134t135-98q-74-54-115-135t-42-174q0-79 30-149t82-122t122-83t150-30q79 0 149 30t122 82t83 123t30 149q0 92-41 173t-116 136q68 34 123 85t93 118zM512 1408q53 0 99-20t82-55t55-81t20-100q0-53-20-99t-55-82t-81-55t-100-20q-53 0-99 20t-82 55t-55 81t-20 100q0 53 20 99t55 82t81 55t100 20m512-1024q0 53 20 99t55 82t81 55t100 20q53 0 99-20t82-55t55-81t20-100q0-53-20-99t-55-82t-81-55t-100-20q-53 0-99 20t-82 55t-55 81t-20 100"/>
@@ -241,29 +241,61 @@
             </div>
         @endforeach
     </div>
-    @php
-    $permissions = [
-        'cv_screening' => ['superadmin', 'hc'],
-        'general_knowledge_test' => ['superadmin', 'hc'],
-        'user_assessment' => ['superadmin', 'manager', 'section_head', 'hc'],
-        'hc_interview' => ['superadmin', 'hc'],
-        'bod_interview' => ['superadmin','direksi', 'hc'],
-        'offering_letter' => ['superadmin', 'hc'],
-    ];
 
-    $canEdit = isset($permissions[$stage]) && in_array(Auth::user()->role, $permissions[$stage]);
-@endphp
+    @php
+        $permissions = [
+            'cv_screening' => ['superadmin', 'hc'],
+            'general_knowledge_test' => ['superadmin', 'hc'],
+            'user_assessment' => ['superadmin', 'manager', 'section_head', 'hc'],
+            'hc_interview' => ['superadmin', 'hc'],
+            'bod_interview' => ['superadmin','direksi', 'hc'],
+            'offering_letter' => ['superadmin', 'hc'],
+        ];
+
+        $canEdit = isset($permissions[$stage]) && in_array(Auth::user()->role, $permissions[$stage]);
+    @endphp
+
     <!-- Stage Detail -->
     <div class="stage-content">
-        @if ($progress)
-            @if ($progress && $progress->offering_status !== 'rejected' && $canEdit)
-    <div class="edit-button-wrapper">
-        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-            <i class="fas fa-id-card"></i> Edit Recruitment Data
-        </a>
-    </div>
-@endif
+        {{-- Tombol Action --}}
+        @if ($canEdit)
+            @if ($progress)
+                @if ($stage === 'offering_letter')
+                    @if ($progress->offering_status === 'accepted')
+                        <div class="edit-button-wrapper">
+                            <a href="{{ route('applicants.show', $applicant->id) }}" class="edit-btn">
+                                <i class="fas fa-id-card"></i> Go to Applicant Data
+                            </a>
+                        </div>
+                    @elseif ($progress->offering_status === 'in_progress')
+                        <div class="edit-button-wrapper">
+                            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                                <i class="fas fa-id-card"></i> Edit Recruitment Data
+                            </a>
+                        </div>
+                    @endif
+                    {{-- rejected => tidak ada tombol --}}
+                @else
+                    @if ($progress->offering_status !== 'rejected')
+                        <div class="edit-button-wrapper">
+                            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                                <i class="fas fa-id-card"></i> Edit Recruitment Data
+                            </a>
+                        </div>
+                    @endif
+                @endif
+            @else
+                {{-- Belum ada progress --}}
+                <div class="edit-button-wrapper">
+                    <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                        <i class="fas fa-id-card"></i> Fill Recruitment Data
+                    </a>
+                </div>
+            @endif
+        @endif
 
+        {{-- Detail Stage --}}
+        @if ($progress)
             <div class="stage-grid">
                 <div class="label">Recruitment Status:</div>
                 <div class="value">
@@ -287,7 +319,6 @@
                     <div class="value">{{ $progress->rejected_reason }}</div>
                 @endif
 
-                {{-- Ambil contract_type dari stage CV Screening --}}
                 @php
                     $cvScreening = $applicant->recruitmentProgresses->firstWhere('stage', 'cv_screening');
                 @endphp
@@ -300,7 +331,6 @@
                 <div class="label">Score:</div>
                 <div class="value">{{ $progress->score ?? '-' }}</div>
 
-                {{-- SLIK Recap hanya ditampilkan jika stage = hc_interview --}}
                 @if ($stage === 'hc_interview')
                     <div class="label">SLIK Recap:</div>
                     <div class="value">{{ $progress->slik_recap ?? '-' }}</div>
@@ -317,13 +347,6 @@
                 @endif
             </div>
         @else
-           @if (!$progress && $canEdit)
-    <div class="edit-button-wrapper">
-        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-            <i class="fas fa-id-card"></i> Fill Recruitment Data
-        </a>
-    </div>
-@endif
             <p class="text-center text-muted">No data available for this stage.</p>
         @endif
     </div>
