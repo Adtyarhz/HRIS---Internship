@@ -1,40 +1,40 @@
 @push('styles')
 <style>
-    /*
-     * Container ini berfungsi untuk "menarik" menu tab keluar dari padding
-     * default .content-wrapper di AdminLTE, membuatnya rapat dengan header.
-     * Sesuaikan nilai margin negatif jika padding layout Anda berbeda.
-     */
+    /* Container styling to handle layout integration with AdminLTE */
     .tabs-container {
-        margin: -20px -20px 20px -20px; /* Asumsi padding default adalah 20px */
+        margin: 0px 0px 20px 0px;
+        width: 100%;
+        overflow: hidden;
     }
 
     .tabs-nav {
         display: flex;
         width: 100%;
-        height: 50px;
         background: #F7F7DA;
         border-bottom: 1px solid rgba(0, 0, 0, 0.20);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
+        white-space: nowrap; /* Prevent wrapping for scrollable tabs */
+        scrollbar-width: none; /* Hide scrollbar for Firefox */
+    }
+
+    .tabs-nav::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Webkit browsers */
     }
 
     .tabs-nav__item {
-        /*
-         * `flex: 1;` membuat semua tab memiliki lebar yang sama dan mengisi ruang.
-         * Ini menggantikan kebutuhan untuk scroll horizontal.
-         */
-        flex: 1;
+        flex: 1 0 auto; /* Allow tabs to size based on content */
         display: flex;
         justify-content: center;
         align-items: center;
         text-align: center;
         text-decoration: none;
-        height: 100%;
-        padding: 5px 10px; /* Padding vertikal dan sedikit horizontal */
+        height: 50px;
+        padding: 8px 12px;
         border-right: 1px solid rgba(0, 0, 0, 0.20);
         box-sizing: border-box;
         transition: background-color 0.2s ease-in-out;
         cursor: pointer;
-        white-space: nowrap;
     }
 
     .tabs-nav__item:last-child {
@@ -43,14 +43,13 @@
 
     .tabs-nav__item-text {
         color: black;
-        font-size: 12px;
         font-family: 'Montserrat', sans-serif;
         font-weight: 400;
         line-height: 1.3;
+        font-size: 14px; /* Base font size */
     }
 
-    /* --- MODIFIERS --- */
-
+    /* Modifiers */
     .tabs-nav__item--active {
         background: #D8E6AD;
         font-weight: 600;
@@ -72,13 +71,54 @@
         color: #777;
     }
 
-    /* Responsive untuk layar sangat kecil, teks mungkin perlu dikecilkan */
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .tabs-nav__item {
+            min-width: 80px;
+            padding: 6px 10px;
+        }
+
+        .tabs-nav__item-text {
+            font-size: 13px;
+        }
+    }
+
     @media (max-width: 768px) {
+        .tabs-container {
+            margin: -15px -15px 15px -15px; /* Adjusted for smaller screens */
+        }
+
+        .tabs-nav {
+            height: 48px;
+        }
+
+        .tabs-nav__item {
+            min-width: 70px;
+            padding: 5px 8px;
+        }
+
+        .tabs-nav__item-text {
+            font-size: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tabs-container {
+            margin: -10px -10px 10px -10px;
+        }
+
+        .tabs-nav {
+            height: 40px;
+        }
+
+        .tabs-nav__item {
+            min-width: 60px;
+            padding: 4px 6px;
+        }
+
         .tabs-nav__item-text {
             font-size: 11px;
-        }
-        .tabs-nav__item {
-            padding: 5px;
+            line-height: 1.2;
         }
     }
 </style>
@@ -90,10 +130,10 @@
     $allTabs = [
         'employees.edit'             => 'Personal',
         'employees.address.edit'     => 'Address',
-        'employees.family-dependents.index'      => 'Family &<br/>Dependent',
-        'employees.educationhistory.index'   => 'Education History',
-        'employees.training-histories.index'    => 'Training Record',
-        'employees.health.edit'      => 'Health History',
+        'employees.family-dependents.index' => 'Family &<br/>Dependent',
+        'employees.educationhistory.index'   => 'Education<br/>History',
+        'employees.training-histories.index' => 'Training<br/>Record',
+        'employees.health.edit'      => 'Health<br/>History',
         'employees.certifications.index' => 'Certification',
         'employees.insurance.index'   => 'Insurance',
         'employees.work-experience.index'  => 'Work<br/>Experience',
@@ -104,36 +144,32 @@
     <nav class="tabs-nav">
         @foreach ($allTabs as $route => $label)
         @php
-            // Menentukan class modifier berdasarkan kondisi
             $isRouteActive = Route::has($route) && $employeeId;
             $isActivePage = request()->routeIs($route . '*') 
-    || (
-        $route === 'employees.work-experience.index' && 
-        (request()->routeIs('employees.work-experience.create') || request()->routeIs('employees.work-experience.edit'))
-    )
-    || (
-        $route === 'employees.educationhistory.index' && 
-        (request()->routeIs('employees.educationhistory.create') || request()->routeIs('employees.educationhistory.edit'))
-    )
-    || (request()->routeIs('employees.create') && $route == 'employees.edit');
+                || (
+                    $route === 'employees.work-experience.index' && 
+                    (request()->routeIs('employees.work-experience.create') || request()->routeIs('employees.work-experience.edit'))
+                )
+                || (
+                    $route === 'employees.educationhistory.index' && 
+                    (request()->routeIs('employees.educationhistory.create') || request()->routeIs('employees.educationhistory.edit'))
+                )
+                || (request()->routeIs('employees.create') && $route == 'employees.edit');
 
             $classes = 'tabs-nav__item';
 
             if ($isActivePage) {
                 $classes .= ' tabs-nav__item--active';
             } elseif (!$isRouteActive && !request()->routeIs('employees.create')) {
-                // Jangan set inactive jika di halaman create
                 $classes .= ' tabs-nav__item--inactive';
             }
         @endphp
 
         @if ($isRouteActive)
-            {{-- Jika route ada dan ini mode edit, buat link <a> --}}
             <a href="{{ route($route, $employeeId) }}" class="{{ $classes }}">
                 <span class="tabs-nav__item-text">{!! $label !!}</span>
             </a>
         @else
-            {{-- Jika route belum ada ATAU ini mode create, tampilkan sebagai <div> --}}
             <div class="{{ $classes }}" @if (!Route::has($route)) title="Fitur ini belum tersedia" @endif>
                 <span class="tabs-nav__item-text">{!! $label !!}</span>
             </div>

@@ -21,106 +21,105 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-public function index(Request $request)
-{
-    // Update status otomatis jika separation_date sudah lewat
-    Employee::whereNotNull('separation_date')
-        ->where('separation_date', '<', Carbon::today())
-        ->where('status', '!=', 'Tidak Aktif')
-        ->update(['status' => 'Tidak Aktif']);
+    public function index(Request $request)
+    {
+        // Update status otomatis jika separation_date sudah lewat
+        Employee::whereNotNull('separation_date')
+            ->where('separation_date', '<', Carbon::today())
+            ->where('status', '!=', 'Tidak Aktif')
+            ->update(['status' => 'Tidak Aktif']);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    // Jika superadmin, lihat semua karyawan aktif
-    if (in_array($user->role, ['superadmin', 'hc']))
- {
-        $query = Employee::where('status', 'Aktif');
-    } else {
-        // Jika user biasa, hanya lihat data karyawan miliknya (user_id)
-        $query = Employee::where('status', 'Aktif')
-                         ->where('user_id', $user->id);
+        // Jika superadmin, lihat semua karyawan aktif
+        if (in_array($user->role, ['superadmin', 'hc'])) {
+            $query = Employee::where('status', 'Aktif');
+        } else {
+            // Jika user biasa, hanya lihat data karyawan miliknya (user_id)
+            $query = Employee::where('status', 'Aktif')
+                ->where('user_id', $user->id);
+        }
+
+        // Filter pencarian jika ada
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('nik', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('division_id')) {
+            $query->where('division_id', $request->division_id);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        if ($request->filled('employee_type')) {
+            $query->where('employee_type', $request->employee_type);
+        }
+
+        if ($request->filled('office')) {
+            $query->where('office', $request->office);
+        }
+
+        // Ambil data tambahan untuk filter
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+
+        // Pagination
+        $employees = $query->latest()->paginate(9)->withQueryString();
+
+        return view('employees.data.index', compact('employees', 'divisions', 'positions'));
     }
 
-    // Filter pencarian jika ada
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->where('full_name', 'like', '%' . $search . '%')
-              ->orWhere('nik', 'like', '%' . $search . '%');
-        });
+    public function indexCareer(Request $request)
+    {
+        $user = auth()->user();
+
+        // Cek role superadmin vs user biasa
+        if (in_array($user->role, ['superadmin', 'hc', 'direksi'])) {
+            $query = Employee::where('status', 'Aktif');
+        } else {
+            $query = Employee::where('status', 'Aktif')
+                ->where('user_id', $user->id);
+        }
+
+        // Filter pencarian
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('nik', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Filter tambahan
+        if ($request->filled('division_id')) {
+            $query->where('division_id', $request->division_id);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        if ($request->filled('employee_type')) {
+            $query->where('employee_type', $request->employee_type);
+        }
+
+        if ($request->filled('office')) {
+            $query->where('office', $request->office);
+        }
+
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+
+        $employees = $query->latest()->paginate(9)->withQueryString();
+
+        return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
     }
-
-    if ($request->filled('division_id')) {
-        $query->where('division_id', $request->division_id);
-    }
-
-    if ($request->filled('position_id')) {
-        $query->where('position_id', $request->position_id);
-    }
-
-    if ($request->filled('employee_type')) {
-        $query->where('employee_type', $request->employee_type);
-    }
-
-    if ($request->filled('office')) {
-        $query->where('office', $request->office);
-    }
-
-    // Ambil data tambahan untuk filter
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
-
-    // Pagination
-    $employees = $query->latest()->paginate(9)->withQueryString();
-
-    return view('employees.data.index', compact('employees', 'divisions', 'positions'));
-}
-
-   public function indexCareer(Request $request)
-{
-    $user = auth()->user();
-
-    // Cek role superadmin vs user biasa
-    if (in_array($user->role, ['superadmin', 'hc', 'direksi'])){
-        $query = Employee::where('status', 'Aktif');
-    } else {
-        $query = Employee::where('status', 'Aktif')
-                         ->where('user_id', $user->id);
-    }
-
-    // Filter pencarian
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->where('full_name', 'like', '%' . $search . '%')
-              ->orWhere('nik', 'like', '%' . $search . '%');
-        });
-    }
-
-    // Filter tambahan
-    if ($request->filled('division_id')) {
-        $query->where('division_id', $request->division_id);
-    }
-
-    if ($request->filled('position_id')) {
-        $query->where('position_id', $request->position_id);
-    }
-
-    if ($request->filled('employee_type')) {
-        $query->where('employee_type', $request->employee_type);
-    }
-
-    if ($request->filled('office')) {
-        $query->where('office', $request->office);
-    }
-
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
-
-    $employees = $query->latest()->paginate(9)->withQueryString();
-
-    return view('career-path.indexCareer', compact('employees', 'divisions', 'positions'));
-}
 
     /**
      * Show the form for creating a new resource.
@@ -229,140 +228,198 @@ public function index(Request $request)
         $insurances = $employee->insurance;
         $workExperiences = $employee->workExperience;
         $trainingHistories = $employee->trainingHistories;
-        return view('employees.data.show', compact('employee', 'age', 'healthRecord', 'educationHistories', 'dependents', 'certifications', 'insurances', 'workExperiences', 'trainingHistories' ));
+        return view('employees.data.show', compact('employee', 'age', 'healthRecord', 'educationHistories', 'dependents', 'certifications', 'insurances', 'workExperiences', 'trainingHistories'));
     }
 
     /**
      * Display the specified resource for career path details.
      */
-   public function showCareer(Employee $employee)
-{
-    $user = auth()->user();
+    public function showCareer(Employee $employee)
+    {
+        $user = auth()->user();
 
-    // Hanya superadmin, hc, direksi, atau pemilik data yang bisa melihat
-    if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
-        abort(403, 'Anda tidak memiliki akses ke data ini.');
+        // Hanya superadmin, hc, direksi, atau pemilik data yang bisa melihat
+        if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses ke data ini.');
+        }
+
+        $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
+        $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
+
+        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
     }
-
-    $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
-    $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
-
-    return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
-}
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Employee $employee)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // Bukan superadmin -> hanya bisa edit milik sendiri
-   if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
-        abort(403, 'Anda tidak memiliki akses untuk mengedit data ini.');
+        // Bukan superadmin -> hanya bisa edit milik sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit data ini.');
+        }
+
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+        $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
+
+        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
     }
-
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
-    $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
-
-    return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
-}
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Employee $employee)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // Bukan superadmin/hc → hanya bisa update milik sendiri
-    if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
-        abort(403, 'Anda tidak memiliki akses untuk mengupdate data ini.');
-    }
-
-    // Validasi
-    $validatedData = $request->validate([
-        'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-        'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-        'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
-        'full_name' => 'required|string|max:100',
-        'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
-        'religion' => 'required|string|max:50',
-        'birth_place' => 'required|string|max:50',
-        'birth_date' => 'required|date',
-        'marital_status' => ['required', Rule::in(['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])],
-        'dependents' => 'required|integer|min:0',
-        'ktp_address' => 'required|string',
-        'current_address' => 'required|string',
-        'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
-        'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
-        'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
-        'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
-        'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
-        'hire_date' => 'required|date',
-        'separation_date' => 'nullable|date|after_or_equal:hire_date',
-        'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-        'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'division_id' => 'nullable|exists:divisions,id',
-        'position_id' => 'nullable|exists:positions,id',
-        'user_id' => ['nullable', 'exists:users,id', Rule::unique('employees')->ignore($employee->id)],
-    ]);
-
-    try {
-        DB::beginTransaction();
-
-        // Handle file upload (jika ada), tapi simpan sementara, jangan update DB langsung jika bukan superadmin/hc
-        if ($request->hasFile('cv_file')) {
-            $file = $request->file('cv_file');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
+        // Bukan superadmin/hc → hanya bisa update milik sendiri
+        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengupdate data ini.');
         }
 
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
-        }
+        // Validasi
+        $validatedData = $request->validate([
+            'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+            'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+            'npwp' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
+            'full_name' => 'required|string|max:100',
+            'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
+            'religion' => 'required|string|max:50',
+            'birth_place' => 'required|string|max:50',
+            'birth_date' => 'required|date',
+            'marital_status' => ['required', Rule::in(['Lajang', 'Pernikahan Pertama', 'Pernikahan Kedua', 'Pernikahan Ketiga', 'Cerai Hidup', 'Cerai Mati'])],
+            'dependents' => 'required|integer|min:0',
+            'ktp_address' => 'required|string',
+            'current_address' => 'required|string',
+            'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
+            'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
+            'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
+            'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
+            'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
+            'hire_date' => 'required|date',
+            'separation_date' => 'nullable|date|after_or_equal:hire_date',
+            'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'division_id' => 'nullable|exists:divisions,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'user_id' => ['nullable', 'exists:users,id', Rule::unique('employees')->ignore($employee->id)],
+        ]);
 
-        // Jika bukan superadmin/hc → buat request edit
-        if (!in_array($user->role, ['superadmin', 'hc'])) {
+        try {
+            DB::beginTransaction();
 
-      EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'update',
-                    'model'         => Employee::class,
-                    'model_id'      => $employee->id,
-                    'original_data' => $employee->only(array_keys($validatedData)),
-                    'changed_data'  => $validatedData,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
+            // Handle file upload (jika ada), tapi simpan sementara, jangan update DB langsung jika bukan superadmin/hc
+            if ($request->hasFile('cv_file')) {
+                $file = $request->file('cv_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validatedData['cv_file'] = $file->storeAs('cv', $filename, 'public');
+            }
+
+            if ($request->hasFile('photo')) {
+                $file = $request->file('photo');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
+            }
+
+            // Jika bukan superadmin/hc → buat request edit
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+
+                EmployeeEditRequest::create([
+                    'employee_id' => $employee->id,
+                    'method' => 'update',
+                    'model' => Employee::class,
+                    'model_id' => $employee->id,
+                    'original_data' => $employee->only(array_keys($validatedData) + ['position_id', 'division_id', 'employee_type']),
+                    'changed_data' => array_merge($validatedData, [
+                        'position_id' => $request->input('position_id', $employee->position_id),
+                        'division_id' => $request->input('division_id', $employee->division_id),
+                        'employee_type' => $request->input('employee_type', $employee->employee_type),
+                    ]),
+                    'status' => 'waiting',
+                    'requested_by' => $user->id,
+                    'requested_at' => now(),
                 ]);
 
-    DB::commit();
-    return redirect()->route('employees.show', $employee->id)
-        ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
-}
+                DB::commit();
+                return redirect()->route('employees.show', $employee->id)
+                    ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+            }
 
-        // Jika superadmin / hc → langsung update ke database
-        if ($request->hasFile('cv_file') && $employee->cv_file) {
-            Storage::disk('public')->delete($employee->cv_file);
+            // Jika superadmin / hc → langsung update ke database
+            if ($request->hasFile('cv_file') && $employee->cv_file) {
+                Storage::disk('public')->delete($employee->cv_file);
+            }
+
+            if ($request->hasFile('photo') && $employee->photo) {
+                Storage::disk('public')->delete($employee->photo);
+            }
+
+            // Simpan data lama sebelum update
+            $oldPosition = $employee->position_id;
+            $oldDivision = $employee->division_id;
+            $oldType = $employee->employee_type;
+
+            $employee->update($validatedData);
+
+            // Cek perubahan karir
+            $newPosition = \App\Models\Position::find($validatedData['position_id'] ?? $employee->position_id);
+            $newDivision = $validatedData['division_id'] ?? $employee->division_id;
+            $newType = $validatedData['employee_type'] ?? $employee->employee_type;
+
+            $careerType = null;
+
+            if (!$oldPosition && $newPosition) {
+                $careerType = 'Awal Masuk';
+            } elseif ($oldPosition && $newPosition && $oldPosition->id !== $newPosition->id) {
+                if ($newPosition->depth < $oldPosition->depth) {
+                    $careerType = 'Promosi';
+                } elseif ($newPosition->depth > $oldPosition->depth) {
+                    $careerType = 'Demosi';
+                } else {
+                    $careerType = 'Mutasi';
+                }
+            } elseif ($oldDivision != $newDivision) {
+                $careerType = 'Mutasi';
+            } elseif ($oldType != $newType) {
+                $careerType = 'Mutasi';
+            }
+
+            // Jika ada perubahan posisi/divisi/tipe karyawan
+            if ($careerType) {
+                // Tutup career history aktif sebelumnya
+                $activeCareer = \App\Models\CareerHistory::where('employee_id', $employee->id)
+                    ->whereNull('end_date')
+                    ->first();
+
+                if ($activeCareer) {
+                    $activeCareer->update([
+                        'end_date' => Carbon::today(),
+                    ]);
+                }
+
+                // Tambahkan riwayat baru
+                \App\Models\CareerHistory::create([
+                    'employee_id' => $employee->id,
+                    'position_id' => $newPosition ? $newPosition->id : null,
+                    'division_id' => $newDivision,
+                    'employee_type' => $newType,
+                    'start_date' => Carbon::today(),
+                    'end_date' => null,
+                    'type' => $careerType,
+                    'notes' => '',
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
         }
-
-        if ($request->hasFile('photo') && $employee->photo) {
-            Storage::disk('public')->delete($employee->photo);
-        }
-
-        $employee->update($validatedData);
-
-        DB::commit();
-        return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
     }
-}
 
     /**
      * Remove the specified resource from storage.
@@ -403,25 +460,25 @@ public function index(Request $request)
         return redirect()->back()->with('info', 'Karyawan sudah berstatus Tidak Aktif.');
     }
 
-   public function editAddress(Employee $employee)
-{
-    $user = auth()->user();
+    public function editAddress(Employee $employee)
+    {
+        $user = auth()->user();
 
-    // Jika bukan HC & Superadmin → hanya boleh akses datanya sendiri
-    if (!in_array($user->role, ['superadmin', 'hc'])) {
-        if (!$user->employee || $user->employee->id !== $employee->id) {
-            abort(403, 'Unauthorized access to address data.');
+        // Jika bukan HC & Superadmin → hanya boleh akses datanya sendiri
+        if (!in_array($user->role, ['superadmin', 'hc'])) {
+            if (!$user->employee || $user->employee->id !== $employee->id) {
+                abort(403, 'Unauthorized access to address data.');
+            }
         }
+
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
+        $users = User::whereDoesntHave('employee')
+            ->orWhere('id', $employee->user_id)
+            ->orderBy('name')
+            ->get();
+
+        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
     }
-
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
-    $users = User::whereDoesntHave('employee')
-        ->orWhere('id', $employee->user_id)
-        ->orderBy('name')
-        ->get();
-
-    return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
-}
 
 }

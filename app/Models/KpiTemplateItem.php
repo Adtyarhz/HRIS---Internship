@@ -31,6 +31,6 @@ class KpiTemplateItem extends Model
 
     public function scoringRules(): HasMany
     {
-        return $this->hasMany(KpiScoringRule::class);
+        return $this->hasMany(KpiScoringRule::class, 'kpi_template_item_id');
     }
 }

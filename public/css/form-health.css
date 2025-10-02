@@ -1,10 +1,5 @@
-/*
- * File: public/css/form-health.css
- * Deskripsi: CSS khusus untuk form riwayat kesehatan.
- */
-
 .form-content-container {
-    background: #FDFBF1;
+    background: #fdfbf1;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     padding: 0px;
@@ -17,8 +12,8 @@
     font-weight: 500;
     color: #000;
     text-align: left;
-    padding-top: calc(.375rem + 1px);
-    padding-bottom: calc(.375rem + 1px);
+    padding-top: calc(0.375rem + 1px);
+    padding-bottom: calc(0.375rem + 1px);
     line-height: 1.5;
 }
 
@@ -26,7 +21,8 @@
     color: #ff0000;
 }
 
-.form-control, .form-control-file {
+.form-control,
+.form-control-file {
     font-size: 13px;
     border-radius: 5px;
     border: 1px solid rgba(0, 0, 0, 0.2);
@@ -99,12 +95,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     padding-top: 20px;
 }
 
-.btn-submit, .btn-cancel, .btn-delete {
+.btn-submit,
+.btn-cancel,
+.btn-delete {
     border-radius: 5px;
     width: 110px;
     height: 37px;
     color: white;
-    font-family: 'Montserrat', sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-size: 12px;
     font-weight: 500;
     display: flex;
@@ -114,14 +112,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border: none;
 }
 
-.btn-submit { background: #367fa9; }
-.btn-cancel { background: #9a3b3b; margin-right: 10px; }
-.btn-delete { background-color: #FF4242; margin-right: 10px; }
+.btn-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 120px;
+    min-width: 120px;
+    height: 2.5rem;
+    color: #fff;
+    font-family: "Noto Sans Georgian", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+}
 
-.btn-submit:hover { background: #2c698d; color: white }
-.btn-cancel:hover { background: #803030; color: white; }
-.btn-delete:hover { background-color: #e63939; color: white;
-        }
+.btn-submit {
+    background: #367fa9;
+    margin-left: 10px;
+}
+.btn-cancel {
+    background: #9a3b3b;
+}
+.btn-delete {
+    background-color: #ff4242;
+    margin-right: 10px;
+}
+
+.btn-submit:hover {
+    background: #2c698d;
+    color: white;
+}
+.btn-cancel:hover {
+    background: #803030;
+    color: white;
+}
+.btn-delete:hover {
+    background-color: #e63939;
+    color: white;
+}
 
 /* Responsive */
 @media (max-width: 767.98px) {

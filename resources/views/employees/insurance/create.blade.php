@@ -1,61 +1,58 @@
 @extends('layouts.admin')
-@section('title', 'Add Insurance')
+
+@section('title', 'Employee Information')
 @section('header_icon', 'icon-park-outline--file-staff-one-01')
 @section('content_header', 'Employee Information')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/index.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
     <style>
-        .form-wrapper {
-            background-color: #FDFBEF;
-            padding: 30px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
+        @media (max-width: 768px) {
+            .form-buttons-container {
+                flex-direction: column-reverse;
+                gap: 15px;
+            }
 
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 20px;
-        }
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+                max-width: 100%;
+            }
 
-        .btn-cancel {
-            background-color: #9A3B3B;
-            color: #fff;
-            border: none;
-        }
-
-        .btn-cancel:hover {
-            background-color: #7b2e2e;
-        }
-
-        .btn-submit {
-            background-color: #367FA9;
-            color: #fff;
-            border: none;
-        }
-
-        .btn-submit:hover {
-            background-color: #2b6282;
+            .btn-submit {
+                margin-left: 0px;
+            }
         }
     </style>
 @endpush
 
 @section('content')
-    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <div class="container-fluid">
+        {{-- 1. Tab menu --}}
+        @include('employees.partials.tab-menu', ['employee' => $employee])
 
-    <div class="form-wrapper">
-        <form action="{{ route('employees.insurance.store', $employee) }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        {{-- 2. Container form --}}
+        <div class="form-content-container">
+            <div class="card-body">
 
-            @include('employees.insurance._form', ['insurance' => null])
+                <form action="{{ route('employees.insurance.store', $employee) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
 
-            <div class="form-actions">
-                <a href="{{ route('employees.insurance.index', $employee) }}" class="btn btn-cancel">Cancel</a>
-                <button type="submit" class="btn btn-submit">Submit</button>
+                    @include('employees.insurance._form', ['insurance' => null])
+
+                    {{-- Tombol Aksi --}}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="form-buttons-container">
+                                <a href="{{ route('employees.insurance.index', $employee) }}" class="btn btn-cancel">Cancel</a>
+                                <button type="submit" class="btn btn-submit">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
             </div>
-        </form>
+        </div>
     </div>
 @endsection

@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Performance Index')
+@section('title', 'Key Performance Index')
 @section('header_icon', 'ri--bill-line-01')
-@section('content_header', 'KPI Performance Index')
+@section('content_header', 'Key Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,24 +50,6 @@
             margin-left: auto;
         }
 
-        .btn-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 120px;
-            height: 2.5rem;
-            color: #fff;
-            font-family: "Noto Sans Georgian", sans-serif;
-            font-size: 15px;
-            font-weight: 500;
-            border-radius: 8px;
-            text-decoration: none;
-            border: none;
-        }
-
-        .btn-info:hover {background-color: #15b3d2; }
         .btn-info:hover {background-color: #098ba5; }
         .add-button:hover { background-color: #803030; color: #fff; }
 
@@ -103,23 +85,6 @@
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
-
-                {{-- Notifications --}}
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
-                @endif
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
 
                 {{-- Section Title + Add Button --}}
                 <div class="assessment-section-title d-flex justify-content-between align-items-center">

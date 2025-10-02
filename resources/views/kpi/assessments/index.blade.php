@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Performance Index')
+@section('title', 'Key Performance Index')
 @section('header_icon', 'ri--bill-line-01')
-@section('content_header', 'KPI Performance Index')
+@section('content_header', 'Key Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -55,31 +55,21 @@
             background-color: #803030;
             color: #fff;
         }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
     </style>
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
+
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
-                @include('kpi.partials.tab-menu')
-
-                {{-- Notifications --}}
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
-                @endif
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
 
                 {{-- My Assessments Card --}}
                 <div class="assessment-section-title">My Assessment History</div>
@@ -110,18 +100,29 @@
                         <tbody>
                             @forelse($myAssessments as $assessment)
                                 <tr>
-                                    <td>{{ $assessment->period->period_name }}
-                                        ({{ $assessment->period->start_date->format('d-m-Y') }} -
-                                        {{ $assessment->period->end_date->format('d-m-Y') }})
+                                    <td>
+                                        @php
+                                            $name = $assessment->period->period_name;
+                                            $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
+                                        @endphp
+
+                                        @if($hasDate)
+                                            {{ $name }}
+                                        @else
+                                            {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
+                                            {{ $assessment->period->end_date->format('d M Y') }})
+                                        @endif
                                     </td>
                                     <td>{{ $assessment->supervisor->name ?? 'N/A' }}</td>
                                     <td>{{ $assessment->status }}</td>
                                     <td>{{ $assessment->final_score ?? '-' }}</td>
                                     <td>
-                                        <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
-                                            class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> View/Assess
-                                        </a>
+                                        <div class="action-buttons">
+                                            <a href="{{ route('kpi-assessments.show', $assessment->id) }}" class="btn-info"
+                                                title="View/Assess">
+                                                <i class="fas fa-eye"></i>View/Assess
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -143,10 +144,11 @@
             <div class="form-content-container">
                 <div class="card-body">
 
-                    <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's Assessment History
-                            <a href="{{ route('kpi-assessments.create') }}" class="add-button">
-                                <i class="fas fa-plus"></i>Add New Assessment
-                            </a>
+                    <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's
+                        Assessment History
+                        <a href="{{ route('kpi-assessments.create') }}" class="add-button">
+                            <i class="fas fa-plus"></i>Add New Assessment
+                        </a>
                     </div>
 
                     <div class="table-responsive">
@@ -165,17 +167,28 @@
                                     <tr>
                                         <td>{{ $assessment->employee->full_name }} (NIK: {{ $assessment->employee->nik }})
                                         </td>
-                                        <td>{{ $assessment->period->period_name }}
-                                            ({{ $assessment->period->start_date->format('d-m-Y') }} -
-                                            {{ $assessment->period->end_date->format('d-m-Y') }})
+                                        <td>
+                                            @php
+                                                $name = $assessment->period->period_name;
+                                                $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
+                                            @endphp
+
+                                            @if($hasDate)
+                                                {{ $name }}
+                                            @else
+                                                {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
+                                                {{ $assessment->period->end_date->format('d M Y') }})
+                                            @endif
                                         </td>
                                         <td>{{ $assessment->status }}</td>
                                         <td>{{ $assessment->final_score ?? '-' }}</td>
                                         <td>
-                                            <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
-                                                class="btn btn-sm btn-info">
-                                                <i class="fas fa-eye"></i> View/Assess
-                                            </a>
+                                            <div class="action-buttons">
+                                                <a href="{{ route('kpi-assessments.show', $assessment->id) }}" class="btn-info"
+                                                    title="View/Assess">
+                                                    <i class="fas fa-eye"></i>View/Assess
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

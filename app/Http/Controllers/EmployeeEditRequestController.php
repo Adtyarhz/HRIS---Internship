@@ -47,343 +47,393 @@ class EmployeeEditRequestController extends Controller
         return view('employee_edit_requests.index', compact('requests'));
     }
 
-  public function show($id)
-{
-    $editRequest = EmployeeEditRequest::with(['employee', 'approvedBy'])->findOrFail($id);
+    public function show($id)
+    {
+        $editRequest = EmployeeEditRequest::with(['employee', 'approvedBy'])->findOrFail($id);
 
-    // Pastikan original_data & changed_data array
-    $originalData = $editRequest->original_data ?? [];
-    if (!is_array($originalData)) {
-        $originalData = json_decode($originalData, true) ?? [];
-    }
-
-    $changedData = $editRequest->changed_data ?? [];
-    if (!is_array($changedData)) {
-        $changedData = json_decode($changedData, true) ?? [];
-    }
-
-    // Normalisasi format date ke Y-m-d
-    $originalData = $this->normalizeDates($originalData);
-    $changedData  = $this->normalizeDates($changedData);
-
-    return view('employee_edit_requests.show', compact('editRequest', 'originalData', 'changedData'));
-}
-
-/**
- * Normalisasi tanggal dalam array agar seragam Y-m-d
- */
-private function normalizeDates(array $data)
-{
-    array_walk_recursive($data, function (&$value, $key) {
-        if ($this->isDateField($key) && !empty($value)) {
-            try {
-                // Saat tampilkan di UI, cukup tanggal saja
-                $value = Carbon::parse($value)->format('Y-m-d');
-            } catch (\Exception $e) {
-                // biarkan nilai aslinya
-            }
+        // Pastikan original_data & changed_data array
+        $originalData = $editRequest->original_data ?? [];
+        if (!is_array($originalData)) {
+            $originalData = json_decode($originalData, true) ?? [];
         }
-    });
-    return $data;
-}
 
-public function store(Request $request)
-{
-    $employee = auth()->user()->employee;
-    if (!$employee) {
-        return back()->with('error', 'Akun Anda tidak terkait dengan data karyawan.');
+        $changedData = $editRequest->changed_data ?? [];
+        if (!is_array($changedData)) {
+            $changedData = json_decode($changedData, true) ?? [];
+        }
+
+        // Normalisasi format date ke Y-m-d
+        $originalData = $this->normalizeDates($originalData);
+        $changedData = $this->normalizeDates($changedData);
+
+        return view('employee_edit_requests.show', compact('editRequest', 'originalData', 'changedData'));
     }
 
-    $originalData = [];
-    $changedData  = [];
-
-    foreach ($this->tables as $table => $fields) {
-        $model = $this->getModelInstance($table, $employee->id);
-        if (!$model) continue;
-
-        foreach ($fields as $field) {
-            $oldValue = $model->getRawOriginal($field); // ambil mentah dari DB
-
-            // Ambil nilai baru dari request (kalau tidak ada input, fallback ke oldValue)
-            $newValue = $request->input($field, $oldValue);
-
-            // Normalisasi old value untuk field tanggal
-            if ($this->isDateField($field) && !empty($oldValue)) {
+    /**
+     * Normalisasi tanggal dalam array agar seragam Y-m-d
+     */
+    private function normalizeDates(array $data)
+    {
+        array_walk_recursive($data, function (&$value, $key) {
+            if ($this->isDateField($key) && !empty($value)) {
                 try {
-                    $oldValue = Carbon::parse($oldValue)->format('Y-m-d');
+                    // Saat tampilkan di UI, cukup tanggal saja
+                    $value = Carbon::parse($value)->format('Y-m-d');
                 } catch (\Exception $e) {
-                    // fallback biarkan aslinya
+                    // biarkan nilai aslinya
                 }
             }
+        });
+        return $data;
+    }
 
-            // Normalisasi new value untuk field tanggal
-            if ($this->isDateField($field) && !empty($newValue)) {
-                try {
-                    $newValue = Carbon::parse($newValue)->format('Y-m-d');
-                } catch (\Exception $e) {
-                    // fallback biarkan input apa adanya
-                }
-            }
+    public function store(Request $request)
+    {
+        $employee = auth()->user()->employee;
+        if (!$employee) {
+            return back()->with('error', 'Akun Anda tidak terkait dengan data karyawan.');
+        }
 
-            // Handle file uploads (certificate_file, insurance_file, dll.)
-            if ($request->hasFile($field)) {
-                $newValue = $request->file($field)->store($table, 'public');
-                Log::debug("New File Uploaded for {$table}.{$field}", [
-                    'old_value' => $oldValue,
-                    'new_value' => $newValue,
-                    'model_id'  => $model->id,
-                ]);
-            }
+        $originalData = [];
+        $changedData = [];
 
-            // Handle material_files untuk certifications & training_histories
-            if ($field === 'material_files' && in_array($table, ['certifications', 'training_histories'])) {
-                $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
-                $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
-                $newFiles = $oldFiles;
+        // Loop setiap tabel & field sesuai mapping
+        foreach ($this->tables as $table => $fields) {
+            $model = $this->getModelInstance($table, $employee->id, $request->input("{$table}_id"));
+            if (!$model) continue;
 
-                if ($request->hasFile('material_files')) {
-                    foreach ($request->file('material_files') as $file) {
-                        $newFilePath = $file->store("{$table}/materials", 'public');
-                        $newFiles[]  = $newFilePath;
-                        Log::debug("New Material File Uploaded for {$table}", [
-                            'path'     => $newFilePath,
-                            'model_id' => $model->id
-                        ]);
+            foreach ($fields as $field) {
+                $oldValue = $model->getRawOriginal($field);
+                $newValue = $request->input($field, $oldValue);
+
+                // Normalisasi tanggal
+                if ($this->isDateField($field)) {
+                    try {
+                        if (!empty($oldValue)) {
+                            $oldValue = Carbon::parse($oldValue)->format('Y-m-d');
+                        }
+                        if (!empty($newValue)) {
+                            $newValue = Carbon::parse($newValue)->format('Y-m-d');
+                        }
+                    } catch (\Exception $e) {
+                        // biarkan aslinya jika gagal parse
                     }
                 }
 
-                if (!empty(array_diff($newFiles, $oldFiles))) {
-                    $originalData[$table][$model->id][$field] = $oldFiles;
-                    $changedData[$table][$model->id][$field]  = $newFiles;
+                // Handle file uploads
+                if ($request->hasFile($field)) {
+                    $newValue = $request->file($field)->store($table, 'public');
+                    Log::debug("New File Uploaded for {$table}.{$field}", [
+                        'old_value' => $oldValue,
+                        'new_value' => $newValue,
+                        'model_id'  => $model->id,
+                    ]);
                 }
-                continue;
-            }
 
-            // Simpan hanya kalau ada perubahan (old != new)
-            if ($oldValue !== $newValue) {
-                $originalData[$table][$model->id][$field] = $oldValue;
-                $changedData[$table][$model->id][$field]  = $newValue;
+                // Handle material_files (special case)
+                if ($field === 'material_files' && in_array($table, ['certifications', 'training_histories'])) {
+                    $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
+                    $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
+                    $newFiles = $oldFiles;
+
+                    if ($request->hasFile('material_files')) {
+                        foreach ($request->file('material_files') as $file) {
+                            $newFilePath = $file->store("{$table}/materials", 'public');
+                            $newFiles[] = $newFilePath;
+                            Log::debug("New Material File Uploaded for {$table}", [
+                                'path'     => $newFilePath,
+                                'model_id' => $model->id,
+                            ]);
+                        }
+                    }
+
+                    if (!empty(array_diff($newFiles, $oldFiles))) {
+                        $originalData[$table][$model->id][$field] = $oldFiles;
+                        $changedData[$table][$model->id][$field] = $newFiles;
+                    }
+                    continue;
+                }
+
+                // Default comparison
+                if ($oldValue !== $newValue) {
+                    $originalData[$table][$model->id][$field] = $oldValue;
+                    $changedData[$table][$model->id][$field] = $newValue;
+                }
             }
         }
+
+        // === Tambahan khusus Career Administration (dari kpi-update) ===
+        if ($request->hasAny(['position_id', 'division_id', 'employee_type'])) {
+            $originalData['employees'][$employee->id]['position_id'] = $employee->position_id;
+            $originalData['employees'][$employee->id]['division_id'] = $employee->division_id;
+            $originalData['employees'][$employee->id]['employee_type'] = $employee->employee_type;
+
+            $changedData['employees'][$employee->id]['position_id'] = $request->input('position_id', $employee->position_id);
+            $changedData['employees'][$employee->id]['division_id'] = $request->input('division_id', $employee->division_id);
+            $changedData['employees'][$employee->id]['employee_type'] = $request->input('employee_type', $employee->employee_type);
+        }
+
+        if (empty($changedData)) {
+            return back()->with('error', 'Tidak ada perubahan yang diajukan.');
+        }
+
+        // Normalisasi sebelum simpan (dari master)
+        $originalData = $this->normalizeDates($originalData);
+        $changedData  = $this->normalizeDates($changedData);
+
+        // === Simpan request dalam transaksi ===
+        try {
+            DB::beginTransaction();
+
+            $editRequest = EmployeeEditRequest::create([
+                'employee_id'  => $employee->id,
+                'method'       => 'update',
+                'model'        => Employee::class,
+                'model_id'     => $employee->id,
+                'original_data'=> $originalData,
+                'changed_data' => $changedData,
+                'status'       => 'waiting',
+                'requested_at' => now(),
+                'requested_by' => auth()->id(),
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Gagal membuat edit request', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan request.');
+        }
+
+        // === Kirim notifikasi setelah commit ===
+        try {
+            $admins = User::whereIn('role', ['hc', 'superadmin'])
+                ->whereKeyNot(auth()->id())
+                ->get();
+
+            $requesterName = auth()->user()->name ?? ($employee->name ?? 'Karyawan');
+
+            Log::info('Mempersiapkan pengiriman notifikasi EmployeeEditRequest', [
+                'edit_request_id' => $editRequest->id,
+                'requested_by'    => auth()->id(),
+                'recipient_ids'   => $admins->pluck('id')->all(),
+            ]);
+
+            if ($admins->isNotEmpty()) {
+                foreach ($admins as $admin) {
+                    $admin->notify(new EmployeeEditRequestNotification(
+                        $requesterName,
+                        $editRequest->id
+                    ));
+                }
+
+                Log::info('Notifikasi EmployeeEditRequest dikirim', [
+                    'edit_request_id' => $editRequest->id,
+                    'recipients'      => $admins->pluck('id')->all(),
+                ]);
+            } else {
+                Log::warning('Tidak ada penerima HC/Superadmin untuk edit request', [
+                    'edit_request_id' => $editRequest->id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Gagal mengirim notifikasi EmployeeEditRequest', [
+                'message'         => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
+                'edit_request_id' => $editRequest->id ?? null,
+            ]);
+            return back()->with('success', 'Request berhasil disimpan, namun gagal mengirim notifikasi.');
+        }
+
+        return back()->with('success', 'Request perubahan berhasil dikirim dan sedang menunggu persetujuan.');
     }
 
-    if (empty($changedData)) {
-        return back()->with('error', 'Tidak ada perubahan yang diajukan.');
-    }
+    public function approve($id)
+    {
+        $editRequest = EmployeeEditRequest::findOrFail($id);
 
-    $originalData = $this->normalizeDates($originalData);
-    $changedData  = $this->normalizeDates($changedData);
+        $changedData = $editRequest->changed_data ?? [];
+        if (!is_array($changedData)) {
+            $changedData = json_decode($changedData, true) ?? [];
+        }
 
-    // simpan request dalam transaksi
-    try {
-        DB::beginTransaction();
+        $modelClass = $editRequest->model;
+        if (!class_exists($modelClass)) {
+            throw new \Exception("Model {$editRequest->model} tidak ditemukan.");
+        }
 
-        $editRequest = EmployeeEditRequest::create([
-            'employee_id'  => $employee->id,
-            'method'       => 'update',
-            'original_data'=> $originalData,
-            'changed_data' => $changedData,
-            'status'       => 'waiting',
-            'requested_at' => now(),
-            'requested_by' => auth()->id(),
-        ]);
+        if (strtolower($editRequest->method) === 'create') {
+            $model = new $modelClass();
 
-        DB::commit();
-    } catch (\Throwable $e) {
-        DB::rollBack();
-        Log::error('Gagal membuat edit request', [
-            'message' => $e->getMessage(),
-            'trace'   => $e->getTraceAsString(),
-        ]);
-        return back()->with('error', 'Terjadi kesalahan saat menyimpan request. Silakan coba lagi.');
-    }
-
-    // --- Kirim notifikasi SETELAH commit ---
-    try {
-        $admins = User::whereIn('role', ['hc', 'superadmin'])
-            ->whereKeyNot(auth()->id())
-            ->get();
-
-        $requesterName = auth()->user()->name ?? ($employee->name ?? 'Karyawan');
-
-        Log::info('Mempersiapkan pengiriman notifikasi EmployeeEditRequest', [
-            'edit_request_id' => $editRequest->id,
-            'requested_by'    => auth()->id(),
-            'recipient_ids'   => $admins->pluck('id')->all(),
-        ]);
-
-        if ($admins->isNotEmpty()) {
-            foreach ($admins as $admin) {
-                $admin->notify(new EmployeeEditRequestNotification(
-                    $requesterName,
-                    $editRequest->id
-                ));
+            if (!isset($changedData['employee_id'])) {
+                $changedData['employee_id'] = $editRequest->employee_id;
             }
 
-            Log::info('Notifikasi EmployeeEditRequest dikirim', [
-                'edit_request_id' => $editRequest->id,
-                'recipients'      => $admins->pluck('id')->all(),
-            ]);
+            $materialKey = $model instanceof \App\Models\Certification ? 'material_files' : 'material_files_uploaded';
+            $materialFiles = $changedData[$materialKey] ?? [];
+            unset($changedData[$materialKey]);
+
+            $model->fill($changedData);
+            $model->save();
+
+            $this->storeMaterials($model, $materialFiles);
+
+            $editRequest->model_id = $model->id;
+            $editRequest->approved_by = auth()->id();
+            $editRequest->status = 'approved';
+            $editRequest->save();
         } else {
-            Log::warning('Tidak ada penerima HC/Superadmin untuk edit request', [
-                'edit_request_id' => $editRequest->id,
-            ]);
+            $model = $modelClass::find($editRequest->model_id);
+            if (!$model) {
+                throw new \Exception("Data {$editRequest->model} dengan ID {$editRequest->model_id} tidak ditemukan.");
+            }
+
+            $allowedFields = $this->tables[$editRequest->model] ?? array_keys($changedData);
+            $updateData = array_intersect_key($changedData, array_flip($allowedFields));
+
+            $materialKey = $model instanceof \App\Models\Certification ? 'material_files' : 'material_files_uploaded';
+            $materialFiles = $changedData[$materialKey] ?? [];
+            unset($updateData[$materialKey]);
+
+            // === Special case Employee → handle Career History ===
+            if ($model instanceof \App\Models\Employee) {
+                $oldPosition = $model->position;
+                $oldDivision = $model->division_id;
+                $oldType = $model->employee_type;
+
+                $model->update($updateData);
+                $model->refresh();
+
+                $newPosition = $model->position;
+                $newDivision = $model->division_id;
+                $newType = $model->employee_type;
+
+                $careerType = null;
+                if (!$oldPosition && $newPosition) {
+                    $careerType = 'Awal Masuk';
+                } elseif ($oldPosition && $newPosition && $oldPosition->id !== $newPosition->id) {
+                    if ($newPosition->depth < $oldPosition->depth) {
+                        $careerType = 'Promosi';
+                    } elseif ($newPosition->depth > $oldPosition->depth) {
+                        $careerType = 'Demosi';
+                    } else {
+                        $careerType = 'Mutasi';
+                    }
+                } elseif ($oldDivision != $newDivision) {
+                    $careerType = 'Mutasi';
+                } elseif ($oldType != $newType) {
+                    $careerType = 'Mutasi';
+                }
+
+                if ($careerType) {
+                    $activeCareer = \App\Models\CareerHistory::where('employee_id', $model->id)
+                        ->whereNull('end_date')
+                        ->first();
+
+                    if ($activeCareer) {
+                        $activeCareer->update(['end_date' => Carbon::today()]);
+                    }
+
+                    \App\Models\CareerHistory::create([
+                        'employee_id' => $model->id,
+                        'position_id' => $newPosition?->id,
+                        'division_id' => $newDivision,
+                        'employee_type' => $newType,
+                        'start_date' => Carbon::today(),
+                        'type' => $careerType,
+                        'notes' => '',
+                    ]);
+                }
+            } else {
+                if (!empty($updateData)) {
+                    $model->update($updateData);
+                }
+            }
+
+            $this->storeMaterials($model, $materialFiles);
+
+            $editRequest->approved_by = auth()->id();
+            $editRequest->status = 'approved';
+            $editRequest->save();
         }
-    } catch (\Throwable $e) {
-        Log::error('Gagal mengirim notifikasi EmployeeEditRequest', [
-            'message'         => $e->getMessage(),
-            'trace'           => $e->getTraceAsString(),
-            'edit_request_id' => $editRequest->id ?? null,
+
+        $user = $editRequest->employee->user ?? null;
+        if ($user) {
+            $user->notify(new EmployeeEditStatusNotification(
+                'approved',
+                'Your data change request has been approved'
+            ));
+        }
+
+        return redirect()->back()->with('success', 'Data berhasil di-approve.');
+    }
+
+    /**
+     * Simpan materials ke tabel relasi
+     */
+    protected function storeMaterials($model, $materialFiles)
+    {
+        if (empty($materialFiles))
+            return;
+
+        // Normalisasi biar pasti array of string (path)
+        if (is_string($materialFiles)) {
+            $materialFiles = json_decode($materialFiles, true) ?? [$materialFiles];
+        }
+
+        if (!is_array($materialFiles)) {
+            $materialFiles = [$materialFiles];
+        }
+
+        // Tentukan relasi sesuai model
+        if ($model instanceof \App\Models\TrainingHistory) {
+            $relation = 'trainingMaterials';
+        } elseif ($model instanceof \App\Models\Certification) {
+            $relation = 'certificationMaterials';
+        } else {
+            return;
+        }
+
+        foreach ($materialFiles as $filePath) {
+            if (is_array($filePath) && isset($filePath['file_path'])) {
+                $filePath = $filePath['file_path'];
+            }
+
+            if (!empty($filePath)) {
+                $model->$relation()->create([
+                    'file_path' => $filePath,
+                ]);
+            }
+        }
+    }
+
+
+    public function reject($id)
+    {
+        $editRequest = EmployeeEditRequest::findOrFail($id);
+
+        if ($editRequest->status !== 'waiting') {
+            return back()->with('error', 'Request sudah diproses.');
+        }
+
+        $editRequest->update([
+            'status' => 'rejected',
+            'approved_by' => auth()->id(),
         ]);
-        return back()->with('success', 'Request berhasil disimpan, namun gagal mengirim notifikasi. Admin mungkin perlu dicek secara manual.');
-    }
 
-    return back()->with('success', 'Request perubahan berhasil dikirim dan sedang menunggu persetujuan.');
-}
-
-  public function approve($id)
-{
-    $editRequest = EmployeeEditRequest::findOrFail($id);
-
-    // Decode changed data
-    $changedData = $editRequest->changed_data ?? [];
-    if (!is_array($changedData)) {
-        $changedData = json_decode($changedData, true) ?? [];
-    }
-
-    $modelClass = $editRequest->model;
-    if (!class_exists($modelClass)) {
-        throw new \Exception("Model {$editRequest->model} tidak ditemukan.");
-    }
-
-    // ==== CASE CREATE ====
-    if (strtolower($editRequest->method) === 'create') {
-        $model = new $modelClass();
-
-        if (!isset($changedData['employee_id'])) {
-            $changedData['employee_id'] = $editRequest->employee_id;
+        // 🔔 Kirim notifikasi ke user karyawan terkait
+        $user = $editRequest->employee->user ?? null;
+        if ($user) {
+            $user->notify(new EmployeeEditStatusNotification(
+                'rejected',
+                'Your data change request has been rejected'
+            ));
         }
 
-        // Tentukan key material files sesuai model
-        $materialKey = $model instanceof \App\Models\Certification ? 'material_files' : 'material_files_uploaded';
-        $materialFiles = $changedData[$materialKey] ?? [];
-        unset($changedData[$materialKey]);
-
-        // Simpan data utama
-        $model->fill($changedData);
-        $model->save();
-
-        // Simpan relasi material
-        $this->storeMaterials($model, $materialFiles);
-
-        $editRequest->model_id    = $model->id;
-        $editRequest->approved_by = auth()->id();
-        $editRequest->status      = 'approved';
-        $editRequest->save();
-
-    // ==== CASE UPDATE ====
-    } else {
-        $model = $modelClass::find($editRequest->model_id);
-        if (!$model) {
-            throw new \Exception("Data {$editRequest->model} dengan ID {$editRequest->model_id} tidak ditemukan.");
-        }
-
-        $allowedFields = $this->tables[$editRequest->model] ?? array_keys($changedData);
-        $updateData = array_intersect_key($changedData, array_flip($allowedFields));
-
-        // Tentukan key material files sesuai model
-        $materialKey = $model instanceof \App\Models\Certification ? 'material_files' : 'material_files_uploaded';
-        $materialFiles = $changedData[$materialKey] ?? [];
-        unset($updateData[$materialKey]);
-
-        // Update data utama
-        if (!empty($updateData)) {
-            $model->update($updateData);
-        }
-
-        // Update relasi materials
-        $this->storeMaterials($model, $materialFiles);
-
-        $editRequest->approved_by = auth()->id();
-        $editRequest->status      = 'approved';
-        $editRequest->save();
+        return back()->with('error', 'Request berhasil ditolak.');
     }
-
-    // 🔔 Notifikasi ke user
-    $user = $editRequest->employee->user ?? null;
-    if ($user) {
-        $user->notify(new EmployeeEditStatusNotification(
-            'approved',
-            'Your data change request has been approved'
-        ));
-    }
-
-    return redirect()->back()->with('success', 'Data berhasil di-approve.');
-}
-
-/**
- * Simpan materials ke tabel relasi
- */
-protected function storeMaterials($model, $materialFiles)
-{
-    if (empty($materialFiles)) return;
-
-    // Normalisasi biar pasti array of string (path)
-    if (is_string($materialFiles)) {
-        $materialFiles = json_decode($materialFiles, true) ?? [$materialFiles];
-    }
-
-    if (!is_array($materialFiles)) {
-        $materialFiles = [$materialFiles];
-    }
-
-    // Tentukan relasi sesuai model
-    if ($model instanceof \App\Models\TrainingHistory) {
-        $relation = 'trainingMaterials';
-    } elseif ($model instanceof \App\Models\Certification) {
-        $relation = 'certificationMaterials';
-    } else {
-        return;
-    }
-
-    foreach ($materialFiles as $filePath) {
-        if (is_array($filePath) && isset($filePath['file_path'])) {
-            $filePath = $filePath['file_path'];
-        }
-
-        if (!empty($filePath)) {
-            $model->$relation()->create([
-                'file_path' => $filePath,
-            ]);
-        }
-    }
-}
-
-
-public function reject($id)
-{
-    $editRequest = EmployeeEditRequest::findOrFail($id);
-
-    if ($editRequest->status !== 'waiting') {
-        return back()->with('error', 'Request sudah diproses.');
-    }
-
-    $editRequest->update([
-        'status' => 'rejected',
-        'approved_by' => auth()->id(),
-    ]);
-
-    // 🔔 Kirim notifikasi ke user karyawan terkait
-    $user = $editRequest->employee->user ?? null;
-    if ($user) {
-        $user->notify(new EmployeeEditStatusNotification(
-            'rejected',
-            'Your data change request has been rejected'
-        ));
-    }
-
-    return back()->with('error', 'Request berhasil ditolak.');
-}
 
     private function getModelInstance($table, $employeeId = null, $recordId = null)
     {

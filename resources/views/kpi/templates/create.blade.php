@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'KPI Performance Index')
+@section('title', 'Key Performance Index')
 @section('header_icon', 'ri--bill-line-01')
-@section('content_header', 'KPI Performance Index')
+@section('content_header', 'Key Performance Index')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,23 +10,15 @@
 @endpush
 
 @section('content')
+    @include('kpi.partials.tab-menu')
     <div class="container-fluid">
         <div class="form-content-container">
             <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form action="{{ route('kpi-templates.store') }}" method="POST">
                     @csrf
                     <div class="row">
                         <div class="col-12">
+                            
                             <!-- Template Name -->
                             <div class="form-group row align-items-center">
                                 <label for="template_name" class="col-md-2 col-form-label">Template Name <span class="text-danger">*</span> :</label>

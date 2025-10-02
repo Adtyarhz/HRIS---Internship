@@ -34,4 +34,9 @@ class KpiAssessmentItem extends Model
     {
         return $this->hasMany(KpiAssessmentItemScore::class);
     }
+
+    public function scoringRules(): HasMany
+    {
+        return $this->hasMany(KpiAssessmentItemScoringRule::class, 'kpi_assessment_item_id');
+    }
 }

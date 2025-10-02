@@ -30,13 +30,13 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
         UserSeeder::class,
-        // Seeder lainnya kalau ada
+        PositionSeeder::class,
     ]);
         
         // Generate beberapa divisi
         Division::factory()->count(8)->create();
 
         // Generate beberapa posisi
-        Position::factory()->count(9)->create();
+        // Position::factory()->count(9)->create();
     }
 }

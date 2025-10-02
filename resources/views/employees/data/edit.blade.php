@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Data Karyawan')
+@section('title', 'Employee Information')
 @section('header_icon', 'icon-park-outline--file-staff-one-01')
-@section('content_header', 'Edit Data Karyawan')
+@section('content_header', 'Employee Information')
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
