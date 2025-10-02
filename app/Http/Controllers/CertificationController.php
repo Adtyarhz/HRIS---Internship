@@ -190,7 +190,7 @@ if ($request->hasFile('certificate_file')) {
     $fileName = time() . '_cert_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
         . '.' . $file->getClientOriginalExtension();
     $file->storeAs('certifications', $fileName, 'public');
-    $validatedData['certificate_file'] = $fileName;
+    $validatedData['certificate_file'] = 'certifications/' .$fileName;
 } else {
     $validatedData['certificate_file'] = $certification->certificate_file ?? null;
 }

@@ -51,6 +51,7 @@
     <h4>Data Changes</h4>
 
     {{-- DATA CHANGE LOGIC (UNCHANGED) --}}
+
     @php
         $originalData = is_string($editRequest->original_data) 
             ? json_decode($editRequest->original_data, true) ?? [] 
@@ -79,76 +80,48 @@
 
     @if(!empty($changedData))
         @php
-            $isFlat = true;
-            foreach ($changedData as $value) {
-                if (is_array($value)) { $isFlat = false; break; }
+            $flattened = [];
+
+
+            foreach ($changedData as $table => $records) {
+                if (is_array($records)) {
+                    foreach ($records as $recordId => $fields) {
+                        if (is_array($fields)) {
+                            foreach ($fields as $field => $newValue) {
+                                $oldValue = $originalData[$table][$recordId][$field] 
+                                    ?? $originalData[$table][$field] 
+                                    ?? '-';
+
+                                $flattened[] = [
+                                    'field' => $field,
+                                    'old'   => $oldValue,
+                                    'new'   => $newValue,
+                                ];
+                            }
+                        } else {
+                            $oldValue = $originalData[$table][$recordId] ?? '-';
+                            $flattened[] = [
+                                'field' => $recordId,
+                                'old'   => $oldValue,
+                                'new'   => $fields,
+                            ];
+                        }
+                    }
+                } else {
+                    $oldValue = $originalData[$table] ?? '-';
+                    $flattened[] = [
+                        'field' => $table,
+                        'old'   => $oldValue,
+                        'new'   => $records,
+                    ];
+                }
             }
         @endphp
 
-        @if($isFlat)
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-secondary text-white text-center">Data</div>
-                <div class="card-body">
-                    <table class="table table-sm table-bordered text-center custom-table">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Field</th>
-                                <th>Old Data</th>
-                                <th>New Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($changedData as $field => $newValue)
-                                <tr>
-                                    <td>{{ ucfirst(str_replace('_', ' ', $field)) }}</td>
-                                    <td>{{ formatValue($field, $originalData[$field] ?? '-') }}</td>
-                                    <td>{{ formatValue($field, $newValue ?? '-') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @else
-           @foreach($changedData as $table => $records)
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-secondary text-white">
-            {{ ucfirst(str_replace('_', ' ', $table)) }}
-        </div>
-        <div class="card-body">
-            @php 
-                if (is_array($records)) {
-                    $firstValue = reset($records);
-                    $isNested = is_array($firstValue) && array_keys($records) !== range(0, count($records) - 1);
-                } else {
-                    $firstValue = $records;
-                    $isNested = false;
-                }
-            @endphp
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-secondary text-white text-center">Perubahan Data</div>
+            <div class="card-body">
 
-            @if($isNested)
-                @foreach($records as $recordId => $fields)
-                    <h6>Record ID: {{ $recordId }}</h6>
-                    <table class="table table-sm table-bordered text-center custom-table">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Field</th>
-                                <th>Old Data</th>
-                                <th>New Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($fields as $field => $newValue)
-                                <tr>
-                                    <td>{{ ucfirst(str_replace('_', ' ', $field)) }}</td>
-                                    <td>{{ formatValue($field, $originalData[$table][$recordId][$field] ?? '-') }}</td>
-                                    <td>{{ formatValue($field, $newValue ?? '-') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endforeach
-            @else
                 <table class="table table-sm table-bordered text-center custom-table">
                     <thead class="table-secondary">
                         <tr>
@@ -158,35 +131,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if(is_array($records))
-                            @foreach($records as $field => $newValue)
-                                <tr>
-                                    <td>{{ ucfirst(str_replace('_', ' ', $field)) }}</td>
-                                    <td>{{ formatValue($field, $originalData[$table][$field] ?? '-') }}</td>
-                                    <td>{{ formatValue($field, $newValue ?? '-') }}</td>
-                                </tr>
-                            @endforeach
-                        @else
+                        @foreach($flattened as $row)
                             <tr>
-                                <td>{{ ucfirst(str_replace('_', ' ', $table)) }}</td>
-                                <td>{{ formatValue($table, $originalData[$table] ?? '-') }}</td>
-                                <td>{{ formatValue($table, $records ?? '-') }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $row['field'])) }}</td>
+                                <td>{{ formatValue($row['field'], $row['old']) }}</td>
+                                <td>{{ formatValue($row['field'], $row['new']) }}</td>
                             </tr>
-                        @endif
+                        @endforeach
                     </tbody>
                 </table>
-            @endif
+            </div>
         </div>
-    </div>
-@endforeach
-
-        @endif
     @else
         <p class="text-muted text-center">No data changes.</p>
     @endif
 
     {{-- Buttons --}}
     <div class="d-flex justify-content-end fixed-bottom mb-3 me-3">
+
     @if($editRequest->status === 'waiting')
         <form action="{{ route('employee-edit-requests.approve', $editRequest->id) }}" method="POST" class="d-inline me-2">
             @csrf
@@ -199,6 +161,7 @@
     @endif
     <a href="{{ route('employee-edit-requests.index') }}" class="btn btn-secondary btn-sm">Back</a>
 </div>
+
 </div>
 @endsection
 

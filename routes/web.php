@@ -27,6 +27,7 @@ use App\Http\Controllers\KpiPeriodController;
 use App\Http\Controllers\KpiIndicatorController;
 use App\Http\Controllers\KpiTemplateController;
 use App\Http\Controllers\KpiAssessmentController;
+use App\Http\Controllers\OvertimeApplicationController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -118,6 +119,15 @@ Route::middleware('auth')->group(function () {
         });
 
     });
+    // tambahan khusus approve/reject
+Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
+Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');
+
+// Overtime Application (resource)
+Route::resource('overtime-applications', OvertimeApplicationController::class);
+
+Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
+    ->name('overtime-tasks.toggle');
 
     // === SUPERADMIN & DIREKSI ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
@@ -250,6 +260,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/read-one', [NotificationController::class, 'markOne'])->name('notifications.readOne');
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
