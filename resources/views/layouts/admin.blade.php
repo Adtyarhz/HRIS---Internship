@@ -8,10 +8,9 @@
 
     <title>@yield('title', 'HRIS Panel')</title>
 
-    <!-- Google Font: Source Sans Pro -->
+    <!-- Google Fonts -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Google Font: Custom -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,21 +18,21 @@
         rel="stylesheet" />
 
     <!-- Font Awesome -->
-    <!-- Optional: Font Awesome CDN (v6) jika ikon tidak muncul) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/plugins/fontawesome-free/css/all.min.css">
-    <!-- Theme style -->
+    <!-- AdminLTE Theme Style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 
-    {{-- Link ke CSS Kustom Anda --}}
+    {{-- Link to your custom CSS file --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
+
     <!-- Iconify CDN -->
-    <!-- BENAR -->
     <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
 
     @stack('styles')
 </head>
+
+<!-- The 'sidebar-mini' class enables AdminLTE's responsive sidebar functionality -->
 
 <body class="hold-transition sidebar-mini">
     <div class="wrapper">
@@ -42,13 +41,19 @@
         <nav class="main-header navbar navbar-expand">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
+                <!-- Hamburger Menu Icon: Toggles the sidebar on mobile and collapses it on desktop -->
+                <li class="nav-item">
+                    <a class="nav-link custom-sidebar-toggle" data-widget="pushmenu" href="#" role="button"><i
+                            class="fas fa-bars"></i></a>
+                </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <div class="d-flex align-items-center h-100 pl-3">
+                    <div class="d-flex align-items-center h-100 pl-3 header-content-wrapper">
                         <span class="@yield('header_icon', 'default-icon-class')"></span>
                         <h1 class="header-title mb-0 ml-2">@yield('content_header', 'Page Title')</h1>
                     </div>
                 </li>
             </ul>
+
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto d-flex align-items-center">
 
@@ -122,13 +127,13 @@
                             @endphp
                             @if ($isSuperadmin)
                                 <a href="#" class="btn btn-default btn-flat"
-                                    onclick="alert('Superadmin tidak memiliki data pribadi')">Profile</a>
+                                    onclick="alert('Superadmin does not have personal data')">Profile</a>
                             @elseif ($employee)
                                 <a href="{{ route('employees.show', $employee->id) }}"
                                     class="btn btn-default btn-flat">Profile</a>
                             @else
                                 <a href="#" class="btn btn-default btn-flat"
-                                    onclick="alert('Data karyawan belum tersedia')">Profile</a>
+                                    onclick="alert('Employee data not yet available')">Profile</a>
                             @endif
                             <a href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
@@ -140,15 +145,13 @@
                     </ul>
                 </li>
             </ul>
-
         </nav>
         <!-- /.navbar -->
 
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar elevation-4">
-            {{-- Konten sidebar tetap sama --}}
             <a href="{{ url('/') }}" class="brand-link">
-                <img src="{{ asset('img/logo.png') }}" alt="HRIS Logo" class="brand-image">
+                <img src="{{ asset('img/BPR LOGO WITH PX (updated)-13.png') }}" alt="HRIS Logo" class="brand-image">
                 <div class="brand-text-wrapper">
                     <span class="brand-text brand-title">HRIS</span>
                     <span
@@ -179,9 +182,8 @@
                                                 return request()->routeIs($subitem['route']);
                                             }));
                                 @endphp
-                                <a href="{{ $url }}"
-                                    class="nav-link{{ request()->routeIs($item['route']) ? ' active' : '' }}"
-                                    @if ($url === '#') onclick="alert('Fitur ini sedang dalam pengembangan')" @endif>
+                                <a href="{{ $url }}" class="nav-link{{ $isActive ? ' active' : '' }}"
+                                    @if ($url === '#') onclick="alert('This feature is under development')" @endif>
                                     <div class="nav-icon-text d-flex align-items-center">
                                         <span class="iconify mr-2" data-icon="{{ $item['icon'] ?? 'mdi:alert' }}"
                                             style="font-size: 18px;"></span>
@@ -197,15 +199,13 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
-            {{-- Content Header (Judul Halaman) SUDAH DIPINDAHKAN KE ATAS --}}
-
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">
-
-                    {{-- Global Alert --}}
+                    {{-- Global Alert & Validation Errors --}}
                     @include('partials.alert')
                     @include('partials.validation-errors')
+
                     @yield('content')
                 </div>
             </section>
