@@ -81,6 +81,7 @@
         ['label' => 'KPI Indicators', 'route' => 'kpi-indicators.index'],
         ['label' => 'KPI Template', 'route' => 'kpi-templates.index'],
         ['label' => 'KPI Assessment', 'route' => 'kpi-assessments.index'],
+        ['label' => 'KPI Report', 'route' => 'kpi-reports.index'],
     ];
 
     // Tentukan menu berdasarkan role
@@ -90,8 +91,12 @@
                         ->all();
     } elseif ($role === 'hc') {
         $visibleTabs = $kpiSubmenu;
+    } elseif ($role === 'manager') {
+        $visibleTabs = collect($kpiSubmenu)
+                        ->whereIn('label', ['KPI Assessment', 'KPI Report'])
+                        ->all();
     } else {
-        $visibleTabs = []; // selain hc & superadmin, tidak tampil
+        $visibleTabs = [];
     }
 @endphp
 

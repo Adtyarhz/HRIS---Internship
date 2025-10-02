@@ -41,7 +41,22 @@
             border: none;
         }
 
-        .btn-secondary {margin-left: 10px;}
+        .btn-secondary {
+            margin-left: 10px;
+        }
+
+        .tooltip-submit {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.700);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            font-size: 12px;
+            max-width: 300px;
+            white-space: pre-wrap;
+            z-index: 1000;
+        }
     </style>
 @endpush
 
@@ -72,22 +87,26 @@
                 @if ($canEditTarget)
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Target and Weight Adjustment</h6>
-                        <span>As a supervisor, please adjust the targets and weights. Once saved, the employee will be able to perform the self-assessment.</span>
+                        <span>As a supervisor, please adjust the targets and weights. Once saved, the employee will be able to
+                            perform the self-assessment.</span>
                     </div>
                 @elseif($kpiAssessment->status == 'Penyesuaian Target')
                     <div class="alert alert-warning">
                         <h6><i class="fas fa-exclamation-triangle"></i> Waiting for Supervisor Adjustment</h6>
-                        <span>This assessment is waiting for target adjustment by the supervisor. You cannot perform self-assessment yet.</span>
+                        <span>This assessment is waiting for target adjustment by the supervisor. You cannot perform
+                            self-assessment yet.</span>
                     </div>
                 @elseif($canEditSelf)
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Self-Assessment</h6>
-                        <span>Please fill in your achievements and scores. Use the <b>"Save Draft"</b> button to save temporarily or <b>"Submit"</b> to send your assessment to your supervisor.</span>
+                        <span>Please fill in your achievements and scores. Use the <b>"Save Draft"</b> button to save
+                            temporarily or <b>"Submit"</b> to send your assessment to your supervisor.</span>
                     </div>
                 @elseif($canEditSupervisor)
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Supervisor Assessment</h6>
-                        <span>Please fill in the achievements and scores for your subordinate. Use the <b>"Save Draft"</b> button to save temporarily or <b>"Submit"</b> to finalize your assessment.</span>
+                        <span>Please fill in the achievements and scores for your subordinate. Use the <b>"Save Draft"</b>
+                            button to save temporarily or <b>"Submit"</b> to finalize your assessment.</span>
                     </div>
                 @endif
 
@@ -117,10 +136,7 @@
                                 @foreach ($kpiAssessment->assessmentItems as $item)
                                     @php
                                         $selfScore = $item->scores->firstWhere('participant.role', 'self');
-                                        $supervisorScore = $item->scores->firstWhere(
-                                            'participant.role',
-                                            'direct_supervisor',
-                                        );
+                                        $supervisorScore = $item->scores->firstWhere('participant.role', 'direct_supervisor');
                                     @endphp
                                     <tr>
                                         {{-- KPI Indicator --}}
@@ -132,10 +148,9 @@
                                         {{-- Weight --}}
                                         <td>
                                             @if ($canEditTarget)
-                                                <input type="number" step="0.01"
-                                                    name="items[{{ $item->id }}][weight]" class="form-control"
-                                                    value="{{ old('items.' . $item->id . '.weight', $item->weight) }}"
-                                                    required>
+                                                <input type="number" step="0.01" name="items[{{ $item->id }}][weight]"
+                                                    class="form-control"
+                                                    value="{{ old('items.' . $item->id . '.weight', $item->weight) }}" required>
                                             @else
                                                 {{ $item->weight }}%
                                             @endif
@@ -144,10 +159,8 @@
                                         {{-- Target --}}
                                         <td>
                                             @if ($canEditTarget)
-                                                <input type="text" name="items[{{ $item->id }}][target]"
-                                                    class="form-control"
-                                                    value="{{ old('items.' . $item->id . '.target', $item->target) }}"
-                                                    required>
+                                                <input type="text" name="items[{{ $item->id }}][target]" class="form-control"
+                                                    value="{{ old('items.' . $item->id . '.target', $item->target) }}" required>
                                             @else
                                                 {{ $item->target }} {{ $item->indicator->measurement_unit }}
                                             @endif
@@ -158,21 +171,14 @@
                                             @if ($canEditSelf)
                                                 <input type="text" name="items[{{ $item->id }}][achievement_input]"
                                                     class="form-control"
-                                                    value="{{ old('items.' . $item->id . '.achievement_input', $selfScore->achievement_input ?? '') }}"
-                                                    required>
+                                                    value="{{ old('items.' . $item->id . '.achievement_input', $selfScore->achievement_input ?? '') }}">
                                             @else
                                                 {{ $selfScore->achievement_input ?? '-' }}
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($canEditSelf)
-                                                <input type="number" step="0.01"
-                                                    name="items[{{ $item->id }}][score]" class="form-control"
-                                                    value="{{ old('items.' . $item->id . '.score', $selfScore->score ?? '') }}"
-                                                    required>
-                                            @else
-                                                {{ $selfScore->score ?? '-' }}
-                                            @endif
+                                            {{-- Skor otomatis, bukan input --}}
+                                            {{ $selfScore->score ?? '-' }}
                                         </td>
 
                                         {{-- Supervisor --}}
@@ -186,16 +192,79 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($canEditSupervisor)
-                                                <input type="number" step="0.01"
-                                                    name="items[{{ $item->id }}][score]" class="form-control"
-                                                    value="{{ old('items.' . $item->id . '.score', $supervisorScore->score ?? '') }}"
-                                                    required>
-                                            @else
-                                                {{ $supervisorScore->score ?? '-' }}
-                                            @endif
+                                            {{-- Skor otomatis, bukan input --}}
+                                            {{ $supervisorScore->score ?? '-' }}
                                         </td>
                                     </tr>
+
+                                    {{-- FORM RULES SAAT PENYESUAIAN TARGET --}}
+                                    @if ($canEditTarget)
+                                        <tr>
+                                            <td colspan="7" class="text-start">
+                                                <div class="mb-2"><strong>Scoring Rules</strong></div>
+                                                <table class="table table-sm table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Operator</th>
+                                                            <th>Value 1</th>
+                                                            <th>Value 2</th>
+                                                            <th>Score</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @php
+                                                            $rules = old("items.{$item->id}.rules", $item->scoringRules->toArray());
+                                                        @endphp
+                                                        @forelse ($rules as $ruleIndex => $rule)
+                                                            <tr>
+                                                                <td>
+                                                                    <select
+                                                                        name="items[{{ $item->id }}][rules][{{ $ruleIndex }}][operator]"
+                                                                        class="form-control" required>
+                                                                        @foreach(['<', '<=', '=', '>=', '>', 'between'] as $op)
+                                                                            <option value="{{ $op }}" {{ ($rule['operator'] ?? '') == $op ? 'selected' : '' }}>
+                                                                                {{ $op }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="0.01"
+                                                                        name="items[{{ $item->id }}][rules][{{ $ruleIndex }}][value1]"
+                                                                        class="form-control" value="{{ $rule['value1'] ?? '' }}"
+                                                                        required>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="0.01"
+                                                                        name="items[{{ $item->id }}][rules][{{ $ruleIndex }}][value2]"
+                                                                        class="form-control" value="{{ $rule['value2'] ?? '' }}">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="0.01"
+                                                                        name="items[{{ $item->id }}][rules][{{ $ruleIndex }}][score]"
+                                                                        class="form-control" value="{{ $rule['score'] ?? '' }}"
+                                                                        required>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-danger remove-rule">x</button>
+                                                                </td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="5" class="text-center">No rules defined</td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                                <button type="button" class="btn btn-sm btn-primary add-rule"
+                                                    data-item="{{ $item->id }}">
+                                                    + Add Rule
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
@@ -211,14 +280,19 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="form-buttons-container">
-                                {{-- <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel-assess">Cancel</a> --}}
+
+                                @php
+                                    use Carbon\Carbon;
+                                    $daysRemaining = (int) Carbon::now()->diffInDays($kpiAssessment->period->end_date, false);
+                                @endphp
                                 @if ($canEditTarget)
                                     <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                     <button type="submit" class="btn btn-submit">Save</button>
                                 @elseif($canEditSelf || $canEditSupervisor)
-                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                     <button type="submit" name="action" value="save_draft" class="btn btn-secondary">Save Draft</button>
-                                    <button type="submit" name="action" value="submit" class="btn btn-submit">Submit</button>
+                                    <button type="submit" name="action" value="submit" class="btn btn-submit has-tooltip"
+                                    @if($daysRemaining > 5) disabled @endif>Submit</button>
                                 @else
                                     <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
                                 @endif
@@ -230,3 +304,71 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // === Tooltip Script (punya kamu sebelumnya) ===
+    const daysRemaining = @json($daysRemaining);
+
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip-submit";
+    tooltip.style.opacity = 0;
+    tooltip.style.position = "absolute";
+    document.body.appendChild(tooltip);
+
+    const submitBtn = document.querySelector(".btn-submit.has-tooltip[disabled]");
+
+    if (submitBtn) {
+        submitBtn.addEventListener("mouseenter", () => {
+            const rect = submitBtn.getBoundingClientRect();
+
+            tooltip.innerHTML = `Tombol submit akan aktif dalam <b>${daysRemaining}</b> hari lagi. Gunakan tombol "Save Draft" untuk menyimpan penilaian Anda sementara.`;
+
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (rect.left + window.scrollX + (rect.width/2) - (tooltip.offsetWidth/2)) + "px";
+            tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 8) + "px";
+        });
+
+        submitBtn.addEventListener("mouseleave", () => {
+            tooltip.style.opacity = 0;
+        });
+    }
+
+    // === Add / Remove Rule Script ===
+    document.querySelectorAll(".add-rule").forEach(button => {
+        button.addEventListener("click", function() {
+            const itemId = this.dataset.item;
+            const tbody = this.closest("td").querySelector("tbody");
+
+            const index = tbody.querySelectorAll("tr").length;
+
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `
+                <td>
+                    <select name="items[${itemId}][rules][${index}][operator]" class="form-control" required>
+                        <option value="<"><</option>
+                        <option value="<="><=</option>
+                        <option value="=">=</option>
+                        <option value=">=">>=</option>
+                        <option value=">">></option>
+                        <option value="between">between</option>
+                    </select>
+                </td>
+                <td><input type="number" step="0.01" name="items[${itemId}][rules][${index}][value1]" class="form-control" required></td>
+                <td><input type="number" step="0.01" name="items[${itemId}][rules][${index}][value2]" class="form-control"></td>
+                <td><input type="number" step="0.01" name="items[${itemId}][rules][${index}][score]" class="form-control" required></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-rule">x</button></td>
+            `;
+            tbody.appendChild(newRow);
+        });
+    });
+
+    // pakai event delegation biar row baru juga bisa dihapus
+    document.addEventListener("click", function(e) {
+        if (e.target.classList.contains("remove-rule")) {
+            e.target.closest("tr").remove();
+        }
+    });
+});
+</script>
+@endpush
