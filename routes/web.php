@@ -27,6 +27,7 @@ use App\Http\Controllers\KpiPeriodController;
 use App\Http\Controllers\KpiIndicatorController;
 use App\Http\Controllers\KpiTemplateController;
 use App\Http\Controllers\KpiAssessmentController;
+use App\Http\Controllers\KpiReportController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -259,6 +260,11 @@ Route::middleware('auth')->group(function () {
         $target->notify(new EmployeeEditRequestNotification("Samuel", 999));
 
         return "Notifikasi sudah dicoba kirim ke user ID {$target->id}";
+    });
+
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc,manager')->group(function () {
+        Route::get('/kpi-reports', [KpiReportController::class, 'index'])->name('kpi-reports.index');
+        Route::get('/kpi-reports/export', [KpiReportController::class, 'export'])->name('kpi-reports.export');
     });
 
     // Akses untuk semua role kecuali superadmin
