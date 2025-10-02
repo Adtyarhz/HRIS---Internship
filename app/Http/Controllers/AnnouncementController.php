@@ -10,20 +10,33 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Employee;
+use App\Models\Division;
 
 class AnnouncementController extends Controller
 {
     public function dashboard()
-    {
-        try {
-            $announcements = Announcement::latest()->paginate(20);
-            Log::info('Dashboard data loaded', ['announcements_count' => $announcements->count(), 'first_page' => $announcements->items()]);
-            return view('dashboard', compact('announcements'));
-        } catch (\Exception $e) {
-            Log::error('Error loading dashboard: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat dashboard.');
-        }
-    }   
+{
+    try {
+        // Ambil data pengumuman
+        $announcements = Announcement::latest()->paginate(20);
+
+        // Hitung jumlah karyawan berdasarkan gender
+        $genderStats = Employee::selectRaw('gender, COUNT(*) as total')
+            ->groupBy('gender')
+            ->pluck('total', 'gender');
+
+        // Hitung jumlah karyawan berdasarkan divisi
+        $divisionStats = Division::withCount('employees')->get();
+
+        return view('dashboard', compact('announcements', 'genderStats', 'divisionStats'));
+    } catch (\Exception $e) {
+        \Log::error('Error loading dashboard: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat dashboard.');
+    }
+}
+
+
 
     public function index(Request $request)
     {
