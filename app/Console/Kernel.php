@@ -10,7 +10,7 @@ class Kernel extends ConsoleKernel
     /**
      * The Artisan commands provided by your application.
      *
-     * @var array
+     * @var array<int, class-string>
      */
     protected $commands = [
         \App\Console\Commands\CloseExpiredAssessments::class,
@@ -21,8 +21,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Jadwalkan command untuk jalan tiap hari jam 00:00
+        // Jalan tiap hari jam 00:00
         $schedule->command('kpi:close-expired')->dailyAt('00:00');
+        // Jalan tiap pagi jam 08:00
+        $schedule->command('kpi:send-reminder')->dailyAt('08:00');
     }
 
     /**
@@ -30,7 +32,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

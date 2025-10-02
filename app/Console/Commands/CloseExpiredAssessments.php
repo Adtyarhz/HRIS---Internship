@@ -5,27 +5,28 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\KpiAssessment;
 use App\Models\KpiPeriod;
+use App\Services\KpiNotifier;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CloseExpiredAssessments extends Command
 {
-    protected $signature = 'assessments:close-expired';
-
-    protected $description = 'Tutup penilaian yang sudah kadaluarsa, dan buat penilaian baru jika periodenya otomatis';
+    protected $signature = 'kpi:close-expired';
+    protected $description = 'Tutup assessment yang kadaluarsa, buat periode baru jika otomatis, dan kirim notifikasi (expired + reminder).';
 
     public function handle()
     {
         $now = Carbon::now();
 
-        // Ambil assessment yang periodenya sudah lewat tapi belum kadaluarsa/selesai
+        // =====================
+        // 1. Tutup assessment yang expired
+        // =====================
         $expiredAssessments = KpiAssessment::whereHas('period', function ($q) use ($now) {
             $q->where('end_date', '<', $now);
         })->whereNotIn('status', ['Kadaluarsa', 'Selesai'])->get();
 
         if ($expiredAssessments->isEmpty()) {
             $this->info("Tidak ada assessment yang kadaluarsa.");
-            return;
         }
 
         foreach ($expiredAssessments as $assessment) {
@@ -35,10 +36,8 @@ class CloseExpiredAssessments extends Command
                 // Tandai assessment lama kadaluarsa
                 $assessment->update(['status' => 'Kadaluarsa']);
 
-                // Deteksi tipe periode dari nama
+                // Deteksi tipe periode
                 $type = $this->detectPeriodType($oldPeriod->period_name);
-
-                // Kalau tidak otomatis → skip
                 if (!$type) {
                     $this->info("Assessment ID {$assessment->id} ditutup (periode manual/khusus, tidak dibuat baru).");
                     return;
@@ -46,7 +45,6 @@ class CloseExpiredAssessments extends Command
 
                 // Buat periode berikutnya
                 $newPeriod = $this->getNextPeriod($oldPeriod, $type);
-
                 if (!$newPeriod) {
                     $this->warn("Assessment ID {$assessment->id} ditutup, tapi periode baru belum ada.");
                     return;
@@ -59,7 +57,7 @@ class CloseExpiredAssessments extends Command
                 $newAssessment->kpi_period_id = $newPeriod->id;
                 $newAssessment->save();
 
-                // Clone assessment items & scoring rules
+                // Clone items + scoring rules
                 foreach ($assessment->assessmentItems as $item) {
                     $newItem = $item->replicate();
                     $newItem->kpi_assessment_id = $newAssessment->id;
@@ -72,9 +70,19 @@ class CloseExpiredAssessments extends Command
                     }
                 }
 
+                // 🔔 Notifikasi expired
+                KpiNotifier::notifyExpired(
+                    $oldPeriod,
+                    $newPeriod,
+                    $assessment->supervisor,
+                    [$assessment->employee->user]
+                );
+
                 $this->info("Assessment ID {$assessment->id} ditutup → assessment baru ID {$newAssessment->id} dibuat untuk periode {$newPeriod->period_name}.");
             });
         }
+
+        $this->info("Proses close expired + reminder selesai.");
     }
 
     /**
@@ -97,45 +105,45 @@ class CloseExpiredAssessments extends Command
     private function getNextPeriod(KpiPeriod $oldPeriod, string $type): ?KpiPeriod
     {
         $nextStart = null;
-        $nextEnd = null;
-        $label = null;
+        $nextEnd   = null;
+        $label     = null;
 
         switch ($type) {
             case 'mingguan':
                 $nextStart = Carbon::parse($oldPeriod->end_date)->addDay()->startOfWeek(Carbon::MONDAY);
-                $nextEnd = $nextStart->copy()->endOfWeek(Carbon::SUNDAY);
-                $label = "Mingguan (" . $nextStart->format('d M') . " - " . $nextEnd->format('d M Y') . ")";
+                $nextEnd   = $nextStart->copy()->endOfWeek(Carbon::SUNDAY);
+                $label     = "Mingguan (" . $nextStart->format('d M') . " - " . $nextEnd->format('d M Y') . ")";
                 break;
 
             case 'bulanan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addMonth()->startOfMonth();
-                $nextEnd = $nextStart->copy()->endOfMonth();
-                $label = "Bulanan " . $nextStart->format('F Y');
+                $nextEnd   = $nextStart->copy()->endOfMonth();
+                $label     = "Bulanan " . $nextStart->format('F Y');
                 break;
 
             case 'triwulan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addMonths(3)->startOfQuarter();
-                $nextEnd = $nextStart->copy()->endOfQuarter();
-                $label = "Triwulan Q" . $nextStart->quarter . " " . $nextStart->format('Y');
+                $nextEnd   = $nextStart->copy()->endOfQuarter();
+                $label     = "Triwulan Q" . $nextStart->quarter . " " . $nextStart->format('Y');
                 break;
 
             case 'per_4_bulan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addMonths(4)->startOfMonth();
-                $nextEnd = $nextStart->copy()->addMonths(3)->endOfMonth();
-                $label = "Periode 4 Bulanan ({$nextStart->format('M Y')} - {$nextEnd->format('M Y')})";
+                $nextEnd   = $nextStart->copy()->addMonths(3)->endOfMonth();
+                $label     = "Periode 4 Bulanan ({$nextStart->format('M Y')} - {$nextEnd->format('M Y')})";
                 break;
 
             case 'per_6_bulan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addMonths(6)->startOfMonth();
-                $nextEnd = $nextStart->copy()->addMonths(5)->endOfMonth();
-                $semester = ($nextStart->month <= 6) ? 1 : 2;
-                $label = "Semester {$semester} {$nextStart->format('Y')}";
+                $nextEnd   = $nextStart->copy()->addMonths(5)->endOfMonth();
+                $semester  = ($nextStart->month <= 6) ? 1 : 2;
+                $label     = "Semester {$semester} {$nextStart->format('Y')}";
                 break;
 
             case 'tahunan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addYear()->startOfYear();
-                $nextEnd = $nextStart->copy()->endOfYear();
-                $label = "Tahunan " . $nextStart->format('Y');
+                $nextEnd   = $nextStart->copy()->endOfYear();
+                $label     = "Tahunan " . $nextStart->format('Y');
                 break;
         }
 
@@ -146,9 +154,7 @@ class CloseExpiredAssessments extends Command
                     'start_date'  => $nextStart->format('Y-m-d'),
                     'end_date'    => $nextEnd->format('Y-m-d'),
                 ],
-                [
-                    'status' => 'Aktif'
-                ]
+                ['status' => 'Aktif']
             );
         }
 

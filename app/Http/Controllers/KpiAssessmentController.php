@@ -154,8 +154,15 @@ class KpiAssessmentController extends Controller
 
                 // Tambahkan peserta atasan dulu untuk penyesuaian
                 $assessment->participants()->create(['assessor_id' => Auth::id(), 'role' => 'direct_supervisor']);
+
             }
             DB::commit();
+            // Setelah loop berhasil bikin assessment
+                \App\Services\KpiNotifier::notifyNewSession(
+                    KpiPeriod::find($validatedData['kpi_period_id']),
+                    Auth::user(),
+                    Employee::whereIn('id', $selectedEmployees)->get()->pluck('user')
+                );
             return redirect()->route('kpi-assessments.index')->with('success', 'Sesi penilaian berhasil dibuat. Silakan sesuaikan target, bobot, dan aturan skor.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -305,6 +312,9 @@ class KpiAssessmentController extends Controller
                 $kpiAssessment->update(['status' => 'Penilaian Diri']);
 
                 DB::commit();
+                \App\Services\KpiNotifier::notifyTargetAdjusted(
+                    [$kpiAssessment->employee->user]
+                );
                 return redirect()
                     ->route('kpi-assessments.show', $kpiAssessment->id)
                     ->with('success', 'Penyesuaian berhasil disimpan. Karyawan sekarang bisa mengisi penilaian diri.');
@@ -357,6 +367,18 @@ class KpiAssessmentController extends Controller
                 $participant->update(['status' => 'Selesai', 'notes' => $validatedData['notes'] ?? null]);
                 $this->updateAssessmentStatus($kpiAssessment);
                 $successMessage = 'Penilaian berhasil diserahkan.';
+
+                // === ✅ NOTIFIKASI: Self submit atau Supervisor submit ===
+                if ($participant->role === 'self') {
+                    // Bawahan submit → notify atasan
+                    $atasan = $kpiAssessment->supervisor;
+                    \App\Services\KpiNotifier::notifySelfSubmitted($atasan, $user, $kpiAssessment->period);
+                } elseif ($participant->role === 'direct_supervisor') {
+                    // Atasan submit → notify bawahan & HR
+                    $user = $kpiAssessment->employee->user;
+                    $hrUsers = \App\Models\User::whereIn('role', ['hc', 'superadmin'])->get();
+                    \App\Services\KpiNotifier::notifySupervisorSubmitted($user, $hrUsers, $kpiAssessment->period);
+                }
             } else { // 'save_draft'
                 $participant->update(['notes' => $validatedData['notes'] ?? null]);
                 $successMessage = 'Draft penilaian berhasil disimpan.';
@@ -515,6 +537,14 @@ class KpiAssessmentController extends Controller
                             $newRule->save();
                         }
                     }
+
+                    // 🔔 Tambahkan notifikasi di sini
+                    \App\Services\KpiNotifier::notifyExpired(
+                        $assessment->period,          // periode lama
+                        $newPeriod,                   // periode baru
+                        $assessment->supervisor,      // atasan lama
+                        [$assessment->employee->user] // bawahan lama
+                    );
                 }
             });
         }
