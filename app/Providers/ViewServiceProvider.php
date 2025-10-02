@@ -27,7 +27,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                         
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
@@ -43,7 +43,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                           
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
@@ -57,7 +57,6 @@ class ViewServiceProvider extends ServiceProvider
                             : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
                             ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
                             ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
@@ -73,7 +72,7 @@ class ViewServiceProvider extends ServiceProvider
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
@@ -89,7 +88,7 @@ class ViewServiceProvider extends ServiceProvider
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
@@ -105,7 +104,7 @@ class ViewServiceProvider extends ServiceProvider
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
@@ -120,7 +119,7 @@ class ViewServiceProvider extends ServiceProvider
                             $careerMenu = $employeeId
                             ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
                             : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Time & Attendance', 'route' => '#', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];

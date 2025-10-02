@@ -16,7 +16,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Manrope:wght@400&family=Noto+Sans+Georgian:wght@400&display=swap"
         rel="stylesheet" />
-
+    <!-- Bootstrap CSS -->
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/plugins/fontawesome-free/css/all.min.css">
@@ -25,10 +26,8 @@
 
     {{-- Link to your custom CSS file --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
-
     <!-- Iconify CDN -->
-    <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
-
+     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     @stack('styles')
 </head>
 

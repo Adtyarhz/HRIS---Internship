@@ -3,15 +3,15 @@
 @section('title', 'Employee Edit Requests')
 
 @section('content_header')
-    <div class="header-with-icon">
+    <div class="header-with-icon d-flex align-items-center gap-2">
         <iconify-icon icon="charm:git-request" width="24" height="24"></iconify-icon>
-        Employee Request
+        <span>Employee Request</span>
     </div>
 @endsection
 
 @section('content')
 <div class="container">
-    <h1>Daftar Permintaan Perubahan Data Karyawan</h1>
+    <h1>List of Employee Data Change Requests</h1>
 
     @if(session('success'))
         <div class="alert alert-success text-center">{{ session('success') }}</div>
@@ -23,11 +23,11 @@
         <thead class="table-secondary">
             <tr>
                 <th>No</th>
-                <th>Karyawan</th>
+                <th>Employee</th>
                 <th>Status</th>
-                <th>Tanggal Pengajuan</th>
-                <th>Disetujui Oleh</th>
-                <th>Aksi</th>
+                <th>Submission Date</th>
+                <th>Approved By</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -37,22 +37,22 @@
                     <td>{{ $req->employee->full_name ?? '-' }}</td>
                     <td>
                         @if($req->status == 'waiting')
-                            <span class="badge bg-warning text-dark">Menunggu</span>
+                            <span class="badge bg-warning text-dark">Pending</span>
                         @elseif($req->status == 'approved')
-                            <span class="badge bg-success">Disetujui</span>
+                            <span class="badge bg-success">Approved</span>
                         @else
-                            <span class="badge bg-danger">Ditolak</span>
+                            <span class="badge bg-danger">Rejected</span>
                         @endif
                     </td>
                     <td>{{ $req->requested_at ? \Carbon\Carbon::parse($req->requested_at)->format('d-m-Y H:i') : '-' }}</td>
                     <td>{{ $req->approvedBy->name ?? '-' }}</td>
                     <td>
-                        <a href="{{ route('employee-edit-requests.show', $req->id) }}" class="btn btn-sm btn-primary">Detail</a>
+                        <a href="{{ route('employee-edit-requests.show', $req->id) }}" class="btn btn-sm btn-primary">Details</a>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center">Belum ada permintaan perubahan.</td>
+                    <td colspan="6" class="text-center">No change requests yet.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -63,10 +63,10 @@
 @push('styles')
 <style>
     .custom-table tbody tr {
-        background-color: #f9f9f9; /* abu tipis */
+        background-color: #f9f9f9; /* light gray */
     }
     .custom-table tbody tr:nth-child(even) {
-        background-color: #f1f1f1; /* sedikit lebih gelap */
+        background-color: #f1f1f1; /* slightly darker */
     }
 </style>
 @endpush

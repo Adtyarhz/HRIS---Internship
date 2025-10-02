@@ -97,26 +97,40 @@ class EmployeeEditRequestController extends Controller
         $originalData = [];
         $changedData = [];
 
+        // Loop setiap tabel & field sesuai mapping
         foreach ($this->tables as $table => $fields) {
-            $model = $this->getModelInstance($table, $employee->id);
-            if (!$model)
-                continue;
+            $model = $this->getModelInstance($table, $employee->id, $request->input("{$table}_id"));
+            if (!$model) continue;
 
             foreach ($fields as $field) {
-                $oldValue = $model->$field;
-                $newValue = $oldValue;
+                $oldValue = $model->getRawOriginal($field);
+                $newValue = $request->input($field, $oldValue);
 
-                // === Handle file uploads ===
+                // Normalisasi tanggal
+                if ($this->isDateField($field)) {
+                    try {
+                        if (!empty($oldValue)) {
+                            $oldValue = Carbon::parse($oldValue)->format('Y-m-d');
+                        }
+                        if (!empty($newValue)) {
+                            $newValue = Carbon::parse($newValue)->format('Y-m-d');
+                        }
+                    } catch (\Exception $e) {
+                        // biarkan aslinya jika gagal parse
+                    }
+                }
+
+                // Handle file uploads
                 if ($request->hasFile($field)) {
                     $newValue = $request->file($field)->store($table, 'public');
                     Log::debug("New File Uploaded for {$table}.{$field}", [
                         'old_value' => $oldValue,
                         'new_value' => $newValue,
-                        'model_id' => $model->id,
+                        'model_id'  => $model->id,
                     ]);
                 }
 
-                // === Handle material_files khusus certifications/training_histories ===
+                // Handle material_files (special case)
                 if ($field === 'material_files' && in_array($table, ['certifications', 'training_histories'])) {
                     $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
                     $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
@@ -127,8 +141,8 @@ class EmployeeEditRequestController extends Controller
                             $newFilePath = $file->store("{$table}/materials", 'public');
                             $newFiles[] = $newFilePath;
                             Log::debug("New Material File Uploaded for {$table}", [
-                                'path' => $newFilePath,
-                                'model_id' => $model->id
+                                'path'     => $newFilePath,
+                                'model_id' => $model->id,
                             ]);
                         }
                     }
@@ -140,15 +154,15 @@ class EmployeeEditRequestController extends Controller
                     continue;
                 }
 
-                // === Perbandingan default ===
-                if ($oldValue !== $newValue || $request->hasFile($field)) {
+                // Default comparison
+                if ($oldValue !== $newValue) {
                     $originalData[$table][$model->id][$field] = $oldValue;
                     $changedData[$table][$model->id][$field] = $newValue;
                 }
             }
         }
 
-        // Tambahan khusus employee untuk track perubahan karir
+        // === Tambahan khusus Career Administration (dari kpi-update) ===
         if ($request->hasAny(['position_id', 'division_id', 'employee_type'])) {
             $originalData['employees'][$employee->id]['position_id'] = $employee->position_id;
             $originalData['employees'][$employee->id]['division_id'] = $employee->division_id;
@@ -163,17 +177,22 @@ class EmployeeEditRequestController extends Controller
             return back()->with('error', 'Tidak ada perubahan yang diajukan.');
         }
 
+        // Normalisasi sebelum simpan (dari master)
+        $originalData = $this->normalizeDates($originalData);
+        $changedData  = $this->normalizeDates($changedData);
+
+        // === Simpan request dalam transaksi ===
         try {
             DB::beginTransaction();
 
             $editRequest = EmployeeEditRequest::create([
-                'employee_id' => $employee->id,
-                'method' => 'update',
-                'model' => Employee::class,
-                'model_id' => $employee->id,
-                'original_data' => $originalData,
+                'employee_id'  => $employee->id,
+                'method'       => 'update',
+                'model'        => Employee::class,
+                'model_id'     => $employee->id,
+                'original_data'=> $originalData,
                 'changed_data' => $changedData,
-                'status' => 'waiting',
+                'status'       => 'waiting',
                 'requested_at' => now(),
                 'requested_by' => auth()->id(),
             ]);
@@ -183,12 +202,12 @@ class EmployeeEditRequestController extends Controller
             DB::rollBack();
             Log::error('Gagal membuat edit request', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace'   => $e->getTraceAsString(),
             ]);
             return back()->with('error', 'Terjadi kesalahan saat menyimpan request.');
         }
 
-        // === Kirim notifikasi ke HC/superadmin ===
+        // === Kirim notifikasi setelah commit ===
         try {
             $admins = User::whereIn('role', ['hc', 'superadmin'])
                 ->whereKeyNot(auth()->id())
@@ -198,8 +217,8 @@ class EmployeeEditRequestController extends Controller
 
             Log::info('Mempersiapkan pengiriman notifikasi EmployeeEditRequest', [
                 'edit_request_id' => $editRequest->id,
-                'requested_by' => auth()->id(),
-                'recipient_ids' => $admins->pluck('id')->all(),
+                'requested_by'    => auth()->id(),
+                'recipient_ids'   => $admins->pluck('id')->all(),
             ]);
 
             if ($admins->isNotEmpty()) {
@@ -212,7 +231,7 @@ class EmployeeEditRequestController extends Controller
 
                 Log::info('Notifikasi EmployeeEditRequest dikirim', [
                     'edit_request_id' => $editRequest->id,
-                    'recipients' => $admins->pluck('id')->all(),
+                    'recipients'      => $admins->pluck('id')->all(),
                 ]);
             } else {
                 Log::warning('Tidak ada penerima HC/Superadmin untuk edit request', [
@@ -221,15 +240,15 @@ class EmployeeEditRequestController extends Controller
             }
         } catch (\Throwable $e) {
             Log::error('Gagal mengirim notifikasi EmployeeEditRequest', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message'         => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
                 'edit_request_id' => $editRequest->id ?? null,
             ]);
+            return back()->with('success', 'Request berhasil disimpan, namun gagal mengirim notifikasi.');
         }
 
         return back()->with('success', 'Request perubahan berhasil dikirim dan sedang menunggu persetujuan.');
     }
-
 
     public function approve($id)
     {

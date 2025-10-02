@@ -140,6 +140,8 @@
                                 class="data-value">{{ $employee->full_name }}</span></div>
                         <div class="data-item"><span class="data-label">NIK</span><span
                                 class="data-value">{{ $employee->nik }}</span></div>
+                        <div class="data-item"><span class="data-label">NIP</span><span
+                                class="data-value">{{ $employee->nip ?? '-' }}</span></div>
                         <div class="data-item"><span class="data-label">NPWP</span><span
                                 class="data-value">{{ $employee->npwp ?? '-' }}</span></div>
                         <div class="data-item"><span class="data-label">Gender</span><span
@@ -310,29 +312,31 @@
                             <div class="data-item"><span class="data-label">Cost</span><span
                                     class="data-value">{{ $certification->cost ? 'Rp ' . number_format($certification->cost, 0, ',', '.') : '-' }}</span>
                             </div>
-                            <div class="data-item"><span class="data-label">Certificate File</span>
+                            <div class="data-item">
+                                <span class="data-label">Certificate File</span>
                                 <span class="data-value">
                                     @if ($certification->certificate_file)
-                                        <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}"
+                                        <a href="{{ asset('storage/' . $certification->certificate_file) }}"
                                             target="_blank">
                                             <i class="fas fa-file-alt"></i>
-                                            {{ Str::afterLast ($certification->certificate_file, '_') }}
+                                            {{ Str::afterLast($certification->certificate_file, '_') }}
                                         </a>
                                     @else
                                         -
                                     @endif
                                 </span>
                             </div>
-
-                            <div class="data-item"><span class="data-label">Certification Materials</span>
+                            <div class="data-item">
+                                <span class="data-label">Certification Materials</span>
                                 <span class="data-value">
                                     @if ($certification->certificationMaterials && $certification->certificationMaterials->count())
                                         <ul class="list-unstyled mb-0">
                                             @foreach ($certification->certificationMaterials as $index => $material)
                                                 <li>
-                                                    <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}"
+                                                    <a href="{{ asset('storage/' . $material->file_path) }}"
                                                         target="_blank">
-                                                        <i class="fas fa-file-alt"></i> File {{ $index + 1 }}
+                                                        <i class="fas fa-file-alt"></i> 
+                                                        {{ Str::afterLast($material->file_path, '_') }}
                                                     </a>
                                                 </li>
                                             @endforeach
