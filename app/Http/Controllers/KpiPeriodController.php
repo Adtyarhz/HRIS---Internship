@@ -20,7 +20,10 @@ class KpiPeriodController extends Controller
         // Periksa dan buat periode otomatis untuk periode saat ini
         $this->generateAutomaticPeriods();
 
-        $kpiPeriods = KpiPeriod::latest()->paginate(10);
+        // Ambil hanya periode dengan status Aktif
+        $kpiPeriods = KpiPeriod::where('status', 'Aktif')
+            ->orderByDesc('start_date')
+            ->paginate(10);
         return view('kpi.periods.index', compact('kpiPeriods'));
     }
 
@@ -45,7 +48,7 @@ class KpiPeriodController extends Controller
                 // Validasi untuk memastikan tidak ada periode lain dengan start_date dan end_date yang sama
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
-                                 ->where('end_date', $request->end_date);
+                        ->where('end_date', $request->end_date);
                 }),
             ],
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -79,7 +82,7 @@ class KpiPeriodController extends Controller
                 // Validasi untuk memastikan tidak ada periode lain dengan start_date dan end_date yang sama
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
-                                 ->where('end_date', $request->end_date);
+                        ->where('end_date', $request->end_date);
                 })->ignore($kpiPeriod->id),
             ],
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -120,99 +123,55 @@ class KpiPeriodController extends Controller
             'tahunan' => 'Tahunan',
         ];
 
-        foreach ($periodTypes as $type => $name) {
-            $period = null;
-
-            // Cek apakah sudah ada periode aktif untuk tipe ini
-            $existingPeriod = KpiPeriod::where('period_name', $name)
-                ->where('start_date', '<=', $now)
-                ->where('end_date', '>=', $now)
-                ->where('status', 'Aktif')
-                ->first();
-
-            if ($existingPeriod) {
-                continue; // Lewati jika periode aktif sudah ada
-            }
+        foreach ($periodTypes as $type => $baseName) {
+            $startDate = null;
+            $endDate = null;
 
             if ($type === 'tahunan') {
                 $startDate = Carbon::create($year, 1, 1);
                 $endDate = Carbon::create($year, 12, 31);
-                if ($now->between($startDate, $endDate)) {
-                    $period = [
-                        'period_name' => $name,
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'status' => 'Aktif',
-                    ];
-                }
             } elseif ($type === 'bulanan') {
                 $startDate = $now->copy()->startOfMonth();
                 $endDate = $now->copy()->endOfMonth();
-                $period = [
-                    'period_name' => $name,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'status' => 'Aktif',
-                ];
             } elseif ($type === 'triwulan') {
                 $quarter = ceil($now->month / 3);
                 $startMonth = ($quarter - 1) * 3 + 1;
                 $startDate = Carbon::create($year, $startMonth, 1);
-                $endMonth = $startMonth + 2;
-                $endDate = Carbon::create($year, $endMonth, 1)->endOfMonth();
-                if ($now->between($startDate, $endDate)) {
-                    $period = [
-                        'period_name' => $name,
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'status' => 'Aktif',
-                    ];
-                }
+                $endDate = Carbon::create($year, $startMonth + 2, 1)->endOfMonth();
             } elseif ($type === 'per_4_bulan') {
                 $tertial = ceil($now->month / 4);
                 $startMonth = ($tertial - 1) * 4 + 1;
                 $startDate = Carbon::create($year, $startMonth, 1);
-                $endMonth = $startMonth + 3;
-                $endDate = Carbon::create($year, $endMonth, 1)->endOfMonth();
-                if ($now->between($startDate, $endDate)) {
-                    $period = [
-                        'period_name' => $name,
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'status' => 'Aktif',
-                    ];
-                }
+                $endDate = Carbon::create($year, $startMonth + 3, 1)->endOfMonth();
             } elseif ($type === 'per_6_bulan') {
                 $semester = ceil($now->month / 6);
                 $startMonth = ($semester - 1) * 6 + 1;
                 $startDate = Carbon::create($year, $startMonth, 1);
-                $endMonth = $startMonth + 5;
-                $endDate = Carbon::create($year, $endMonth, 1)->endOfMonth();
-                if ($now->between($startDate, $endDate)) {
-                    $period = [
-                        'period_name' => $name,
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'status' => 'Aktif',
-                    ];
-                }
+                $endDate = Carbon::create($year, $startMonth + 5, 1)->endOfMonth();
             } elseif ($type === 'mingguan') {
                 $startDate = $now->copy()->startOfWeek(Carbon::MONDAY);
-                $endDate = $startDate->copy()->endOfWeek(Carbon::SUNDAY);
-                $period = [
-                    'period_name' => $name,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'status' => 'Aktif',
-                ];
+                $endDate = $now->copy()->endOfWeek(Carbon::SUNDAY);
             }
 
-            if ($period && !KpiPeriod::where([
-                'period_name' => $period['period_name'],
-                'start_date' => $period['start_date'],
-                'end_date' => $period['end_date']
-            ])->exists()) {
-                KpiPeriod::create($period);
+            if (!$startDate || !$endDate) {
+                continue;
+            }
+
+            // Label tampilan
+            $periodName = $baseName . ' (' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . ')';
+
+            // Cek dengan kombinasi period_name + start_date + end_date
+            $exists = KpiPeriod::whereDate('start_date', $startDate->format('Y-m-d'))
+                ->whereDate('end_date', $endDate->format('Y-m-d'))
+                ->exists();
+
+            if (!$exists) {
+                KpiPeriod::create([
+                    'period_name' => $periodName,
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'status' => 'Aktif',
+                ]);
             }
         }
     }
@@ -226,7 +185,7 @@ class KpiPeriodController extends Controller
         KpiPeriod::where('end_date', '<', $now)
             ->where('status', 'Aktif')
             ->update(['status' => 'Ditutup']);
-        
+
         KpiPeriod::where('end_date', '>=', $now)
             ->where('status', 'Ditutup')
             ->update(['status' => 'Aktif']);

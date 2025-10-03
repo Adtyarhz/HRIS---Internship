@@ -77,7 +77,7 @@ class HealthRecordController extends Controller
 
             DB::commit();
 
-            return redirect()->route('employees.show', $employee->id)
+            return redirect()->back()
                 ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
         }
 
@@ -89,8 +89,7 @@ class HealthRecordController extends Controller
 
         DB::commit();
 
-        return redirect()->route('employees.show', $employee->id)
-                         ->with('success', 'Riwayat kesehatan karyawan berhasil disimpan.');
+        return redirect()->back()->with('success', 'Riwayat kesehatan karyawan berhasil disimpan.');
     } catch (\Exception $e) {
         DB::rollBack();
         return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();

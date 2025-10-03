@@ -25,7 +25,7 @@
     <div class="col-12">
         <div class="form-buttons-container">
             <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
-            <button type="submit" class="btn btn-submit">Update Address</button>
+            <button type="submit" class="btn btn-submit">Update</button>
         </div>
     </div>
 </div>

@@ -118,7 +118,18 @@ class LoginController extends Controller
         $user->email = $request->email ?? $employee->email ?? strtolower(Str::slug($request->name)) . '@example.com';
         $user->password = Hash::make($request->password);
     }
-
+    // 🔑 Batasi akses ubah email & role
+    if (in_array(Auth::user()->role, ['superadmin', 'hc'])) {
+        // superadmin & hc boleh edit semua
+        $user->email = $request->email;
+        $user->role  = $request->role;
+    } else {
+        // role lain: kunci email & role ke value lama
+        $request->merge([
+            'email' => $user->email,
+            'role'  => $user->role,
+        ]);
+    }
     $request->validate([
         'name' => 'required|string|max:255|unique:users,name,' . ($user->id ?? 'null'),
         'email' => 'required|email|unique:users,email,' . ($user->id ?? 'null'),
@@ -127,8 +138,6 @@ class LoginController extends Controller
     ]);
 
     $user->name = $request->name;
-    $user->email = $request->email;
-    $user->role = $request->role; // ✅ tambahkan ini
 
     if ($request->filled('password')) {
         $user->password = Hash::make($request->password);

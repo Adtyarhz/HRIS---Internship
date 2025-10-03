@@ -6,6 +6,7 @@ use App\Models\CareerHistory;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Division;
+use App\Models\EmployeeEditRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -17,31 +18,31 @@ class CareerHistoryController extends Controller
     /**
      * Display a listing of the career histories.
      */
-public function index(Employee $employee)
-{
-     $user = auth()->user();
+    public function index(Employee $employee)
+    {
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
         }
-    $careerHistories = CareerHistory::where('employee_id', $employee->id)
-        ->with(['position', 'division'])
-        ->orderBy('id')
-        ->get();
+        $careerHistories = CareerHistory::where('employee_id', $employee->id)
+            ->with(['position', 'division'])
+            ->orderBy('id')
+            ->get();
 
-    $divisions = Division::orderBy('name')->get();
-    $positions = Position::orderBy('title')->get();
+        $divisions = Division::orderBy('name')->get();
+        $positions = Position::orderBy('title')->get();
 
-    return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
-}
+        return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
+    }
 
     /**
      * Show the form for creating a new career history.
      */
     public function create(Employee $employee)
     {
-         $user = auth()->user();
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
@@ -57,7 +58,7 @@ public function index(Employee $employee)
      */
     public function store(Request $request, Employee $employee)
     {
-         $user = auth()->user();
+        $user = auth()->user();
 
         // Bukan superadmin/hc -> hanya boleh buat untuk dirinya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
@@ -77,14 +78,40 @@ public function index(Employee $employee)
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $data = $request->only([
+            'position_id',
+            'division_id',
+            'employee_type',
+            'start_date',
+            'end_date',
+            'type',
+            'notes'
+        ]);
+        $data['employee_id'] = $employee->id;
+
         try {
             DB::beginTransaction();
 
-            $data = $request->only([
-                'position_id', 'division_id', 'employee_type',
-                'start_date', 'end_date', 'type', 'notes'
-            ]);
-            $data['employee_id'] = $employee->id;
+            // Jika bukan superadmin / hc → buat request approval
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                EmployeeEditRequest::create([
+                    'employee_id' => $employee->id,
+                    'method' => 'store',
+                    'model' => CareerHistory::class,
+                    'model_id' => null, // karena create baru
+                    'original_data' => null,
+                    'changed_data' => $data,
+                    'status' => 'waiting',
+                    'requested_by' => $user->id,
+                    'requested_at' => now(),
+                ]);
+
+                DB::commit();
+                return redirect()->route('employees.showCareer', $employee)
+                    ->with('info', 'Permintaan penambahan riwayat karir telah dikirim dan menunggu persetujuan.');
+            }
+
+            // === Logika lama: langsung simpan ke CareerHistory ===
 
             // Tutup CareerHistory aktif sebelumnya (jika ada)
             $activeCareerHistory = CareerHistory::where('employee_id', $employee->id)
@@ -123,7 +150,7 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-         $user = auth()->user();
+        $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh edit miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit riwayat karir ini.');
@@ -142,12 +169,13 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-        
+
         $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh update miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk memperbarui riwayat karir ini.');
         }
+
         $validator = Validator::make($request->all(), [
             'position_id' => 'required|exists:positions,id',
             'division_id' => 'required|exists:divisions,id',
@@ -162,56 +190,75 @@ public function index(Employee $employee)
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $data = $request->only([
+            'position_id',
+            'division_id',
+            'employee_type',
+            'start_date',
+            'end_date',
+            'type',
+            'notes'
+        ]);
+
         try {
             DB::beginTransaction();
 
-            $data = $request->only([
-                'position_id', 'division_id', 'employee_type',
-                'start_date', 'end_date', 'type', 'notes'
-            ]);
-
-            // Cek apakah ada perubahan pada position_id, division_id, atau employee_type
-            $hasChanges = $careerHistory->position_id != $data['position_id'] ||
-                          $careerHistory->division_id != $data['division_id'] ||
-                          $careerHistory->employee_type != $data['employee_type'];
-
-            // Jika CareerHistory ini aktif (end_date null) dan ada perubahan,
-            // tutup CareerHistory ini dan buat yang baru
-            if (is_null($careerHistory->end_date) && $hasChanges) {
-                $careerHistory->update([
-                    'end_date' => Carbon::today(),
-                ]);
-
-                // Buat CareerHistory baru dengan data baru
-                CareerHistory::create([
+            // Jika bukan superadmin / hc → buat request approval
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                EmployeeEditRequest::create([
                     'employee_id' => $employee->id,
-                    'position_id' => $data['position_id'],
-                    'division_id' => $data['division_id'],
-                    'employee_type' => $data['employee_type'],
-                    'start_date' => Carbon::today(),
-                    'end_date' => null,
-                    'type' => $data['type'], // Gunakan tipe dari input
-                    'notes' => $data['notes'],
+                    'method' => 'update',
+                    'model' => CareerHistory::class,
+                    'model_id' => $careerHistory->id,
+                    'original_data' => $careerHistory->toArray(),
+                    'changed_data' => $data,
+                    'status' => 'waiting',
+                    'requested_by' => $user->id,
+                    'requested_at' => now(),
                 ]);
 
-                // Perbarui data Employee berdasarkan CareerHistory baru
-                $employee->update([
-                    'position_id' => $data['position_id'],
-                    'division_id' => $data['division_id'],
-                    'employee_type' => $data['employee_type'],
-                ]);
-            } else {
-                // Jika tidak ada perubahan atau CareerHistory tidak aktif, update saja
+                DB::commit();
+                return redirect()->route('employees.showCareer', $employee)
+                    ->with('info', 'Permintaan perubahan riwayat karir telah dikirim dan menunggu persetujuan.');
+            }
+
+            // === Logika update CareerHistory ===
+            if (is_null($careerHistory->end_date)) {
+                // CASE: Career History AKTIF
+
                 $careerHistory->update($data);
 
-                // Jika CareerHistory ini aktif (end_date null), perbarui data Employee
-                if (is_null($careerHistory->end_date)) {
+                if (is_null($data['end_date'])) {
+                    // Masih aktif → update Employee
                     $employee->update([
                         'position_id' => $data['position_id'],
                         'division_id' => $data['division_id'],
                         'employee_type' => $data['employee_type'],
                     ]);
+                } else {
+                    // Jika end_date diisi → cek apakah sudah lewat
+                    if (Carbon::now()->greaterThan(Carbon::parse($data['end_date']))) {
+                        // Hapus data jabatan di employee
+                        $employee->update([
+                            'position_id' => null,
+                            'division_id' => null,
+                            'employee_type' => null,
+                        ]);
+                    }
                 }
+            } else {
+                // CASE: Career History SUDAH BERAKHIR
+                $newEndDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
+
+                if (is_null($newEndDate)) {
+                    return back()->with('error', 'Tanggal berakhir riwayat yang sudah selesai tidak boleh null.')->withInput();
+                }
+
+                if ($newEndDate->greaterThan(Carbon::today())) {
+                    return back()->with('error', 'Tanggal berakhir riwayat yang sudah selesai tidak boleh melewati hari ini.')->withInput();
+                }
+
+                $careerHistory->update($data);
             }
 
             DB::commit();
@@ -231,7 +278,8 @@ public function index(Employee $employee)
         if ($careerHistory->employee_id !== $employee->id) {
             abort(404);
         }
-         $user = auth()->user();
+
+        $user = auth()->user();
         // Bukan superadmin/hc -> hanya boleh hapus miliknya sendiri
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses untuk menghapus riwayat karir ini.');
@@ -239,32 +287,19 @@ public function index(Employee $employee)
         try {
             DB::beginTransaction();
 
-            // Jika CareerHistory yang dihapus adalah aktif (end_date null),
-            // perbarui Employee ke CareerHistory aktif terbaru (jika ada)
+            // Jika CareerHistory yang dihapus adalah aktif (end_date null)
             if (is_null($careerHistory->end_date)) {
-                $latestCareerHistory = CareerHistory::where('employee_id', $employee->id)
-                    ->whereNotNull('end_date')
-                    ->orderBy('end_date', 'desc')
-                    ->first();
-
-                if ($latestCareerHistory) {
-                    $employee->update([
-                        'position_id' => $latestCareerHistory->position_id,
-                        'division_id' => $latestCareerHistory->division_id,
-                        'employee_type' => $latestCareerHistory->employee_type,
-                    ]);
-                } else {
-                    // Jika tidak ada CareerHistory lain, set ke null
-                    $employee->update([
-                        'position_id' => null,
-                        'division_id' => null,
-                        'employee_type' => $employee->employee_type, // Pertahankan employee_type
-                    ]);
-                }
+                // Hapus juga data jabatan employee
+                $employee->update([
+                    'position_id' => null,
+                    'division_id' => null,
+                    'employee_type' => null,
+                ]);
             }
 
             $careerHistory->delete();
-        DB::commit();
+
+            DB::commit();
             return redirect()->route('employees.showCareer', $employee)
                 ->with('success', 'Riwayat karir berhasil dihapus.');
         } catch (\Exception $e) {

@@ -7,6 +7,25 @@
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-buttons-container {
+                flex-direction: column-reverse;
+                gap: 15px;
+            }
+
+            .btn-submit,
+            .btn-cancel,
+            .btn-delete {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .btn-submit {
+                margin-left: 0px;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -15,13 +34,6 @@
 
         <div class="form-content-container">
             <div class="card-body">
-
-                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
-                @endif
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
 
                 <form id="updateForm"
                     action="{{ route('employees.family-dependents.update', [$employee->id, $familyDependent->id]) }}"
