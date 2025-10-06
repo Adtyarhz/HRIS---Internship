@@ -358,7 +358,7 @@ class EmployeeController extends Controller
             }
 
             // Simpan data lama sebelum update
-            $oldPosition = $employee->position_id;
+            $oldPosition = $employee->position;
             $oldDivision = $employee->division_id;
             $oldType = $employee->employee_type;
 
