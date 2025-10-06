@@ -353,14 +353,19 @@ class KpiAssessmentController extends Controller
             }
 
             if ($action === 'submit') {
-                $periodEnd = $kpiAssessment->period->end_date; // pastikan relasi period sudah ada
-                $daysRemaining = now()->diffInDays($periodEnd, false);
+                $periodEnd = $kpiAssessment->period->end_date->endOfDay(); // pastikan sampai akhir hari periode
+                $now = now();
+                // Hitung sisa waktu dalam detik, lalu ubah ke hari (dengan pecahan)
+                $hoursRemaining = $now->diffInHours($periodEnd, false);
+                $daysRemaining = $hoursRemaining / 24;
 
+                // Jika masih lebih dari 5 hari (dalam hitungan jam), tolak submit
                 if ($daysRemaining > 5) {
                     DB::rollBack();
+                    $daysRemainingInt = floor($daysRemaining);
                     return back()->with(
                         'error',
-                        "Penilaian hanya bisa disubmit ketika periode tersisa 5 hari atau kurang. Saat ini masih {$daysRemaining} hari."
+                        "Penilaian hanya bisa disubmit ketika periode tersisa 5 hari atau kurang. Saat ini masih sekitar {$daysRemainingInt} hari lagi."
                     )->withInput();
                 }
 
