@@ -2,7 +2,7 @@
 <style>
     /* Container styling to handle layout integration with AdminLTE */
     .tabs-container {
-        margin: 0px 0px 20px 0px;
+        margin: 0px 0px 0px 0px;
         width: 100%;
         overflow: hidden;
     }
