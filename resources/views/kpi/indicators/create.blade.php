@@ -9,25 +9,27 @@
     <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('kpi.partials.tab-menu')
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
-                <form action="{{ route('kpi-indicators.store') }}" method="POST">
-                    @csrf
-                    @include('kpi.indicators._form', ['kpiIndicator' => new \App\Models\KpiIndicator()])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    <form action="{{ route('kpi-indicators.store') }}" method="POST">
+                        @csrf
+                        @include('kpi.indicators._form', ['kpiIndicator' => new \App\Models\KpiIndicator()])
 
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="form-buttons-container">
-                                <a href="{{ route('kpi-indicators.index') }}" class="btn btn-cancel">Cancel</a>
-                                <button type="submit" class="btn btn-submit">Submit</button>
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="form-buttons-container">
+                                    <a href="{{ route('kpi-indicators.index') }}" class="btn btn-cancel">Cancel</a>
+                                    <button type="submit" class="btn btn-submit">Submit</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection

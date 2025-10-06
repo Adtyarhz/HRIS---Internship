@@ -29,10 +29,6 @@
             text-align: center;
         }
 
-        .container-fluid {
-            padding-bottom: 30px;
-        }
-
         .add-button {
             display: flex;
             align-items: center;
@@ -61,143 +57,153 @@
             gap: 10px;
             justify-content: center;
         }
+
+        .container-fluid-1 {
+            margin-bottom: 30px;
+        }
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('kpi.partials.tab-menu')
-
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
-
-                {{-- My Assessments Card --}}
-                <div class="assessment-section-title">My Assessment History</div>
-                @if ($activePeriods->isNotEmpty())
-                    <div class="alert alert-info">
-                        <h5><i class="icon fas fa-info"></i> Performance Assessment Information</h5>
-                        Your performance assessment session will be initiated by your direct supervisor. Please wait until
-                        your supervisor starts and assigns the KPI template for the active period.
-                    </div>
-                @else
-                    <div class="alert alert-warning">
-                        <h5><i class="icon fas fa-exclamation-triangle"></i> No Active Periods</h5>
-                        There are currently no active assessment periods. Please contact the administrator for more
-                        information.
-                    </div>
-                @endif
-                <div class="table-responsive">
-                    <table class="table table-bordered table-custom text-center align-middle">
-                        <thead>
-                            <tr>
-                                <th>Period</th>
-                                <th>Supervisor</th>
-                                <th>Status</th>
-                                <th>Final Score</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($myAssessments as $assessment)
-                                <tr>
-                                    <td>
-                                        @php
-                                            $name = $assessment->period->period_name;
-                                            $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
-                                        @endphp
-
-                                        @if($hasDate)
-                                            {{ $name }}
-                                        @else
-                                            {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
-                                            {{ $assessment->period->end_date->format('d M Y') }})
-                                        @endif
-                                    </td>
-                                    <td>{{ $assessment->supervisor->name ?? 'N/A' }}</td>
-                                    <td>{{ $assessment->status }}</td>
-                                    <td>{{ $assessment->final_score ?? '-' }}</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="{{ route('kpi-assessments.show', $assessment->id) }}" class="btn-info"
-                                                title="View/Assess">
-                                                <i class="fas fa-eye"></i>View/Assess
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">No assessment history available for
-                                        you.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Team Assessments Card (Only shown if user is a supervisor) --}}
-    @if ($assessmentsAsSupervisor->isNotEmpty() || Auth::user()->employee->position->children->isNotEmpty())
+    <section class="content">
         <div class="container-fluid">
-            <div class="form-content-container">
-                <div class="card-body">
 
-                    <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's
-                        Assessment History
-                        <a href="{{ route('kpi-assessments.create') }}" class="add-button">
-                            <i class="fas fa-plus"></i>Add New Assessment
-                        </a>
-                    </div>
+            <div class="container-fluid-1">
+                <div class="form-content-container">
+                    <div class="card-body">
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Period</th>
-                                    <th>Status</th>
-                                    <th>Final Score</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($assessmentsAsSupervisor as $assessment)
+                        {{-- My Assessments Card --}}
+                        <div class="assessment-section-title">My Assessment History</div>
+                        @if ($activePeriods->isNotEmpty())
+                            <div class="alert alert-info">
+                                <h5><i class="icon fas fa-info"></i> Performance Assessment Information</h5>
+                                Your performance assessment session will be initiated by your direct supervisor. Please wait
+                                until
+                                your supervisor starts and assigns the KPI template for the active period.
+                            </div>
+                        @else
+                            <div class="alert alert-warning">
+                                <h5><i class="icon fas fa-exclamation-triangle"></i> No Active Periods</h5>
+                                There are currently no active assessment periods. Please contact the administrator for more
+                                information.
+                            </div>
+                        @endif
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td>{{ $assessment->employee->full_name }} (NIK: {{ $assessment->employee->nik }})
-                                        </td>
-                                        <td>
-                                            @php
-                                                $name = $assessment->period->period_name;
-                                                $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
-                                            @endphp
-
-                                            @if($hasDate)
-                                                {{ $name }}
-                                            @else
-                                                {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
-                                                {{ $assessment->period->end_date->format('d M Y') }})
-                                            @endif
-                                        </td>
-                                        <td>{{ $assessment->status }}</td>
-                                        <td>{{ $assessment->final_score ?? '-' }}</td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="{{ route('kpi-assessments.show', $assessment->id) }}" class="btn-info"
-                                                    title="View/Assess">
-                                                    <i class="fas fa-eye"></i>View/Assess
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>Period</th>
+                                        <th>Supervisor</th>
+                                        <th>Status</th>
+                                        <th>Final Score</th>
+                                        <th>Action</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @forelse($myAssessments as $assessment)
+                                        <tr>
+                                            <td>
+                                                @php
+                                                    $name = $assessment->period->period_name;
+                                                    $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
+                                                @endphp
 
+                                                @if($hasDate)
+                                                    {{ $name }}
+                                                @else
+                                                    {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
+                                                    {{ $assessment->period->end_date->format('d M Y') }})
+                                                @endif
+                                            </td>
+                                            <td>{{ $assessment->supervisor->name ?? 'N/A' }}</td>
+                                            <td>{{ $assessment->status }}</td>
+                                            <td>{{ $assessment->final_score ?? '-' }}</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
+                                                        class="btn-info" title="View/Assess">
+                                                        <i class="fas fa-eye"></i>View/Assess
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No assessment history available for
+                                                you.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {{-- Team Assessments Card (Only shown if user is a supervisor) --}}
+            @if ($assessmentsAsSupervisor->isNotEmpty() || Auth::user()->employee->position->children->isNotEmpty())
+                <div class="container-fluid-1">
+                    <div class="form-content-container">
+                        <div class="card-body">
+
+                            <div class="assessment-section-title d-flex justify-content-between align-items-center">My Team's
+                                Assessment History
+                                <a href="{{ route('kpi-assessments.create') }}" class="add-button">
+                                    <i class="fas fa-plus"></i>Add New Assessment
+                                </a>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-custom text-center align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Period</th>
+                                            <th>Status</th>
+                                            <th>Final Score</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($assessmentsAsSupervisor as $assessment)
+                                            <tr>
+                                                <td>{{ $assessment->employee->full_name }} (NIK: {{ $assessment->employee->nik }})
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $name = $assessment->period->period_name;
+                                                        $hasDate = preg_match('/\d{2}\s\w{3}\s\d{4}/', $name);
+                                                    @endphp
+
+                                                    @if($hasDate)
+                                                        {{ $name }}
+                                                    @else
+                                                        {{ $name }} ({{ $assessment->period->start_date->format('d M Y') }} -
+                                                        {{ $assessment->period->end_date->format('d M Y') }})
+                                                    @endif
+                                                </td>
+                                                <td>{{ $assessment->status }}</td>
+                                                <td>{{ $assessment->final_score ?? '-' }}</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <a href="{{ route('kpi-assessments.show', $assessment->id) }}"
+                                                            class="btn-info" title="View/Assess">
+                                                            <i class="fas fa-eye"></i>View/Assess
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            @endif
+
         </div>
-    @endif
+    </section>
 @endsection
