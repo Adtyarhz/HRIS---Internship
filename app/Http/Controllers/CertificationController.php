@@ -184,25 +184,25 @@ class CertificationController extends Controller
         // Bagian non-HC/non-superadmin → simpan sebagai permintaan edit
         if (!in_array($user->role, ['hc', 'superadmin'])) {
 
-            /// Handle file certificate_file jika ada upload
+           // certificate_file
 if ($request->hasFile('certificate_file')) {
     $file = $request->file('certificate_file');
     $fileName = time() . '_cert_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
         . '.' . $file->getClientOriginalExtension();
-    $file->storeAs('certifications', $fileName, 'public');
-    $validatedData['certificate_file'] = 'certifications/' .$fileName;
+    $file->storeAs('certifications/main', $fileName, 'public');
+    $validatedData['certificate_file'] = 'certifications/main/' . $fileName;
 } else {
     $validatedData['certificate_file'] = $certification->certificate_file ?? null;
 }
 
-// Handle file material_files jika ada upload
+// material_files
 $materialFiles = [];
 if ($request->hasFile('material_files')) {
     foreach ($request->file('material_files') as $materialFile) {
         $filename = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
             . '.' . $materialFile->getClientOriginalExtension();
         $materialFile->storeAs('certifications/materials', $filename, 'public');
-        $materialFiles[] = $filename;
+        $materialFiles[] = 'certifications/materials/' . $filename;
     }
 }
 $validatedData['material_files'] = $materialFiles;

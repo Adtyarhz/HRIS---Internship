@@ -55,8 +55,17 @@
     <label class="required">Address</label>
     <input type="text" name="address" class="form-control" required value="{{ old('address', $applicant->address ?? '') }}">
 
-    <label class="required">Applied Position</label>
-    <input type="text" name="applied_position" class="form-control" required value="{{ old('applied_position', $applicant->applied_position ?? '') }}">
+        <label class="required">Applied Position</label>
+    <select name="applied_position" class="form-control" required>
+        <option value="">-- Select Position --</option>
+        @foreach($positions as $position)
+            <option value="{{ $position->id }}"
+                {{ old('applied_position', $applicant->applied_position ?? '') == $position->id ? 'selected' : '' }}>
+                {{ $position->title }}
+            </option>
+        @endforeach
+    </select>
+
 
     <label>Last Education</label>
     <input type="text" name="last_education" class="form-control" value="{{ old('last_education', $applicant->last_education ?? '') }}">
