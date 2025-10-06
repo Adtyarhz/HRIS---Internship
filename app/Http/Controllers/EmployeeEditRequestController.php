@@ -128,12 +128,22 @@ class EmployeeEditRequestController extends Controller
                         'new_value' => $newValue,
                         'model_id'  => $model->id,
                     ]);
+                } else {
+                    // normalisasi path lama & baru
+                    if (in_array($field, ['certificate_file', 'insurance_file'])) {
+                        $oldValue = $this->normalizeFilePath($oldValue, $table, false);
+                        $newValue = $this->normalizeFilePath($newValue, $table, false);
+                    }
                 }
 
                 // Handle material_files (special case)
                 if ($field === 'material_files' && in_array($table, ['certifications', 'training_histories'])) {
                     $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
                     $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
+
+                    // normalisasi semua path lama
+                    $oldFiles = array_map(fn($f) => $this->normalizeFilePath($f, $table, true), $oldFiles);
+
                     $newFiles = $oldFiles;
 
                     if ($request->hasFile('material_files')) {
@@ -451,5 +461,22 @@ class EmployeeEditRequestController extends Controller
     private function isDateField($field)
     {
         return str_contains($field, 'date') || str_contains($field, 'start_year') || str_contains($field, 'end_year');
+    }
+
+    /**
+     * Normalisasi path file supaya konsisten (ada folder prefix)
+     */
+    private function normalizeFilePath($path, $table, $isMaterial = false)
+    {
+        if (empty($path)) return $path;
+
+        // Jika path sudah ada folder prefix, langsung return
+        if (str_contains($path, '/')) {
+            return $path;
+        }
+
+        return $isMaterial
+            ? "{$table}/materials/{$path}"
+            : "{$table}/{$path}";
     }
 }
