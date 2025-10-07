@@ -28,42 +28,53 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        {{-- 1. Tab menu --}}
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-        {{-- 2. Container form --}}
-        <div class="form-content-container">
-            <div class="card-body">
+                    <form id="updateForm" action="{{ route('employees.insurance.update', [$employee, $insurance]) }}"
+                        method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
 
-                <form id="updateForm" action="{{ route('employees.insurance.update', [$employee, $insurance]) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
+                        @include('employees.insurance._form', ['insurance' => $insurance])
 
-                    @include('employees.insurance._form', ['insurance' => $insurance])
-
-                    {{-- Tombol Aksi --}}
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="form-buttons-container">
-                                <button type="button" class="btn btn-delete"
-                                    onclick="showDeleteModal('insurance-{{ $insurance->id }}')">Delete</button>
-                                <a href="{{ route('employees.insurance.index', $employee) }}" class="btn btn-cancel">Cancel</a>
-                                <button type="submit" form="updateForm" class="btn btn-submit">Submit</button>
+                        {{-- Tombol Aksi --}}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="form-buttons-container">
+                                    <button type="button" class="btn btn-delete"
+                                        onclick="showDeleteModal('insurance-{{ $insurance->id }}')">Delete</button>
+                                    <a href="{{ route('employees.insurance.index', $employee) }}"
+                                        class="btn btn-cancel">Cancel</a>
+                                    <button type="submit" form="updateForm" class="btn btn-submit">Submit</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
 
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal Delete -->
-    <x-delete-modal 
-        modalId="insurance-{{ $insurance->id }}" 
-        :action="route('employees.insurance.destroy', [$employee, $insurance])" 
-        message="Are you sure to delete this Insurance?" 
-    />
+        <!-- Modal Delete -->
+        <x-delete-modal modalId="insurance-{{ $insurance->id }}" :action="route('employees.insurance.destroy', [$employee, $insurance])" message="Are you sure to delete this Insurance?" />
+    </section>
 @endsection
+
+@push('scripts')
+    <script>
+        document.getElementById('updateForm').addEventListener('submit', function (e) {
+            console.log('Form submitted with method: PUT');
+            console.log('Form data:', new FormData(this));
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerText = 'Saving...';
+            }
+        });
+    </script>
+@endpush

@@ -172,70 +172,71 @@
     </style>
 @endpush
 
-@section('content')
-    {{-- Tab Menu --}}
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Family Dependents
-                    <a href="{{ route('employees.family-dependents.create', $employee->id) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Family Member
-                    </a>
-                </div>
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Family Dependents
+                        <a href="{{ route('employees.family-dependents.create', $employee->id) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Family Member
+                        </a>
+                    </div>
 
-                {{-- Table / Card --}}
-                @if ($dependents->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Family Name</th>
-                                    <th>Relationship</th>
-                                    <th>Phone</th>
-                                    <th>Address</th>
-                                    <th>City, Province</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($dependents as $familyDependent)
+                    {{-- Table / Card --}}
+                    @if ($dependents->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $loop->iteration }}</td>
-                                        <td data-label="Family Name">{{ $familyDependent->contact_name }}</td>
-                                        <td data-label="Relationship">{{ $familyDependent->relationship }}</td>
-                                        <td data-label="Phone">{{ $familyDependent->phone_number }}</td>
-                                        <td data-label="Address">{{ $familyDependent->address }}</td>
-                                        <td data-label="City, Province">{{ $familyDependent->city }}, {{ $familyDependent->province }}</td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.family-dependents.edit', [$employee->id, $familyDependent->id]) }}"
-                                                    class="btn-info" title="Edit Family">
-                                                    <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Family Name</th>
+                                        <th>Relationship</th>
+                                        <th>Phone</th>
+                                        <th>Address</th>
+                                        <th>City, Province</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center text-muted py-4">
-                        No family dependents available for this employee.
-                    </div>
-                @endif
+                                </thead>
+                                <tbody>
+                                    @foreach ($dependents as $familyDependent)
+                                        <tr>
+                                            <td data-label="No.">{{ $loop->iteration }}</td>
+                                            <td data-label="Family Name">{{ $familyDependent->contact_name }}</td>
+                                            <td data-label="Relationship">{{ $familyDependent->relationship }}</td>
+                                            <td data-label="Phone">{{ $familyDependent->phone_number }}</td>
+                                            <td data-label="Address">{{ $familyDependent->address }}</td>
+                                            <td data-label="City, Province">{{ $familyDependent->city }},
+                                                {{ $familyDependent->province }}</td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.family-dependents.edit', [$employee->id, $familyDependent->id]) }}"
+                                                        class="btn-info" title="Edit Family">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            No family dependents available for this employee.
+                        </div>
+                    @endif
 
-                {{-- Button cancel --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    {{-- Button cancel --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    </div>
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

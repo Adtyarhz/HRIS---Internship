@@ -60,7 +60,7 @@
             text-decoration: none;
             margin-left: auto;
         }
-        
+
         .btn-info:hover {
             background-color: #098ba5;
         }
@@ -204,83 +204,85 @@
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Employee Insurance
+                        <a href="{{ route('employees.insurance.create', $employee) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Insurance
+                        </a>
+                    </div>
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Employee Insurance
-                    <a href="{{ route('employees.insurance.create', $employee) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Insurance
-                    </a>
-                </div>
-
-                {{-- Table / Card --}}
-                @if ($insurances->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Insurance Number</th>
-                                    <th>Type</th>
-                                    <th>Period</th>
-                                    <th>Status</th>
-                                    <th>File</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($insurances as $insurance)
+                    {{-- Table / Card --}}
+                    @if ($insurances->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $loop->iteration }}</td>
-                                        <td data-label="Insurance Number">{{ $insurance->insurance_number }}</td>
-                                        <td data-label="Type">{{ $insurance->insurance_type }}</td>
-                                        <td data-label="Period">
-                                            {{ \Carbon\Carbon::parse($insurance->start_date)->format('d/m/Y') }}
-                                            -
-                                            {{ $insurance->expiry_date ? \Carbon\Carbon::parse($insurance->expiry_date)->format('d/m/Y') : '-' }}
-                                        </td>
-                                        <td data-label="Status">{{ $insurance->status }}</td>
-                                        <td data-label="File">
-                                            @if ($insurance->insurance_file)
-                                                <a href="{{ asset('storage/' . $insurance->insurance_file) }}" target="_blank" class="file-link">
-                                                    <i class="fa-regular fa-file"></i>
-                                                    {{ Str::afterLast($insurance->insurance_file, '_') }}
-                                                </a>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.insurance.edit', [$employee, $insurance]) }}"
-                                                    class="btn-info" title="Edit Insurance">
-                                                    <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Insurance Number</th>
+                                        <th>Type</th>
+                                        <th>Period</th>
+                                        <th>Status</th>
+                                        <th>File</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center text-muted py-4">
-                        No insurance available for this employee.
-                    </div>
-                @endif
+                                </thead>
+                                <tbody>
+                                    @foreach ($insurances as $insurance)
+                                        <tr>
+                                            <td data-label="No.">{{ $loop->iteration }}</td>
+                                            <td data-label="Insurance Number">{{ $insurance->insurance_number }}</td>
+                                            <td data-label="Type">{{ $insurance->insurance_type }}</td>
+                                            <td data-label="Period">
+                                                {{ \Carbon\Carbon::parse($insurance->start_date)->format('d/m/Y') }}
+                                                -
+                                                {{ $insurance->expiry_date ? \Carbon\Carbon::parse($insurance->expiry_date)->format('d/m/Y') : '-' }}
+                                            </td>
+                                            <td data-label="Status">{{ $insurance->status }}</td>
+                                            <td data-label="File">
+                                                @if ($insurance->insurance_file)
+                                                    <a href="{{ asset('storage/' . $insurance->insurance_file) }}" target="_blank"
+                                                        class="file-link">
+                                                        <i class="fa-regular fa-file"></i>
+                                                        {{ Str::afterLast($insurance->insurance_file, '_') }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.insurance.edit', [$employee, $insurance]) }}"
+                                                        class="btn-info" title="Edit Insurance">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            No insurance available for this employee.
+                        </div>
+                    @endif
 
-                {{-- Cancel Button --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
+                    {{-- Cancel Button --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
+                    </div>
+
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

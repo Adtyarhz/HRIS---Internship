@@ -27,37 +27,27 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        {{-- 1. Panggil partial menu tab --}}
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-        {{-- 2. Container untuk konten form --}}
-        <div class="form-content-container">
-            <div class="card-body">
+                    <form action="{{ route('employees.family-dependents.store', $employee->id) }}" method="POST">
+                        @csrf
 
-                <form action="{{ route('employees.family-dependents.store', $employee->id) }}" method="POST">
-                    @csrf
 
-                    <div class="row">
-                        <div class="col-12">
+                        @include('employees.family-dependents._form', ['familyDependent' => null])
 
-                            @include('employees.family-dependents._form', ['familyDependent' => null])
+                        <div class="form-buttons-container mt-4">
+                            <a href="{{ route('employees.family-dependents.index', $employee->id) }}"
+                                class="btn btn-cancel">Cancel</a>
+                            <button type="submit" class="btn btn-submit">Submit</button>
 
-                            {{-- Tombol Aksi --}}
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <div class="form-buttons-container">
-                                        <a href="{{ route('employees.family-dependents.index', $employee->id) }}"
-                                            class="btn btn-cancel">Cancel</a>
-                                        <button type="submit" class="btn btn-submit">Submit</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection

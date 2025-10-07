@@ -25,7 +25,7 @@
     <div class="col-12">
         <div class="form-buttons-container">
             <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
-            <button type="submit" class="btn btn-submit">Update</button>
+            <button type="submit" form="updateForm" class="btn btn-submit">Update</button>
         </div>
     </div>
 </div>
@@ -34,7 +34,7 @@
 <input type="hidden" name="full_name" value="{{ $employee->full_name ?? 'Default Name' }}">
 <input type="hidden" name="gender" value="{{ $employee->gender ?? 'Laki-laki' }}">
 <input type="hidden" name="birth_place" value="{{ $employee->birth_place ?? 'Default Birth Place' }}">
-<input type="hidden" name="birth_date" value="{{ $employee->birth_date ? $employee->birth_date->format('Y-m-d') : '' }}">
+<input type="hidden" name="birth_date" value="{{ $employee->birth_date ?? '' }}">
 <input type="hidden" name="religion" value="{{ $employee->religion ?? 'Islam' }}">
 <input type="hidden" name="nik" value="{{ $employee->nik ?? 'Default NIK' }}">
 <input type="hidden" name="nip" value="{{ $employee->nip ?? '' }}">
@@ -47,7 +47,7 @@
 <input type="hidden" name="employee_type" value="{{ $employee->employee_type ?? 'Kontrak' }}">
 <input type="hidden" name="division_id" value="{{ $employee->division_id ?? '' }}">
 <input type="hidden" name="position_id" value="{{ $employee->position_id ?? '' }}">
-<input type="hidden" name="hire_date" value="{{ $employee->hire_date ? $employee->hire_date->format('Y-m-d') : '' }}">
-<input type="hidden" name="separation_date" value="{{ $employee->separation_date ? $employee->separation_date->format('Y-m-d') : '' }}">
+<input type="hidden" name="hire_date" value="{{ $employee->hire_date ?? '' }}">
+<input type="hidden" name="separation_date" value="{{ $employee->separation_date ?? '' }}">
 <input type="hidden" name="office" value="{{ $employee->office ?? 'Kantor Pusat' }}">
 <input type="hidden" name="user_id" value="{{ $employee->user_id ?? '' }}">

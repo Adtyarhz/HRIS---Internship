@@ -60,7 +60,7 @@
             text-decoration: none;
             margin-left: auto;
         }
-        
+
         .btn-info:hover {
             background-color: #098ba5;
         }
@@ -172,70 +172,72 @@
     </style>
 @endpush
 
-@section('content')
-    {{-- Tab Menu --}}
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Education History
-                    <a href="{{ route('employees.educationhistory.create', $employee) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Education History
-                    </a>
-                </div>
-
-                {{-- Table / Card --}}
-                @if($educationHistories->isEmpty())
-                    <div class="text-center text-muted py-4">
-                        No education history recorded.
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Education History
+                        <a href="{{ route('employees.educationhistory.create', $employee) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Education History
+                        </a>
                     </div>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Level</th>
-                                    <th>Institution</th>
-                                    <th>Major</th>
-                                    <th>Start - End Year</th>
-                                    <th>GPA / Score</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($educationHistories as $index => $education)
+
+                    {{-- Table / Card --}}
+                    @if($educationHistories->isEmpty())
+                        <div class="text-center text-muted py-4">
+                            No education history recorded.
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $index + 1 }}</td>
-                                        <td data-label="Level">{{ $education->education_level }}</td>
-                                        <td data-label="Institution">{{ $education->institution_name }}</td>
-                                        <td data-label="Major">{{ $education->major ?? '-' }}</td>
-                                        <td data-label="Start - End Year">{{ $education->start_year }} - {{ $education->end_year }}</td>
-                                        <td data-label="GPA / Score">{{ $education->gpa_or_score ?? '-' }}</td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.educationhistory.edit', [$employee, $education]) }}"
-                                                    class="btn-info" title="Edit Work Experience">
-                                                    <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Level</th>
+                                        <th>Institution</th>
+                                        <th>Major</th>
+                                        <th>Start - End Year</th>
+                                        <th>GPA / Score</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach($educationHistories as $index => $education)
+                                        <tr>
+                                            <td data-label="No.">{{ $index + 1 }}</td>
+                                            <td data-label="Level">{{ $education->education_level }}</td>
+                                            <td data-label="Institution">{{ $education->institution_name }}</td>
+                                            <td data-label="Major">{{ $education->major ?? '-' }}</td>
+                                            <td data-label="Start - End Year">{{ $education->start_year }} -
+                                                {{ $education->end_year }}</td>
+                                            <td data-label="GPA / Score">{{ $education->gpa_or_score ?? '-' }}</td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.educationhistory.edit', [$employee, $education]) }}"
+                                                        class="btn-info" title="Edit Work Experience">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+
+                    {{-- Cancel button --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
                     </div>
-                @endif
 
-                {{-- Cancel button --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection
