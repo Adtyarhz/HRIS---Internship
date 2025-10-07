@@ -29,9 +29,14 @@
 
             <div class="right-actions d-flex gap-2">
                 <!-- Tombol Deactive -->
-                <button type="button" class="action-button btn-deactivet-data" onclick="showDeleteModal('deactivate-employee-{{ $employee->id }}')">
-                    <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
-                </button>
+                @if(in_array(Auth::user()->role, ['superadmin','hc']))
+                    <button type="button" class="action-button btn-deactivet-data" onclick="showDeleteModal('deactivate-employee-{{ $employee->id }}')">
+                        <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
+                    </button>
+                @else
+                    {{-- Tambahkan elemen kosong agar space-between tetap bekerja --}}
+                    <div></div>
+                @endif
 
                 <!-- Modal Deactive -->
                 <x-delete-modal 
