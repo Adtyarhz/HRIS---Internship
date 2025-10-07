@@ -198,21 +198,23 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
-            <!-- Main content -->
-            <section class="content">
-                <div class="container-fluid">
-                    {{-- Global Alert & Validation Errors --}}
-                    @include('partials.alert')
-                    @include('partials.validation-errors')
+            
+            {{-- Global Alert & Validation Errors --}}
+            @include('partials.alert')
+            @include('partials.validation-errors')
 
-                    @yield('content')
-                </div>
-            </section>
-            <!-- /.content -->
+            @hasSection('content-wrapper')
+                @yield('content-wrapper')
+            @else
+                <section class="content">
+                    <div class="container-fluid">
+                        @yield('content')
+                    </div>
+                </section>
+            @endif
         </div>
-        <!-- /.content-wrapper -->
+
     </div>
-    <!-- ./wrapper -->
 
     <!-- REQUIRED SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
