@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
 
 class TrainingHistoryController extends Controller
 {
@@ -75,21 +77,21 @@ class TrainingHistoryController extends Controller
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $validatedData['material_files_uploaded'] = $storedFiles;
 
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'create',
-                    'model'         => TrainingHistory::class,
-                    'model_id'      => null,
-                    'original_data' => null,
-                    'changed_data'  => $validatedData,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+                $editRequest = $notifier->createEditRequest(
+                    new TrainingHistory(),
+                    $validatedData,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id]
+                );
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan pembuatan data pelatihan.');
+                }
 
                 DB::commit();
                 return redirect()->route('employees.training-histories.index', $employee->id)
-                                ->with('info', 'Permintaan penambahan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Permintaan penambahan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
             }
 
             // Superadmin/HC langsung simpan
@@ -100,7 +102,7 @@ class TrainingHistoryController extends Controller
 
             DB::commit();
             return redirect()->route('employees.training-histories.index', $employee->id)
-                            ->with('success', 'Riwayat pelatihan berhasil ditambahkan.');
+                ->with('success', 'Riwayat pelatihan berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal menyimpan riwayat pelatihan: ' . $e->getMessage())->withInput();
@@ -147,26 +149,30 @@ class TrainingHistoryController extends Controller
             }
 
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
+
                 $originalData = $trainingHistory->only(array_keys($validatedData));
 
                 $validatedData['material_files_uploaded'] = $storedFiles;
                 $validatedData['delete_materials'] = $validatedData['delete_materials'] ?? [];
 
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'update',
-                    'model'         => TrainingHistory::class,
-                    'model_id'      => $trainingHistory->id,
-                    'original_data' => $originalData,
-                    'changed_data'  => $validatedData,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $editRequest = $notifier->createEditRequest(
+                    $trainingHistory,
+                    $validatedData,
+                    EmployeeEditRequestNotification::class,
+                    [
+                        'employee_id' => $employee->id,
+                        'method' => 'update',
+                    ]
+                );
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan perubahan riwayat pelatihan.');
+                }
 
                 DB::commit();
                 return redirect()->route('employees.training-histories.index', $employee->id)
-                                ->with('info', 'Permintaan perubahan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Permintaan perubahan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
             }
 
             $trainingHistory->update($validatedData);
@@ -191,7 +197,7 @@ class TrainingHistoryController extends Controller
 
             DB::commit();
             return redirect()->route('employees.training-histories.index', $employee->id)
-                            ->with('success', 'Riwayat pelatihan berhasil diperbarui.');
+                ->with('success', 'Riwayat pelatihan berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memperbarui riwayat pelatihan: ' . $e->getMessage())->withInput();
@@ -202,16 +208,42 @@ class TrainingHistoryController extends Controller
     {
         $this->authorizeEmployeeAccess($employee);
 
+        $user = auth()->user();
         DB::beginTransaction();
+
         try {
-            foreach ($trainingHistory->trainingMaterials as $material) {
-                Storage::delete('public/training_materials/' . $material->file_path);
+            // Jika bukan superadmin/hc → buat permintaan approval hapus
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $trainingHistory,
+                    [],
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id],
+                    'delete'
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan penghapusan data pelatihan.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.training-histories.index', $employee->id)
+                    ->with('info', 'Permintaan penghapusan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
             }
+
+            // Jika superadmin/hc → langsung hapus data dan file
+            foreach ($trainingHistory->trainingMaterials as $material) {
+                Storage::disk('public')->delete('training_materials/' . $material->file_path);
+            }
+
             $trainingHistory->delete();
 
             DB::commit();
             return redirect()->route('employees.training-histories.index', $employee->id)
-                             ->with('success', 'Riwayat pelatihan berhasil dihapus.');
+                ->with('success', 'Riwayat pelatihan berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal menghapus riwayat pelatihan.');

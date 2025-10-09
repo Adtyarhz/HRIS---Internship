@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
 
 class WorkExperienceController extends Controller
 {
@@ -48,36 +51,67 @@ class WorkExperienceController extends Controller
             'salary_slip_file' => 'required|file|mimes:pdf,doc,docx,jpg,png,jpeg',
         ]);
 
-        if ($request->hasFile('reference_letter_file')) {
-            $file = $request->file('reference_letter_file');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $validated['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
-        }
-
-        if ($request->hasFile('salary_slip_file')) {
-            $file = $request->file('salary_slip_file');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $validated['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
-        }
         $user = auth()->user();
-    if (!in_array($user->role, ['superadmin', 'hc'])) {
-        EmployeeEditRequest::create([
-            'employee_id'   => $employee->id,
-            'method'        => 'create',
-            'model'         => WorkExperience::class,
-            'model_id'      => null, // belum ada id karena data belum dibuat
-            'original_data' => [],   // data lama kosong
-            'changed_data'  => $validated, // data yang diajukan
-            'status'        => 'waiting',
-            'requested_by'  => $user->id,
-            'requested_at'  => now(),
-        ]);
-        return redirect()->route('employees.work-experience.index', $employee)
-                         ->with('info', 'Permintaan penambahan data telah dikirim dan menunggu persetujuan.');
-    }
-        $employee->workExperience()->create($validated);
+        DB::beginTransaction();
 
-        return redirect()->route('employees.work-experience.index', $employee)->with('success', 'Work Experience was Added.');
+        try {
+            if ($request->hasFile('reference_letter_file')) {
+                $file = $request->file('reference_letter_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validated['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+
+            if ($request->hasFile('salary_slip_file')) {
+                $file = $request->file('salary_slip_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $validated['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    new WorkExperience(), // model dummy untuk request create
+                    $validated,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id],
+                    'create'
+                );
+                if (!$editRequest) {
+                    // rollback & hapus file upload jika gagal
+                    DB::rollBack();
+                    if (!empty($validated['reference_letter_file'])) {
+                        Storage::disk('public')->delete($validated['reference_letter_file']);
+                    }
+                    if (!empty($validated['salary_slip_file'])) {
+                        Storage::disk('public')->delete($validated['salary_slip_file']);
+                    }
+                    return back()->with('error', 'Gagal membuat permintaan pembuatan data pengalaman kerja.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.work-experience.index', $employee)
+                    ->with('info', 'Permintaan penambahan data pengalaman kerja telah dikirim dan menunggu persetujuan.');
+            }
+
+            $employee->workExperience()->create($validated);
+
+            DB::commit();
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Work Experience was added.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Hapus file jika gagal
+            if (!empty($validated['reference_letter_file'])) {
+                Storage::disk('public')->delete($validated['reference_letter_file']);
+            }
+            if (!empty($validated['salary_slip_file'])) {
+                Storage::disk('public')->delete($validated['salary_slip_file']);
+            }
+
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function edit(Employee $employee, WorkExperience $workExperience)
@@ -132,21 +166,23 @@ class WorkExperienceController extends Controller
         try {
             $user = auth()->user();
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'update',
-                    'model'         => WorkExperience::class,
-                    'model_id'      => $workExperience->id,
-                    'original_data' => $workExperience->only(array_keys($validated)),
-                    'changed_data'  => $validated,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $workExperience,
+                    $validated,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id]
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan perubahan data pengalaman kerja.');
+                }
 
                 DB::commit();
                 return redirect()->route('employees.work-experience.index', $employee)
-                                 ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
             }
 
             $workExperience->update($validated);
@@ -167,10 +203,50 @@ class WorkExperienceController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $workExperience->delete();
+        $user = auth()->user();
+        DB::beginTransaction();
 
-        return redirect()->route('employees.work-experience.index', $employee)
-            ->with('success', 'Work Experience was Deleted.');
+        try {
+            // 🔹 Jika bukan superadmin/HC → buat request approval
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $workExperience,                            // model yang akan dihapus
+                    [],                                         // tidak ada data baru
+                    EmployeeEditRequestNotification::class,     // notifikasi
+                    ['employee_id' => $employee->id],           // meta data tambahan
+                    'delete'                                    // aksi penghapusan
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan penghapusan data pengalaman kerja.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.work-experience.index', $employee)
+                    ->with('info', 'Permintaan penghapusan pengalaman kerja telah dikirim dan menunggu persetujuan.');
+            }
+
+            // 🔹 Superadmin/HC langsung hapus
+            // Hapus file jika ada
+            if ($workExperience->reference_letter_file) {
+                Storage::disk('public')->delete($workExperience->reference_letter_file);
+            }
+            if ($workExperience->salary_slip_file) {
+                Storage::disk('public')->delete($workExperience->salary_slip_file);
+            }
+
+            $workExperience->delete();
+            DB::commit();
+
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Work Experience was Deleted.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
 
     private function authorizeAccess(Employee $employee)

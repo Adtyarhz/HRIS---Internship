@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
 
 class InsuranceController extends Controller
 {
@@ -54,23 +56,29 @@ class InsuranceController extends Controller
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
                 $validated['insurance_file'] = $file->storeAs('insurance_files', $filename, 'public');
             }
-\Log::info('Insurance request created', ['data' => $validated]);
+
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'create',
-                    'model'         => Insurance::class,
-                    'model_id'      => null,
-                    'original_data' => null,
-                    'changed_data'  => $validated,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    new Insurance(),                           // model dummy untuk referensi tipe
+                    $validated,                                 // data yang diusulkan
+                    EmployeeEditRequestNotification::class,     // notifikasi ke HC
+                    ['employee_id' => $employee->id],           // konteks tambahan
+                    'create'                                    // metode perubahan
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    if (!empty($validated['insurance_file'])) {
+                        Storage::disk('public')->delete($validated['insurance_file']);
+                    }
+                    return back()->with('error', 'Gagal membuat permintaan penambahan data asuransi.');
+                }
 
                 DB::commit();
                 return redirect()->route('employees.insurance.index', $employee)
-                                 ->with('info', 'Permintaan penambahan data telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Permintaan penambahan data telah dikirim dan menunggu persetujuan.');
             }
 
             $employee->insurance()->create($validated);
@@ -121,36 +129,57 @@ class InsuranceController extends Controller
         DB::beginTransaction();
 
         try {
+            // ✅ Upload file baru (jika ada)
             if ($request->hasFile('insurance_file')) {
                 $file = $request->file('insurance_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                    . '.' . $file->getClientOriginalExtension();
                 $validated['insurance_file'] = $file->storeAs('insurance_files', $filename, 'public');
             }
 
+            // ✅ Flow Approval untuk non-HC / non-superadmin
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'update',
-                    'model'         => Insurance::class,
-                    'model_id'      => $insurance->id,
-                    'original_data' => $insurance->only(array_keys($validated)),
-                    'changed_data'  => $validated,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $insurance,
+                    $validated,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id],
+                    'update'
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    if (!empty($validated['insurance_file'])) {
+                        Storage::disk('public')->delete($validated['insurance_file']);
+                    }
+                    return back()->with('error', 'Gagal membuat permintaan perubahan data asuransi.');
+                }
 
                 DB::commit();
                 return redirect()->route('employees.insurance.index', $employee)
-                                 ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Permintaan perubahan data asuransi telah dikirim dan menunggu persetujuan.');
+            }
+
+            // ✅ Jika HC / Superadmin → langsung update
+            // Hapus file lama jika diganti
+            if (isset($validated['insurance_file']) && $insurance->insurance_file) {
+                Storage::disk('public')->delete($insurance->insurance_file);
             }
 
             $insurance->update($validated);
             DB::commit();
 
-            return redirect()->route('employees.insurance.index', $employee)->with('success', 'Insurance data was updated.');
+            return redirect()->route('employees.insurance.index', $employee)
+                ->with('success', 'Data asuransi berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if (!empty($validated['insurance_file'])) {
+                Storage::disk('public')->delete($validated['insurance_file']);
+            }
+
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())->withInput();
         }
     }
@@ -163,9 +192,46 @@ class InsuranceController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $insurance->delete();
+        $user = auth()->user();
+        DB::beginTransaction();
 
-        return redirect()->route('employees.insurance.index', $employee)->with('success', 'Insurance data was deleted.');
+        try {
+            // ✅ Flow Approval untuk non-HC / non-superadmin
+            if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $insurance,
+                    [],
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id],
+                    'delete'
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan penghapusan data asuransi.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.insurance.index', $employee)
+                    ->with('info', 'Permintaan penghapusan data asuransi telah dikirim dan menunggu persetujuan.');
+            }
+
+            // ✅ HC / Superadmin → langsung hapus
+            if ($insurance->insurance_file) {
+                Storage::disk('public')->delete($insurance->insurance_file);
+            }
+
+            $insurance->delete();
+
+            DB::commit();
+            return redirect()->route('employees.insurance.index', $employee)
+                ->with('success', 'Data asuransi berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
 
     private function authorizeAccess(Employee $employee)

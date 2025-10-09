@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
 
 class EmployeeController extends Controller
 {
@@ -326,23 +329,19 @@ class EmployeeController extends Controller
 
             // Jika bukan superadmin/hc → buat request edit
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
 
-                EmployeeEditRequest::create([
-                    'employee_id' => $employee->id,
-                    'method' => 'update',
-                    'model' => Employee::class,
-                    'model_id' => $employee->id,
-                    'original_data' => $employee->only(array_keys($validatedData) + ['position_id', 'division_id', 'employee_type']),
-                    'changed_data' => array_merge($validatedData, [
-                        'position_id' => $request->input('position_id', $employee->position_id),
-                        'division_id' => $request->input('division_id', $employee->division_id),
-                        'employee_type' => $request->input('employee_type', $employee->employee_type),
-                    ]),
-                    'status' => 'waiting',
-                    'requested_by' => $user->id,
-                    'requested_at' => now(),
-                ]);
-
+                $editRequest = $notifier->createEditRequest(
+                    $employee,
+                    $validatedData,
+                    EmployeeEditRequestNotification::class,
+                    [
+                        'employee_id' => $employee->id, // jika model butuh ini
+                    ]
+                );
+                if (!$editRequest) {
+                    return back()->with('error', 'Gagal membuat permintaan perubahan data.');
+                }
                 DB::commit();
                 return redirect()->route('employees.show', $employee->id)
                     ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');

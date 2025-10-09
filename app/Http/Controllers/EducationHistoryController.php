@@ -7,6 +7,8 @@ use App\Models\EducationHistory;
 use App\Models\EmployeeEditRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
 
 class EducationHistoryController extends Controller
 {
@@ -56,17 +58,18 @@ class EducationHistoryController extends Controller
 
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'create',
-                    'model'         => EducationHistory::class, 
-                    'model_id'      => null,
-                    'original_data' => null,
-                    'changed_data'  => $validated,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    new EducationHistory(),
+                    $validated,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id]
+                );
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan pembuatan data pendidikan.');
+                }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
                                  ->with('info', 'Permintaan penambahan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
@@ -110,17 +113,19 @@ class EducationHistoryController extends Controller
 
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'update',
-                    'model'         => EducationHistory::class,
-                    'model_id'      => $educationHistory->id,
-                    'original_data' => $educationHistory->only(array_keys($validated)),
-                    'changed_data'  => $validated,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $educationHistory,
+                    $validated,
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id]
+                );
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan pengubahan data pendidikan.');
+                }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
                                  ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
@@ -147,17 +152,20 @@ class EducationHistoryController extends Controller
 
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-                EmployeeEditRequest::create([
-                    'employee_id'   => $employee->id,
-                    'method'        => 'delete',
-                    'model'         => EducationHistory::class,
-                    'model_id'      => $educationHistory->id,
-                    'original_data' => $educationHistory->toArray(),
-                    'changed_data'  => null,
-                    'status'        => 'waiting',
-                    'requested_by'  => $user->id,
-                    'requested_at'  => now(),
-                ]);
+                $notifier = new RequestNotifierService();
+
+                $editRequest = $notifier->createEditRequest(
+                    $educationHistory,
+                    [],
+                    EmployeeEditRequestNotification::class,
+                    ['employee_id' => $employee->id],          
+                    'delete'
+                );
+
+                if (!$editRequest) {
+                    DB::rollBack();
+                    return back()->with('error', 'Gagal membuat permintaan penghapusan data pendidikan.');
+                }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
                                  ->with('info', 'Permintaan penghapusan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
