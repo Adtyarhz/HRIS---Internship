@@ -17,19 +17,36 @@ class NotificationController extends Controller
         auth()->user()->unreadNotifications->markAsRead();
         return back()->with('success', 'All notifications marked as read');
     }
-    public function markOne(Request $request)
+    public function redirect($id)
 {
-    $request->validate([
-        'id' => 'required|uuid', // id di tabel notifications itu UUID
-    ]);
+    $notification = auth()->user()->notifications()->findOrFail($id);
 
-    $notification = auth()->user()->notifications()->where('id', $request->id)->first();
-
-    if ($notification) {
+    // Tandai sebagai read
+    if (is_null($notification->read_at)) {
         $notification->markAsRead();
     }
 
-    return back()->with('success', 'Notification marked as read.');
+    // Redirect ke URL yang tersimpan dalam notifikasi
+    $url = $notification->data['url'] ?? route('notifications.index');
+
+    return redirect($url);
 }
+
+public function readAndRedirect($id)
+{
+    $notification = auth()->user()->notifications()->findOrFail($id);
+
+    // Tandai notifikasi sebagai read
+    if (is_null($notification->read_at)) {
+        $notification->markAsRead();
+    }
+
+    // Ambil URL dari data notifikasi (jika ada)
+    $url = $notification->data['url'] ?? route('notifications.index');
+
+    // Redirect ke halaman tujuan
+    return redirect($url);
+}
+
 
 }

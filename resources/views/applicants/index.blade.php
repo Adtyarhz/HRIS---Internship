@@ -45,6 +45,8 @@
 
     .btn-add:hover {
         background-color: #7a2f2f;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .filter-form {
@@ -168,7 +170,6 @@
 @endsection
 
 @section('content')
-    @include('applicants.alert')
 
     <div class="announcement-header">
         <h2>Applicants</h2>

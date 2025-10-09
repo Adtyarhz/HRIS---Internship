@@ -265,9 +265,15 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
     Route::middleware('auth')->group(function () {
         Route::post('/employee-edit-requests', [EmployeeEditRequestController::class, 'store'])->name('employee-edit-requests.store');
     });
+
+    // === NOTIFICATIONS ===    
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-    Route::post('/notifications/read-one', [NotificationController::class, 'markOne'])->name('notifications.readOne');
+    Route::get('/notifications/redirect/{id}', [NotificationController::class, 'redirect'])
+    ->name('notifications.redirect');
+
+    Route::get('/notifications/read/{id}', [NotificationController::class, 'readAndRedirect'])
+    ->name('notifications.readAndRedirect');
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');

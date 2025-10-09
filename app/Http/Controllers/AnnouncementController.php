@@ -12,30 +12,95 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use App\Models\Division;
+use App\Models\User;
 
 class AnnouncementController extends Controller
 {
     public function dashboard()
 {
     try {
-        // Ambil data pengumuman
+        $user = auth()->user();
+        $role = $user->role;
+
+        // Ambil data pengumuman (semua role bisa lihat)
         $announcements = Announcement::latest()->paginate(20);
 
-        // Hitung jumlah karyawan berdasarkan gender
-        $genderStats = Employee::selectRaw('gender, COUNT(*) as total')
-            ->groupBy('gender')
-            ->pluck('total', 'gender');
+        // Default kosong
+        $genderStats = collect();
+        $divisionStats = collect();
 
-        // Hitung jumlah karyawan berdasarkan divisi
-        $divisionStats = Division::withCount('employees')->get();
+        // === ROLE SUPERADMIN, HC, DIREKSI ===
+        if (in_array($role, ['superadmin', 'hc', 'direksi'])) {
+            $genderStats = Employee::selectRaw('gender, COUNT(*) as total')
+                ->groupBy('gender')
+                ->pluck('total', 'gender')
+                ->mapWithKeys(function ($value, $key) {
+                    $englishKey = match (strtolower($key)) {
+                        'laki-laki' => 'Male',
+                        'perempuan' => 'Female',
+                        default => ucfirst($key),
+                    };
+                    return [$englishKey => $value];
+                });
 
+            $divisionStats = Division::withCount('employees')->get();
+        }
+
+        // === ROLE MANAGER ===
+        elseif ($role === 'manager') {
+            $divisionId = $user->employee->division_id ?? null;
+
+            if ($divisionId) {
+                $genderStats = Employee::where('division_id', $divisionId)
+                    ->selectRaw('gender, COUNT(*) as total')
+                    ->groupBy('gender')
+                    ->pluck('total', 'gender')
+                    ->mapWithKeys(function ($value, $key) {
+                        $englishKey = match (strtolower($key)) {
+                            'laki-laki' => 'Male',
+                            'perempuan' => 'Female',
+                            default => ucfirst($key),
+                        };
+                        return [$englishKey => $value];
+                    });
+            }
+        }
+
+        // === ROLE SECTION HEAD ===
+        elseif ($role === 'section_head') {
+            $divisionId = $user->employee->division_id ?? null;
+
+            if ($divisionId) {
+                $hasManager = User::where('role', 'manager')
+                    ->whereHas('employee', function ($q) use ($divisionId) {
+                        $q->where('division_id', $divisionId);
+                    })
+                    ->exists();
+
+                if (!$hasManager) {
+                    $genderStats = Employee::where('division_id', $divisionId)
+                        ->selectRaw('gender, COUNT(*) as total')
+                        ->groupBy('gender')
+                        ->pluck('total', 'gender')
+                        ->mapWithKeys(function ($value, $key) {
+                            $englishKey = match (strtolower($key)) {
+                                'laki-laki' => 'Male',
+                                'perempuan' => 'Female',
+                                default => ucfirst($key),
+                            };
+                            return [$englishKey => $value];
+                        });
+                }
+            }
+        }
+
+        // Staff (biasa & support) tidak dapat chart apa pun
         return view('dashboard', compact('announcements', 'genderStats', 'divisionStats'));
     } catch (\Exception $e) {
         \Log::error('Error loading dashboard: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat dashboard.');
+        return redirect()->back()->with('error', 'An error occurred while loading the dashboard.');
     }
 }
-
 
 
     public function index(Request $request)
@@ -60,7 +125,7 @@ class AnnouncementController extends Controller
             return view('announcement.index', compact('announcements'));
         } catch (\Exception $e) {
             Log::error('Error loading announcement index: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat daftar pengumuman.');
+            return redirect()->back()->with('error', 'An error occurred while loading the announcement list.');
         }
     }
 
@@ -75,7 +140,7 @@ class AnnouncementController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'announcement_type' => 'required|in:Umum,Divisi,Urgent,Informasi,Polling',
+            'announcement_type' => 'required|in:Umum,Urgent,Informasi,Polling',
             'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'external_link' => 'nullable|url',
             'label' => 'required|string|max:50',
@@ -179,7 +244,7 @@ class AnnouncementController extends Controller
     $rules = [
         'title' => 'required|string|max:255',
         'content' => 'required|string',
-        'announcement_type' => 'required|in:Umum,Divisi,Urgent,Informasi,Polling',
+        'announcement_type' => 'required|in:Umum,Urgent,Informasi,Polling',
         'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         'external_link' => 'nullable|url',
         'label' => 'required|string|max:50',
@@ -275,7 +340,7 @@ class AnnouncementController extends Controller
         $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
     
         if (!$announcement->polling || now()->lt($announcement->polling->deadline)) {
-            return redirect()->back()->with('error', 'Polling belum berakhir atau tidak ditemukan.');
+            return redirect()->back()->with('error', 'Poll not finished or not found.');
         }
     
         $filename = 'hasil_polling_' . Str::slug($announcement->title) . '.csv';

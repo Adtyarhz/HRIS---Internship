@@ -32,7 +32,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Apakah kandidat telah menerima penawaran kerja sesuai dengan surat penawaran?</p>
+                    <p>Are you sure to add this applicant data to employee data?</p>
                     <div class="mt-3">
     <div class="d-flex mb-2">
         <div style="width: 140px;"><strong>Nama Kandidat</strong></div>

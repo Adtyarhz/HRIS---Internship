@@ -91,7 +91,7 @@ class EmployeeEditRequestController extends Controller
     {
         $employee = auth()->user()->employee;
         if (!$employee) {
-            return back()->with('error', 'Akun Anda tidak terkait dengan data karyawan.');
+            return back()->with('error', 'Your account is not associated with employee data.');
         }
 
         $originalData = [];
@@ -128,6 +128,12 @@ class EmployeeEditRequestController extends Controller
                         'new_value' => $newValue,
                         'model_id'  => $model->id,
                     ]);
+                    } else {
+                    // normalisasi path lama & baru
+                    if (in_array($field, ['certificate_file', 'insurance_file'])) {
+                        $oldValue = $this->normalizeFilePath($oldValue, $table, false);
+                        $newValue = $this->normalizeFilePath($newValue, $table, false);
+                    }
                 }
 
                 // Handle material_files (special case)
@@ -135,6 +141,8 @@ class EmployeeEditRequestController extends Controller
                     $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
                     $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
                     $newFiles = $oldFiles;
+                    // normalisasi semua path lama
+                    $oldFiles = array_map(fn($f) => $this->normalizeFilePath($f, $table, true), $oldFiles);
 
                     if ($request->hasFile('material_files')) {
                         foreach ($request->file('material_files') as $file) {
@@ -174,7 +182,7 @@ class EmployeeEditRequestController extends Controller
         }
 
         if (empty($changedData)) {
-            return back()->with('error', 'Tidak ada perubahan yang diajukan.');
+            return back()->with('error', 'No changes proposed.');
         }
 
         // Normalisasi sebelum simpan (dari master)
@@ -204,7 +212,7 @@ class EmployeeEditRequestController extends Controller
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
             ]);
-            return back()->with('error', 'Terjadi kesalahan saat menyimpan request.');
+            return back()->with('error', 'An error occurred while saving the request.');
         }
 
         // === Kirim notifikasi setelah commit ===
@@ -247,7 +255,7 @@ class EmployeeEditRequestController extends Controller
             return back()->with('success', 'Request berhasil disimpan, namun gagal mengirim notifikasi.');
         }
 
-        return back()->with('success', 'Request perubahan berhasil dikirim dan sedang menunggu persetujuan.');
+        return back()->with('success', 'Change request has been successfully submitted and is awaiting approval.');
     }
 
     public function approve($id)
@@ -367,7 +375,7 @@ class EmployeeEditRequestController extends Controller
             ));
         }
 
-        return redirect()->back()->with('success', 'Data berhasil di-approve.');
+        return redirect()->back()->with('success', 'Data successfully approved.');
     }
 
     /**
@@ -432,9 +440,24 @@ class EmployeeEditRequestController extends Controller
             ));
         }
 
-        return back()->with('error', 'Request berhasil ditolak.');
+        return back()->with('error', 'Request successfully rejected.');
     }
+    /**
+     * Normalisasi path file supaya konsisten (ada folder prefix)
+     */
+    private function normalizeFilePath($path, $table, $isMaterial = false)
+    {
+        if (empty($path)) return $path;
 
+        // Jika path sudah ada folder prefix, langsung return
+        if (str_contains($path, '/')) {
+            return $path;
+        }
+
+        return $isMaterial
+            ? "{$table}/materials/{$path}"
+            : "{$table}/{$path}";
+    }
     private function getModelInstance($table, $employeeId = null, $recordId = null)
     {
         if (!isset($this->modelMap[$table])) {

@@ -56,46 +56,52 @@
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto d-flex align-items-center">
 
-                <!-- Notification Bell -->
-                <li class="nav-item dropdown d-flex align-items-center">
-                    <a class="nav-link position-relative d-flex align-items-center justify-content-center rounded-circle bg-light mx-2"
-                        style="width:45px; height:45px;" data-toggle="dropdown" href="#">
-                        <i class="far fa-bell" style="font-size:20px;"></i>
-                        @if (auth()->user()->unreadNotifications->count() > 0)
-                            <span class="badge badge-danger navbar-badge"
-                                style="font-size: 0.65rem; position: absolute; top: 6px; right: 6px;">
-                                {{ auth()->user()->unreadNotifications->count() }}
-                            </span>
-                        @endif
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        <span class="dropdown-item dropdown-header">
-                            {{ auth()->user()->notifications->count() }} Notifications
-                        </span>
-                        <div class="dropdown-divider"></div>
+              <!-- Notification Bell -->
+<li class="nav-item dropdown d-flex align-items-center">
+    <a class="nav-link position-relative d-flex align-items-center justify-content-center rounded-circle bg-light mx-2"
+        style="width:45px; height:45px;" data-toggle="dropdown" href="#">
+        <i class="far fa-bell" style="font-size:20px;"></i>
+        @if (auth()->user()->unreadNotifications->count() > 0)
+            <span class="badge badge-danger navbar-badge"
+                style="font-size: 0.65rem; position: absolute; top: 6px; right: 6px;">
+                {{ auth()->user()->unreadNotifications->count() }}
+            </span>
+        @endif
+    </a>
 
-                        @forelse(auth()->user()->notifications->take(5) as $notification)
-                            <a href="#" class="dropdown-item d-flex align-items-start">
-                                <i class="fas fa-info-circle fa-2x text-primary mr-2"></i>
-                                <div class="notification-text" style="white-space: normal; max-width: 250px;">
-                                    <div class="text-sm">
-                                        {{ $notification->data['message'] ?? 'Notification' }}
-                                    </div>
-                                    <small class="text-muted">
-                                        {{ $notification->created_at->diffForHumans() }}
-                                    </small>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                        @empty
-                            <span class="dropdown-item text-center text-muted">No notifications</span>
-                        @endforelse
+    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        <span class="dropdown-item dropdown-header">
+            {{ auth()->user()->notifications->count() }} Notifications
+        </span>
+        <div class="dropdown-divider"></div>
 
-                        <a href="{{ route('notifications.index') }}" class="dropdown-item dropdown-footer">
-                            See All Notifications
-                        </a>
-                    </div>
-                </li>
+        @forelse(auth()->user()->notifications->take(5) as $notification)
+            @php
+                $url = $notification->data['url'] ?? null;
+                $message = $notification->data['message'] ?? 'Notification';
+                $isUnread = is_null($notification->read_at);
+            @endphp
+
+            <a href="{{ route('notifications.readAndRedirect', ['id' => $notification->id]) }}"
+               class="dropdown-item d-flex align-items-start {{ $isUnread ? 'font-weight-bold' : '' }}">
+                <i class="fas fa-info-circle fa-2x text-primary mr-2"></i>
+                <div class="notification-text" style="white-space: normal; max-width: 250px;">
+                    <div class="text-sm">{!! $message !!}</div>
+                    <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                </div>
+            </a>
+            <div class="dropdown-divider"></div>
+        @empty
+            <span class="dropdown-item text-center text-muted">No notifications</span>
+        @endforelse
+
+        <a href="{{ route('notifications.index') }}" class="dropdown-item dropdown-footer">
+            See All Notifications
+        </a>
+    </div>
+</li>
+
+
 
                 <!-- Profile Menu -->
                 <li class="nav-item dropdown user-menu d-flex align-items-center">
@@ -150,13 +156,21 @@
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar elevation-4">
             <a href="{{ url('/') }}" class="brand-link">
-                <img src="{{ asset('img/BPR LOGO WITH PX (updated)-13.png') }}" alt="HRIS Logo" class="brand-image">
-                <div class="brand-text-wrapper">
-                    <span class="brand-text brand-title">HRIS</span>
-                    <span
-                        class="brand-text brand-subtitle">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'User')) }}</span>
-                </div>
-            </a>
+    <img src="{{ asset('img/BPR LOGO WITH PX (updated)-13.png') }}" alt="HRIS Logo" class="brand-image">
+
+    <div class="brand-text-wrapper">
+        <span class="brand-text brand-title">HRIS</span>
+        <span class="brand-text brand-subtitle">
+            {{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'User')) }}
+        </span>
+        @if(Auth::user()->employee && Auth::user()->employee->division)
+            <span class="brand-text brand-subtitle text-sm text-muted">
+                {{ Auth::user()->employee->division->name }}
+            </span>
+        @endif
+    </div>
+</a>
+
             <div class="sidebar">
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"

@@ -87,6 +87,8 @@
 
     .btn-detail:hover {
         background-color: #333;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .pagination {
@@ -131,6 +133,8 @@
 
     .btn-back:hover {
         background-color: #5a6268;
+        color: white;
+        text-decoration: none;
     }
 </style>
 @endpush

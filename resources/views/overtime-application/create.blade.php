@@ -88,11 +88,12 @@
 @endpush
 
 @section('content_header')
-    <div class="header-with-icon">
-        <svg class="custom-hamburger" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"
-             xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd"
-                  d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2" />
+    <div class="header-with-icon d-flex align-items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             width="24" height="24" viewBox="0 0 24 24" 
+             class="mr-2" fill="currentColor">
+            <path d="M12 20A8 8 0 1 0 12 4a8 8 0 0 0 0 16m0-18a10 10 0 1 1 0 20
+                     a10 10 0 0 1 0-20m.5 5v5.25l4.5 2.67l-.75 1.23L11 11V7h1.5Z"/>
         </svg>
         Create Overtime Application
     </div>
