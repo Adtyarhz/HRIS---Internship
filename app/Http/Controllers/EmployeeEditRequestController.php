@@ -274,6 +274,7 @@ class EmployeeEditRequestController extends Controller
             throw new \Exception("Model {$editRequest->model} tidak ditemukan.");
         }
 
+        // ====== HANDLE CREATE ======
         if (strtolower($editRequest->method) === 'create') {
             $model = new $modelClass();
 
@@ -294,6 +295,27 @@ class EmployeeEditRequestController extends Controller
             $editRequest->approved_by = auth()->id();
             $editRequest->status = 'approved';
             $editRequest->save();
+
+        // ====== HANDLE DELETE ======
+        } elseif (strtolower($editRequest->method) === 'delete') {
+            $model = $modelClass::find($editRequest->model_id);
+
+            if (!$model) {
+                throw new \Exception("Data {$editRequest->model} dengan ID {$editRequest->model_id} tidak ditemukan.");
+            }
+
+            // Simpan backup data sebelum hapus (opsional)
+            Log::info("Menghapus data {$modelClass} ID {$editRequest->model_id} atas persetujuan HC/Superadmin.", [
+                'deleted_data' => $model->toArray(),
+            ]);
+
+            $model->delete();
+
+            $editRequest->approved_by = auth()->id();
+            $editRequest->status = 'approved';
+            $editRequest->save();
+
+        // ====== HANDLE UPDATE ======
         } else {
             $model = $modelClass::find($editRequest->model_id);
             if (!$model) {
@@ -331,9 +353,7 @@ class EmployeeEditRequestController extends Controller
                     } else {
                         $careerType = 'Mutasi';
                     }
-                } elseif ($oldDivision != $newDivision) {
-                    $careerType = 'Mutasi';
-                } elseif ($oldType != $newType) {
+                } elseif ($oldDivision != $newDivision || $oldType != $newType) {
                     $careerType = 'Mutasi';
                 }
 
@@ -369,6 +389,7 @@ class EmployeeEditRequestController extends Controller
             $editRequest->save();
         }
 
+        // === Kirim notifikasi ke user pengaju ===
         $user = $editRequest->employee->user ?? null;
         if ($user) {
             $user->notify(new EmployeeEditStatusNotification(
