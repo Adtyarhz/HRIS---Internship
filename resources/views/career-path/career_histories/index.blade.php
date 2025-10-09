@@ -6,134 +6,254 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/universal-table.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/form-health.css') }}">
     <style>
-        .table th,
-        .table td {
-            vertical-align: middle;
-            text-align: center;
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
         }
 
-        table tbody {
-            background-color: #F4F1E0;
-        }
-
-        table thead {
-            background-color: #DFD9B6;
-        }
-
-        /* ✅ Tambahan untuk membuat tabel responsif */
-        .table-responsive-custom {
+        .table-custom {
             width: 100%;
-            overflow-x: auto;
-        }
-
-        .table {
-            min-width: 1200px;
             border-collapse: collapse;
         }
 
-        .table th,
-        .table td {
+        .table-custom th,
+        .table-custom td {
+            text-align: center;
+            vertical-align: middle;
+            font-size: 13px;
             white-space: nowrap;
         }
 
-        @media screen and (max-width: 768px) {
-            .table {
-                font-size: 12px;
+        .table-custom th {
+            background-color: #DFD9B6;
+            font-weight: 600;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .container-fluid {
+            padding-bottom: 30px;
+        }
+
+        .add-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 220px;
+            height: 2.5rem;
+            background-color: #9a3b3b;
+            color: #fff;
+            font-family: "Noto Sans Georgian", sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-left: auto;
+        }
+
+        .btn-info:hover {
+            background-color: #098ba5;
+        }
+
+        .add-button:hover {
+            background-color: #803030;
+            color: #fff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .material-symbols--edit {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M3 21v-4.25L16.2 3.575q.3-.275.663-.425t.762-.15t.775.15t.65.45L20.425 5q.3.275.438.65T21 6.4q0 .4-.137.763t-.438.662L7.25 21zM17.6 7.8L19 6.4L17.6 5l-1.4 1.4z'/%3E%3C/svg%3E");
+        }
+
+        /* ===== Responsiveness ===== */
+        @media (max-width: 992px) {
+            .section-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .add-button {
+                margin-left: 0;
+                width: 100%;
+                max-width: 100%;
             }
         }
 
-        .mdi--pencil {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background-repeat: no-repeat;
-            background-size: 100% 100%;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23293CB3' d='M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z'/%3E%3C/svg%3E");
+        /* Mobile: table → card */
+        @media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: hidden;
+            }
+
+            .table-custom,
+            .table-custom thead,
+            .table-custom tbody,
+            .table-custom th,
+            .table-custom td,
+            .table-custom tr {
+                display: block;
+                width: 100%;
+            }
+
+            .table-custom thead {
+                display: none;
+            }
+
+            .table-custom tr {
+                margin-bottom: 1rem;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 0.75rem;
+                background-color: #fff;
+            }
+
+            .table-custom td {
+                text-align: left !important;
+                white-space: normal;
+                padding: 6px 8px;
+                font-size: 13px;
+                border: none;
+            }
+
+            .table-custom td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                display: block;
+                margin-bottom: 2px;
+                color: #333;
+            }
+
+            .action-buttons {
+                justify-content: flex-start;
+                margin-top: 8px;
+            }
+
+            .btn-info {
+                max-width: 100%;
+                font-size: 12px;
+                height: 2.2rem;
+                padding: 0 10px;
+            }
+
+            .btn-cancel {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .form-buttons-container {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 2px;
+                padding-top: 0px;
+            }
         }
     </style>
 @endpush
 
 @section('content')
     <div class="container-fluid">
-        <div class="content-container">
+        <div class="form-content-container">
             <div class="card-body">
-                <div class="action-header">
-                    <h4 class="employee-career-history">Career Histories: </h4>
+
+                {{-- Section Title + Add Button --}}
+                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                    Career Histories
+                    @php
+                        $role = auth()->user()->role;
+                        $isOwner = auth()->user()->employee && auth()->user()->employee->id === $employee->id;
+                    @endphp
+
+                    @if (!in_array($role, ['direksi']) || ($role === 'direksi' && $isOwner))
+                        <a href="{{ route('employees.career_histories.create', $employee) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Career Histories
+                        </a>
+                    @endif
                 </div>
 
-@php
-    $role = auth()->user()->role;
-    $isOwner = auth()->user()->employee && auth()->user()->employee->id === $employee->id;
-@endphp
-
-{{-- ✅ Tombol Add Career Histories --}}
-@if (!in_array($role, ['direksi']) || ($role === 'direksi' && $isOwner))
-    <div class="action-buttons">
-        <a href="{{ route('employees.career_histories.create', $employee) }}" class="btn btn-add">
-            <i class="fas fa-plus"></i> Add Career Histories
-        </a>
-    </div>
-@endif
+                {{-- Flash messages --}}
                 @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="alert alert-success mt-3">{{ session('success') }}</div>
                 @endif
                 @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
+                    <div class="alert alert-danger mt-3">{{ session('error') }}</div>
                 @endif
 
-                @if ($careerHistories->isEmpty())
-                    <div class="no-data">
-                        <p>No career history available.</p>
-                    </div>
-                @else
-                    <div class="table-responsive-custom">
-                        <table class="table table-bordered">
+                {{-- Table / Card --}}
+                @if ($careerHistories->isNotEmpty())
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-custom text-center align-middle">
                             <thead>
                                 <tr>
-                                    <th>No</th>
-                                    <th>Position & Division</th>
+                                    <th>No.</th>
+                                    <th>Position &amp; Division</th>
                                     <th>Type</th>
                                     <th>Start Date - End Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($careerHistories as $index => $careerHistory)
+                                @foreach ($careerHistories as $careerHistory)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td class="col-details" data-label="Jabatan/Divisi">
-                                            <div class="jabatan-divisi">
-                                                <div class="employee-position">
-                                                    <b>{{ $careerHistory->position->title ?? 'Belum Diatur' }}</b>
-                                                </div>
-                                                <div class="employee-division">
-                                                    {{ $careerHistory->division->name ?? 'Belum Datur' }}
-                                                </div>
-                                            </div>
+                                        <td data-label="No.">{{ $loop->iteration }}</td>
+
+                                        <td data-label="Position/Division" class="text-start">
+                                            <div class="employee-position">
+                                                <strong>{{ $careerHistory->position->title ?? 'Belum Diatur' }}</strong></div>
+                                            <div class="text-muted">{{ $careerHistory->division->name ?? 'Belum Diatur' }}</div>
                                         </td>
-                                        <td>{{ $careerHistory->type }}</td>
-                                        <td>
+
+                                        <td data-label="Type">{{ $careerHistory->type }}</td>
+
+                                        <td data-label="Start - End">
                                             {{ \Carbon\Carbon::parse($careerHistory->start_date)->format('d/m/Y') }} -
                                             {{ $careerHistory->end_date ? \Carbon\Carbon::parse($careerHistory->end_date)->format('d/m/Y') : 'Present' }}
                                         </td>
-                                      <td>
-    @if (!in_array($role, ['direksi']) || ($role === 'direksi' && $isOwner))
-        <a href="{{ route('employees.career_histories.edit', [$employee, $careerHistory]) }}">
-            <span class="mdi--pencil"></span>
-        </a>
-    @endif
-</td>
 
+                                        <td data-label="Actions">
+                                            <div class="action-buttons">
+                                                @if (!in_array($role, ['direksi']) || ($role === 'direksi' && $isOwner))
+                                                    <a href="{{ route('employees.career_histories.edit', [$employee, $careerHistory]) }}"
+                                                        class="btn-info" title="Edit Career History">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
+                @else
+                    <div class="text-center text-muted py-4">
+                        No career history available.
+                    </div>
                 @endif
 
-                <div class="action-buttons-cancel">
+                {{-- Button cancel / back --}}
+                <div class="form-buttons-container mt-3">
                     <a href="{{ route('employees.showCareer', $employee) }}" class="btn btn-cancel">Back</a>
                 </div>
             </div>

@@ -27,7 +27,7 @@
     {{-- Link to your custom CSS file --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
     <!-- Iconify CDN -->
-     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
     @stack('styles')
 </head>
 

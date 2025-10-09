@@ -278,6 +278,7 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
     <script>
         document.getElementById('updateForm').addEventListener('submit', function (e) {
             console.log('Form submitted with method: PUT');
@@ -287,6 +288,29 @@
                 submitButton.disabled = true;
                 submitButton.innerText = 'Saving...';
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const formattedInput = document.getElementById('price_last_checkup_display');
+            const rawInput = document.getElementById('price_last_checkup');
+
+            if (!formattedInput || !rawInput) return;
+
+            const cleave = new Cleave(formattedInput, {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.',
+                numeralDecimalScale: 2,
+                rawValueTrimPrefix: true,
+            });
+
+            formattedInput.addEventListener('input', function() {
+                rawInput.value = cleave.getRawValue();
+            });
+
+            rawInput.value = cleave.getRawValue();
         });
     </script>
 @endpush
