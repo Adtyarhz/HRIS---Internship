@@ -17,7 +17,6 @@ use Illuminate\Http\RedirectResponse;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ApplicantController; 
 use App\Models\Applicant;
 
 class EmployeeController extends Controller
@@ -317,8 +316,8 @@ class EmployeeController extends Controller
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'division' => 'nullable|exists:divisions,name',
-            'position' => 'nullable|exists:positions,title',
+            'division_id' => 'nullable|exists:divisions,id',
+            'position_id' => 'nullable|exists:positions,id',
         ]);
 
         try {
@@ -497,44 +496,42 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get();
 
-    return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
-}
-public function convert($id)
-{
-    $applicant = Applicant::findOrFail($id);
-
-    // Ambil offering letter yang paling baru & accepted
-    $offeringLetter = $applicant->recruitmentProgresses()
-        ->where('stage', 'offering_letter')
-        ->where('offering_status', 'accepted')
-        ->latest('created_at')
-        ->first();
-
-    if (!$offeringLetter) {
-        return redirect()->back()->with('error', 'Applicant cannot be converted to employee because the offering letter is not accepted.');
+        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
     }
+    public function convert($id)
+    {
+        $applicant = Applicant::findOrFail($id);
 
-    // Mapping contract_type (English → Indonesian)
-    $contractMap = [
-        'Contract'   => 'Kontrak',
-        'Internship' => 'Magang',
-        'Probation'  => 'Masa Percobaan',
-        'Full-time'  => 'Fulltime',
-    ];
+        // Ambil offering letter yang paling baru & accepted
+        $offeringLetter = $applicant->recruitmentProgresses()
+            ->where('stage', 'offering_letter')
+            ->where('offering_status', 'accepted')
+            ->latest('created_at')
+            ->first();
 
-    $mappedContractType = $contractMap[$offeringLetter->contract_type] ?? null;
+        if (!$offeringLetter) {
+            return redirect()->back()->with('error', 'Applicant cannot be converted to employee because the offering letter is not accepted.');
+        }
 
-    return view('employees.data.create', [
-        'applicant'          => $applicant,
-        'offeringLetter'     => $offeringLetter,
-        'mappedContractType' => $mappedContractType,
-        'divisions'          => Division::all(),
-        'positions'          => Position::all(),
-        'users'              => User::all(),
-    ]);
-     return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
-}
-       
+        // Mapping contract_type (English → Indonesian)
+        $contractMap = [
+            'Contract' => 'Kontrak',
+            'Internship' => 'Magang',
+            'Probation' => 'Masa Percobaan',
+            'Full-time' => 'Fulltime',
+        ];
+
+        $mappedContractType = $contractMap[$offeringLetter->contract_type] ?? null;
+
+        return view('employees.data.create', [
+            'applicant' => $applicant,
+            'offeringLetter' => $offeringLetter,
+            'mappedContractType' => $mappedContractType,
+            'divisions' => Division::all(),
+            'positions' => Position::all(),
+            'users' => User::all(),
+        ]);
+    }
 }
 
 
