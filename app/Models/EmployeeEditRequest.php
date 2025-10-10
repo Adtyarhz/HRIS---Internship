@@ -44,5 +44,9 @@ class EmployeeEditRequest extends Model
     {
         return $this->morphTo(__FUNCTION__, 'model', 'model_id');
     }
+    public function notifications()
+    {
+        return $this->hasMany(OvertimeApplicationNotification::class);
+    }
     
 }

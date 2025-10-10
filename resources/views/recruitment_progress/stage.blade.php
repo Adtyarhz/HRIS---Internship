@@ -69,6 +69,27 @@
         margin-top: 10px;
         font-size: 12px;
     }
+    .step.pending .circle {
+        background-color: #cfd0d2ff; /* gray */
+    }
+
+    /* --- Tahap yang sudah bisa diisi tapi belum ada data --- */
+/* Default emas cerah */
+.step.available .circle {
+    background-color: #e0d465ff;
+    color: #fff;
+}
+
+/* Kalau available dan sedang dibuka → emas gelap */
+.step.available.active .circle {
+    background-color: #b9961bff;
+}
+
+
+.step.available .label {
+    color: #007bff;
+    font-weight: 600;
+}
 
     .step.disabled {
         pointer-events: none;
@@ -194,9 +215,7 @@
         <h1 class="header-title mb-0">Recruitment Applicant</h1>
     </div>
 @endsection
-
 @section('content')
-@include('applicants.alert')
 <div class="schedule-header">
     <h2>Recruitment Progress of {{ $applicant->full_name }}</h2>
 </div>
@@ -223,6 +242,10 @@
                 if ($index > 0) {
                     $prev = $applicant->recruitmentProgresses->firstWhere('stage', $stages[$index - 1]);
                     $canClick = $prev && $prev->offering_status === 'accepted';
+                }   
+                 //Jika tahap bisa diakses tapi belum ada data progress → tandai "available"
+                    if ($canClick && !$progressData) {
+                    $class = $step === $stage ? 'available active' : 'available';
                 }
 
                 $disabled = !$canClick || ($applicant->recruitmentProgresses->firstWhere('offering_status', 'rejected') && $step !== $stage);

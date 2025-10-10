@@ -198,7 +198,7 @@
                                         Leave empty if you don’t want to replace.</small>
                                     @if ($certification->certificate_file)
                                         <p class="mt-2">Current file:
-                                            <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}"
+                                            <a href="{{ asset('storage/' . $certification->certificate_file) }}"
                                                 target="_blank">{{ Str::afterLast($certification->certificate_file, '_') }}</a>
                                         </p>
                                         <input type="hidden" name="existing_certificate_file"
@@ -218,7 +218,7 @@
                                         <ul class="existing-files">
                                             @foreach ($certification->certificationMaterials as $material)
                                                 <li>
-                                                    <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}"
+                                                    <a href="{{ asset('storage/' . $material->file_path) }}"
                                                         target="_blank">
                                                         <i class="fas fa-file-alt"></i>
                                                         {{ Str::afterLast($material->file_path, '_') }}

@@ -305,9 +305,8 @@ class EmployeeController extends Controller
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'division_id' => 'nullable|exists:divisions,id',
-            'position_id' => 'nullable|exists:positions,id',
-            'user_id' => ['nullable', 'exists:users,id', Rule::unique('employees')->ignore($employee->id)],
+            'division' => 'nullable|exists:divisions,name',
+            'position' => 'nullable|exists:positions,title',
         ]);
 
         try {
@@ -334,10 +333,17 @@ class EmployeeController extends Controller
                     'method' => 'update',
                     'model' => Employee::class,
                     'model_id' => $employee->id,
-                    'original_data' => $employee->only(array_keys($validatedData) + ['position_id', 'division_id', 'employee_type']),
+                    'original_data' => array_merge(
+                        $employee->only(array_keys($validatedData)),
+                        [
+                            'position' => $employee->position->title ?? null,
+                            'division' => $employee->division->name ?? null,
+                            'employee_type' => $employee->employee_type,
+                        ]
+                    ),
                     'changed_data' => array_merge($validatedData, [
-                        'position_id' => $request->input('position_id', $employee->position_id),
-                        'division_id' => $request->input('division_id', $employee->division_id),
+                        'position' => optional(Position::find($request->input('position_id')))->title,
+                        'division' => optional(Division::find($request->input('division_id')))->name,
                         'employee_type' => $request->input('employee_type', $employee->employee_type),
                     ]),
                     'status' => 'waiting',
@@ -515,8 +521,9 @@ public function convert($id)
         'positions'          => Position::all(),
         'users'              => User::all(),
     ]);
+     return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
 }
-        return view('employees.data.edit', compact('employee', 'divisions', 'positions', 'users'));
-    }
+       
+}
 
-}
+

@@ -8,10 +8,12 @@ use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Employee;
+use App\Models\User;
+use App\Notifications\NewApplicantNotification;
 
 class ApplicantController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
 {
     $search = $request->input('search');
     $sortBy = $request->input('sort', 'created_at');
@@ -23,13 +25,28 @@ class ApplicantController extends Controller
     }
 
     $user = auth()->user();
+    $divisionId = optional($user->employee)->division_id;
 
     $applicants = Applicant::with(['division', 'position'])
         ->when($search, function ($query) use ($search) {
             $query->where('full_name', 'like', '%' . $search . '%');
         })
-        ->when($user->role === 'section_head', function ($query) use ($user) {
-            $query->where('division_id', optional($user->employee)->division_id);
+        ->when(in_array($user->role, ['manager', 'section_head']), function ($query) use ($user, $divisionId) {
+            // Cek apakah di divisi ini ada manager
+            $hasManager = \App\Models\User::whereHas('employee', function($q) use ($divisionId) {
+                $q->where('division_id', $divisionId);
+            })->where('role', 'manager')->exists();
+
+            if ($user->role === 'manager') {
+                // Manager melihat semua applicant dari divisinya
+                $query->where('division_id', $divisionId);
+            } elseif ($user->role === 'section_head' && !$hasManager) {
+                // Section head hanya melihat applicant jika tidak ada manager
+                $query->where('division_id', $divisionId);
+            } else {
+                // Jika ada manager, section head tidak melihat apapun
+                $query->whereNull('id'); // buat kosong hasilnya
+            }
         })
         ->when($sortBy === 'position', function ($query) use ($direction) {
             $query->leftJoin('positions', 'positions.id', '=', 'applicants.applied_position')
@@ -72,13 +89,36 @@ class ApplicantController extends Controller
             $validated['resume_file'] = $file->storeAs('resumes', $filename, 'public');
         }
 
-        Applicant::create($validated);
+        // Applicant::create($validated);
+        $applicant = Applicant::create($validated);
+        // Kirim notifikasi ke HC dan Section Head divisi terkait
+        // Ambil manager dulu
+        $managers = User::whereHas('employee', function($q) use ($applicant) {
+            $q->where('division_id', $applicant->division_id);
+        })->where('role', 'manager')->get();
+
+        // Jika tidak ada manager, ambil section head
+        if ($managers->isEmpty()) {
+            $divisionHeads = User::whereHas('employee', function($q) use ($applicant) {
+                $q->where('division_id', $applicant->division_id);
+            })->where('role', 'section_head')->get();
+        } else {
+            $divisionHeads = $managers;
+        }
+
+        // Gabungkan dengan HC
+        $hcUsers = User::admins()->get();
+        foreach ($hcUsers->merge($divisionHeads) as $user) {
+            $user->notify(new NewApplicantNotification($applicant));
+        }
 
         return redirect()->route('applicants.index')->with('success', 'Applicant added successfully!');
     }
 
     public function edit(Applicant $applicant)
     {
+         $user = auth()->user();
+    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $divisions = Division::all();
         $positions = Position::all();
         return view('applicants.edit', compact('applicant', 'divisions', 'positions'));
@@ -114,6 +154,24 @@ class ApplicantController extends Controller
 {
     $applicant = Applicant::with('position')->findOrFail($id);
     $offeringLetter = $applicant->offeringLetter;
+    $user = auth()->user();
+     // 🔒 Pembatasan akses berdasarkan role
+    if (!in_array($user->role, ['superadmin', 'hc'])) {
+        $divisionId = optional($user->employee)->division_id;
+        $applicantDivision = $applicant->division_id;
+
+        if ($user->role === 'manager') {
+            if ($divisionId !== $applicantDivision) abort(403);
+        } elseif ($user->role === 'section_head') {
+            $hasManager = User::whereHas('employee', function ($q) use ($divisionId) {
+                $q->where('division_id', $divisionId);
+            })->where('role', 'manager')->exists();
+
+            if ($hasManager || $divisionId !== $applicantDivision) abort(403);
+        } else {
+            abort(403);
+        }
+    }
 
     // cek apakah sudah jadi employee
     $isConverted = Employee::where('full_name', $applicant->full_name)
@@ -126,13 +184,17 @@ class ApplicantController extends Controller
 
 
     public function destroy(Applicant $applicant)
-    {
+    {   
+        $user = auth()->user();
+    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $applicant->delete();
         return redirect()->route('applicants.index')->with('success', 'Applicant deleted successfully!');
     }
 
     public function convertToEmployee($id)
-    {
+    {   
+         $user = auth()->user();
+    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $applicant = Applicant::with('position')->findOrFail($id);
 
         $offeringLetter = $applicant->recruitmentProgresses()

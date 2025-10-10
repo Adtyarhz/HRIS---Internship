@@ -6,6 +6,8 @@ use App\Models\Applicant;
 use App\Models\RecruitmentProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\User;
+use App\Notifications\RecruitmentStageNotification;
 
 class RecruitmentProgressController extends Controller
 {
@@ -98,7 +100,7 @@ class RecruitmentProgressController extends Controller
             ->first();
 
         if (!$previousProgress || $previousProgress->offering_status !== 'accepted') {
-            return redirect()->back()->with('error', 'Anda harus menyelesaikan tahap sebelumnya dan menandainya sebagai accepted.');
+            return redirect()->back()->with('error', 'You must complete the previous step and mark it as accepted.');
         }
     }
 
@@ -161,9 +163,17 @@ class RecruitmentProgressController extends Controller
         ['applicant_id' => $applicant->id, 'stage' => $stage],
         array_merge($validated, ['applicant_id' => $applicant->id])
     );
+    // Kirim notifikasi ke role berikutnya
+    $nextStage = $this->getNextStage($stage);
+    if ($nextStage) {
+        $receivers = User::whereIn('role', $this->getStageRoles($nextStage))->get();
+        foreach ($receivers as $user) {
+            $user->notify(new RecruitmentStageNotification($applicant, $stage, $validated['offering_status']));
+        }
+    }
 
     return redirect()->route('recruitment.stage.show', [$applicant->id, $stage])
-        ->with('success', 'Progress berhasil diperbarui.');
+        ->with('success', 'Progress updated successfully.');
 }
 private function canEditStage(string $stage, string $role): bool
 {
@@ -178,5 +188,25 @@ private function canEditStage(string $stage, string $role): bool
 
     return in_array($role, $permissions[$stage] ?? []);
 }
+private function getNextStage($stage)
+{
+    $index = array_search($stage, $this->stages);
+    return $this->stages[$index + 1] ?? null;
+}
+
+private function getStageRoles($stage)
+{
+    $permissions = [
+        'cv_screening' => ['superadmin', 'hc'],
+        'general_knowledge_test' => ['superadmin', 'hc'],
+        'user_assessment' => ['superadmin', 'manager', 'section_head'],
+        'hc_interview' => ['superadmin', 'hc'],
+        'bod_interview' => ['superadmin', 'direksi', 'hc'],
+        'offering_letter' => ['superadmin','hc'],
+    ];
+
+    return $permissions[$stage] ?? [];
+}
+
 
 }
