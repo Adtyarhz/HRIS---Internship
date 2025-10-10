@@ -486,7 +486,9 @@ public function destroy($id)
     $application->tasks()->delete(); // hapus semua tasks terkait
     $application->delete();
 
-    return back()->with('success', 'Overtime application removed.');
+    return redirect()
+        ->route('overtime-applications.index')
+        ->with('success', 'Overtime application removed.');
 }
 
 }

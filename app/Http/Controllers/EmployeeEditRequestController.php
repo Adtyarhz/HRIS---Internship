@@ -504,17 +504,17 @@ class EmployeeEditRequestController extends Controller
     /**
      * Normalisasi path file supaya konsisten (ada folder prefix)
      */
-    private function normalizeFilePath($path, $table, $isMaterial = false)
-    {
-        if (empty($path)) return $path;
+    //private function normalizeFilePath($path, $table, $isMaterial = false)
+    //{
+      //  if (empty($path)) return $path;
 
         // Jika path sudah ada folder prefix, langsung return
-        if (str_contains($path, '/')) {
-            return $path;
-        }
+        //if (str_contains($path, '/')) {
+          //  return $path;
+        //}
 
-        return $isMaterial
-            ? "{$table}/materials/{$path}"
-            : "{$table}/{$path}";
-    }
+        //return $isMaterial
+          //  ? "{$table}/materials/{$path}"
+            //: "{$table}/{$path}";
+    //}
 }

@@ -179,7 +179,6 @@
         <select name="type">
             <option value="">Announcement Type</option>
             <option value="Umum" {{ request('announcement_type') == 'Umum' ? 'selected' : '' }}>Umum</option>
-            <option value="Divisi" {{ request('announcement_type') == 'Divisi' ? 'selected' : '' }}>Divisi</option>
             <option value="Urgent" {{ request('announcement_type') == 'Urgent' ? 'selected' : '' }}>Urgent</option>
             <option value="Informasi" {{ request('announcement_type') == 'Informasi' ? 'selected' : '' }}>Informasi</option>
             <option value="Polling" {{ request('announcement_type') == 'Polling' ? 'selected' : '' }}>Polling</option>

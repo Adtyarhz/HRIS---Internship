@@ -150,7 +150,6 @@
 @endsection
 
 @section('content')
-@include('interview_schedule.alert')
 <div class="schedule-header">
     <h2>Interview Schedules of {{ $applicant->full_name }}</h2>
 </div>
@@ -181,7 +180,7 @@
                 <td>{{ $i + $schedules->firstItem() }}</td>
                 <td>{{ $schedule->interview_type }}</td>
                 <td>{{ $schedule->interview_date }}</td>
-                <td>{{ $schedule->interviewer }}</td>
+                <td>{{ $schedule->interviewer?->name ?? '-' }}</td>
                 <td>
                     <a href="{{ route('interview-schedule.show', [$applicant->id, $schedule->id]) }}" class="btn-detail">Detail</a>
                 </td>

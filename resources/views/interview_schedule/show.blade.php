@@ -102,7 +102,7 @@
 
         <div class="detail-row">
             <div class="detail-label">Interviewer</div>
-            <div class="detail-value">{{ $schedule->interviewer }}</div>
+            <div class="detail-value">{{ $schedule->interviewer?->name ?? '-' }}</div>
         </div>
 
         <div class="detail-row">
