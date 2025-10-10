@@ -116,7 +116,25 @@ class InterviewScheduleController extends Controller
     public function create(Applicant $applicant)
     {
         $this->authorizeAccessByRole('create');
-        return view('interview_schedule.create', compact('applicant'));
+        // Ambil opsi interviewer tergantung tipe interview
+        $divisionId = $applicant->division_id;
+
+       // Cek apakah ada manager di divisi ini
+        $hasManager = User::whereHas('employee', function ($q) use ($divisionId) {
+            $q->where('division_id', $divisionId);
+        })->where('role', 'manager')->exists();
+
+        // Jika ada manager, hanya tampilkan manager. Jika tidak, tampilkan section_head
+        $userInterviewers = User::where('role', $hasManager ? 'manager' : 'section_head')
+            ->whereHas('employee', function ($q) use ($divisionId) {
+                $q->where('division_id', $divisionId);
+            })
+            ->get();
+
+        $hcInterviewers = User::whereIn('role', ['hc', 'superadmin'])->get();
+        $direksiInterviewers = User::where('role', 'direksi')->get();
+
+        return view('interview_schedule.create', compact('applicant', 'userInterviewers', 'hcInterviewers', 'direksiInterviewers'));
     }
 
     public function store(Request $request, Applicant $applicant)
@@ -126,62 +144,34 @@ class InterviewScheduleController extends Controller
     $request->validate([
         'interview_type' => 'required|in:User,HC,Direksi',
         'interview_date' => 'required|date',
-        'interviewer' => 'required',
-        'location' => 'required',
-        'result' => 'nullable',
+        'interviewer_id' => 'required|exists:users,id',
+        'location' => 'required|string|max:255',
+        'result' => 'nullable|string',
     ]);
 
     // Simpan data jadwal interview
-    $schedule = $applicant->interviewSchedules()->create($request->all());
+     $schedule = $applicant->interviewSchedules()->create([
+            'interview_type' => $request->interview_type,
+            'interview_date' => $request->interview_date,
+            'interviewer_id' => $request->interviewer_id,
+            'location' => $request->location,
+            'result' => $request->result,
+        ]);
 
-    // Dapatkan divisi pelamar
-    $divisionId = $applicant->division_id;
-
-    $recipients = collect(); // kumpulan user yang akan menerima notifikasi
-
-    switch ($request->interview_type) {
-        case 'User':
-            // Coba cari manager di divisi pelamar
-            $manager = User::whereHas('employee', function ($q) use ($divisionId) {
-                $q->where('division_id', $divisionId);
-            })->where('role', 'manager')->first();
-
-            if ($manager) {
-                $recipients->push($manager);
-            } else {
-                // Jika tidak ada manager, cari section head
-                $sectionHead = User::whereHas('employee', function ($q) use ($divisionId) {
-                    $q->where('division_id', $divisionId);
-                })->where('role', 'section_head')->first();
-
-                if ($sectionHead) {
-                    $recipients->push($sectionHead);
-                }
-            }
-            break;
-
-        case 'HC':
-            $recipients = User::whereIn('role', ['hc', 'superadmin'])->get();
-            break;
-
-        case 'Direksi':
-            $recipients = User::where('role', 'direksi')->get();
-            break;
-    }
-
-    // Kirim notifikasi ke semua penerima yang ditemukan
-    foreach ($recipients as $user) {
-        $user->notify(new InterviewScheduleNotification($schedule));
-    }
-
+        // Kirim notifikasi hanya ke interviewer yang dipilih
+        $interviewer = User::find($request->interviewer_id);
+        if ($interviewer) {
+            $interviewer->notify(new InterviewScheduleNotification($schedule));
+        }
+        
     return redirect()
         ->route('interview-schedule.index', $applicant->id)
-        ->with('success', 'Interview schedule has been created and notification sent.');
+        ->with('success', 'Interview schedule has been created and notification sent to the selected interviewer.');
 }
 
    public function show(Applicant $applicant, InterviewSchedule $schedule)
     {
-        $user = Auth::user();
+       // $user = Auth::user();
 
         if (!$this->canAccessSchedule($schedule)) {
             abort(403, 'Unauthorized');
@@ -196,7 +186,24 @@ class InterviewScheduleController extends Controller
         abort(403, 'Unauthorized');
     }
 
-    return view('interview_schedule.edit', compact('schedule', 'applicant'));
+    $divisionId = $applicant->division_id;
+
+        // Cek apakah ada manager di divisi ini
+        $hasManager = User::whereHas('employee', function ($q) use ($divisionId) {
+            $q->where('division_id', $divisionId);
+        })->where('role', 'manager')->exists();
+
+        // Jika ada manager, hanya tampilkan manager. Jika tidak, tampilkan section_head
+        $userInterviewers = User::where('role', $hasManager ? 'manager' : 'section_head')
+            ->whereHas('employee', function ($q) use ($divisionId) {
+                $q->where('division_id', $divisionId);
+            })
+            ->get();
+
+        $hcInterviewers = User::whereIn('role', ['hc', 'superadmin'])->get();
+        $direksiInterviewers = User::where('role', 'direksi')->get();
+
+        return view('interview_schedule.edit', compact('schedule', 'applicant', 'userInterviewers', 'hcInterviewers', 'direksiInterviewers'));
 }
 
 public function update(Request $request, Applicant $applicant, InterviewSchedule $schedule)
@@ -209,7 +216,7 @@ public function update(Request $request, Applicant $applicant, InterviewSchedule
     $request->validate([
         'interview_type' => 'required|in:User,HC,Direksi',
         'interview_date' => 'required|date',
-        'interviewer' => 'required|string|max:255',
+        'interviewer_id' => 'required|exists:users,id',
         'location' => 'required|string|max:255',
         'result' => 'nullable|string',
     ]);
@@ -218,15 +225,19 @@ public function update(Request $request, Applicant $applicant, InterviewSchedule
     $schedule->update([
         'interview_type' => $request->interview_type,
         'interview_date' => $request->interview_date,
-        'interviewer' => $request->interviewer,
+        'interviewer_id' => $request->interviewer_id,
         'location' => $request->location,
         'result' => $request->result,
     ]);
 
-    // Redirect ke halaman detail
-    return redirect()
-        ->route('interview-schedule.index', [$applicant->id, $schedule->id])
-        ->with('success', 'Interview schedule was updated.');
+    // Kirim notifikasi ke interviewer yang dipilih (seperti di method store)
+    $interviewer = User::find($request->interviewer_id);
+    if ($interviewer) {
+        $interviewer->notify(new InterviewScheduleNotification($schedule));
+    }
+        return redirect()
+            ->route('interview-schedule.index', $applicant->id)
+            ->with('success', 'Interview schedule was updated and notification sent to the selected interviewer.');
 }
 
 public function destroy(Applicant $applicant, InterviewSchedule $schedule)
@@ -237,7 +248,9 @@ public function destroy(Applicant $applicant, InterviewSchedule $schedule)
 
     $schedule->delete();
 
-    return redirect()->route('interview-schedule.index', $applicant->id)->with('success', 'Interview schedule has deleted.');
+     return redirect()
+            ->route('interview-schedule.index', $applicant->id)
+            ->with('success', 'Interview schedule has been deleted.');
 }
 
     private function authorizeAccessByRole($action)

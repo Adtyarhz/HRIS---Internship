@@ -14,7 +14,7 @@ class InterviewSchedule extends Model
         'applicant_id',
         'interview_type',
         'interview_date',
-        'interviewer',
+        'interviewer_id',
         'location',
         'result',
     ];
@@ -22,6 +22,10 @@ class InterviewSchedule extends Model
     public function applicant()
     {
         return $this->belongsTo(Applicant::class);
+    }
+    public function interviewer()
+    {
+        return $this->belongsTo(User::class, 'interviewer_id');
     }
 }
 

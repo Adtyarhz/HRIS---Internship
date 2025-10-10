@@ -69,6 +69,15 @@
                     return is_array($v) ? $k . ': ' . json_encode($v) : $k . ': ' . $v;
                 }, $value, array_keys($value)));
             }
+            if ($field === 'division_id') {
+                $division = \App\Models\Division::find($value);
+                return $division ? $division->name : '-';
+            }
+
+            if ($field === 'position_id') {
+                $position = \App\Models\Position::find($value);
+                return $position ? $position->title : '-';
+            }
 
             // Format tanggal
             if (!empty($value) && str_contains($field, 'date')) {
@@ -178,7 +187,12 @@
                     <tbody>
                         @foreach($flattened as $row)
                             <tr>
-                                <td>{{ ucfirst(str_replace('_', ' ', $row['field'])) }}</td>
+                                @php
+                                    $label = $row['field'];
+                                    if ($label === 'division_id') $label = 'Division';
+                                    elseif ($label === 'position_id') $label = 'Position';
+                                @endphp
+                                <td>{{ ucfirst(str_replace('_', ' ', $label)) }}</td>
                                 <td>{!! formatValue($row['field'], $row['old']) !!}</td>
                                 <td>{!! formatValue($row['field'], $row['new']) !!}</td>
                             </tr>

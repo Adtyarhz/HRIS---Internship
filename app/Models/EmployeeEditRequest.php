@@ -48,5 +48,15 @@ class EmployeeEditRequest extends Model
     {
         return $this->hasMany(OvertimeApplicationNotification::class);
     }
+     public function division()
+{
+    return $this->belongsTo(Division::class, 'division_id');
+}
+
+public function position()
+{
+    return $this->belongsTo(Position::class, 'position_id');
+}
+
     
 }

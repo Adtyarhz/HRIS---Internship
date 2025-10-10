@@ -58,13 +58,37 @@
 </div>
 </form>
 
-    {{-- Tombol Reset Password --}}
-    @if (auth()->check() && in_array(auth()->user()->role, ['superadmin', 'hc']))
-      <form action="{{ route('employees.reset_password', $employee->id) }}" method="POST" class="mt-4" onsubmit="return confirm('Apakah Anda yakin ingin mereset password untuk {{ $employee->name }}?')">
-    @csrf
-    <button type="submit" class="btn btn-warning">
-        <i class="fas fa-key"></i> Reset Password
-    </button>
-</form>
-    @endif
+     {{-- Tombol Reset Password --}}
+@if (auth()->check() && in_array(auth()->user()->role, ['superadmin', 'hc']))
+    <form action="{{ route('employees.reset_password', $employee->id) }}" method="POST" class="mt-4" id="resetPasswordForm">
+        @csrf
+        <button type="button" class="btn btn-warning" id="resetPasswordBtn">
+            <i class="fas fa-key"></i> Reset Password
+        </button>
+
+        <!-- Teks konfirmasi default password -->
+        <p class="text-muted mt-2" id="defaultPasswordText" style="display: none;">
+            Apakah ingin reset password ke default <strong>"password123"</strong>?
+            <button type="submit" class="btn btn-sm btn-danger ms-2">Ya, Reset</button>
+            <button type="button" class="btn btn-sm btn-secondary ms-1" id="cancelReset">Batal</button>
+        </p>
+    </form>
+
+    @push('scripts')
+    <script>
+        const btn = document.getElementById('resetPasswordBtn');
+        const text = document.getElementById('defaultPasswordText');
+        const cancelBtn = document.getElementById('cancelReset');
+
+        btn.addEventListener('click', () => {
+            text.style.display = text.style.display === 'none' ? 'block' : 'none';
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            text.style.display = 'none';
+        });
+    </script>
+    @endpush
+@endif
+
 @endsection

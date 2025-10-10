@@ -336,32 +336,49 @@ class AnnouncementController extends Controller
     }
 
     public function exportPolling($id)
-    {
-        $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
-    
-        if (!$announcement->polling || now()->lt($announcement->polling->deadline)) {
-            return redirect()->back()->with('error', 'Poll not finished or not found.');
-        }
-    
-        $filename = 'hasil_polling_' . Str::slug($announcement->title) . '.csv';
-    
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ];
-    
-        $callback = function () use ($announcement) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Opsi', 'Jumlah Suara']);
-    
-            foreach ($announcement->polling->options as $option) {
-                fputcsv($handle, [$option->option_text, $option->votes->count()]);
-            }
-    
-            fclose($handle);
-        };
-    
-        return new StreamedResponse($callback, 200, $headers);
+{
+    $announcement = Announcement::with('polling.options.votes.creator')->findOrFail($id);
+
+    if (!$announcement->polling || now()->lt($announcement->polling->deadline)) {
+        return redirect()->back()->with('error', 'Poll not finished or not found.');
     }
+
+    $filename = 'hasil_polling_' . Str::slug($announcement->title) . '.csv';
+
+    $headers = [
+        'Content-Type' => 'text/csv; charset=UTF-8',
+        'Content-Disposition' => "attachment; filename=\"$filename\"",
+    ];
+
+    $callback = function () use ($announcement) {
+        // Tambahkan BOM agar Excel baca UTF-8 dengan benar
+        echo "\xEF\xBB\xBF"; 
+
+        $handle = fopen('php://output', 'w');
+
+        // Ganti delimiter jadi titik koma (;)
+        $delimiter = ';';
+
+        // Header kolom
+        fputcsv($handle, ['Opsi', 'Jumlah Suara', 'Nama Voter'], $delimiter);
+
+        foreach ($announcement->polling->options as $option) {
+            $voters = $option->votes->map(fn($vote) => optional($vote->creator)->name)->filter()->toArray();
+            $voterNames = !empty($voters) ? implode(' | ', $voters) : '-';
+
+            fputcsv($handle, [
+                $option->option_text,
+                $option->votes->count(),
+                $voterNames,
+            ], $delimiter);
+        }
+
+        fclose($handle);
+    };
+
+    return new StreamedResponse($callback, 200, $headers);
+}
+
+
 
 }

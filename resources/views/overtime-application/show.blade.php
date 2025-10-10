@@ -196,22 +196,39 @@
     <div class="d-flex justify-content-between mb-4 align-items-center">
         {{-- Left --}}
         <div class="d-flex gap-3">
-            @php
-                $user = Auth::user();
-                $employee = $user->employee ?? null;
-                $divisionId = $employee->division_id ?? null;
+        @php
+            $user = Auth::user();
+            $employee = $user->employee ?? null;
+            $divisionId = $employee->division_id ?? null;
 
-                $hasManager = false;
-                if ($divisionId) {
-                    $hasManager = \App\Models\Employee::where('division_id', $divisionId)
-                        ->whereHas('user', function ($q) {
-                            $q->where('role', 'manager');
-                        })
-                        ->exists();
-                }
-            @endphp
+            $hasManager = false;
+            if ($divisionId) {
+                $hasManager = \App\Models\Employee::where('division_id', $divisionId)
+                    ->whereHas('user', function ($q) {
+                        $q->where('role', 'manager');
+                    })
+                    ->exists();
+            }
+        @endphp
 
-            @if(
+        {{-- ✅ Tombol EDIT hanya muncul jika status masih Pending --}}
+        @if(
+            $application->status == 'Pending' &&
+            (
+                ($user->role === 'manager' && $hasManager) ||
+                ($user->role === 'section_head' && !$hasManager) ||
+                in_array($user->role, ['hc', 'superadmin'])
+            )
+        )
+            <a href="{{ route('overtime-applications.edit', $application->id) }}" class="btn-edit">Edit</a>
+        @endif
+
+        {{-- ✅ Tombol DELETE muncul jika:
+             1. Status Pending (dan role valid)
+             2. Status Approved/Rejected (hanya HC & Superadmin)
+        --}}
+        @if(
+            (
                 $application->status == 'Pending' &&
                 (
                     ($user->role === 'manager' && $hasManager) ||
@@ -219,18 +236,21 @@
                     in_array($user->role, ['hc', 'superadmin'])
                 )
             )
-                <a href="{{ route('overtime-applications.edit', $application->id) }}" class="btn-edit">Edit</a>
-
-                {{-- ===== DELETE BUTTON (dipindah dari index) ===== --}}
-                <form action="{{ route('overtime-applications.destroy', $application->id) }}" method="POST" style="display:inline-block;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this application?')">
-                        Delete
-                    </button>
-                </form>
-            @endif
-        </div>
+            ||
+            (
+                in_array($application->status, ['Approved', 'Rejected']) &&
+                in_array($user->role, ['hc', 'superadmin'])
+            )
+        )
+            <form action="{{ route('overtime-applications.destroy', $application->id) }}" method="POST" style="display:inline-block;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn-delete" onclick="return confirm('Delete this application?')">
+                    Delete
+                </button>
+            </form>
+        @endif
+    </div>
 
         {{-- Right --}}
         @if ($application->status === 'Pending' && in_array(Auth::user()->role, ['hc', 'superadmin']))
