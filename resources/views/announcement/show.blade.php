@@ -24,6 +24,24 @@
         align-items: center;
         margin-bottom: 1rem;
     }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        background: none;
+        color: #7b7c7eff;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        font-family: initial;
+        border: none;
+        padding: 0;
+        transition: color 0.2s ease;
+    }
+
+    .btn-back:hover {
+        color: #000; /* Sedikit lebih gelap saat hover */
+        text-decoration: underline; /* Efek hover seperti link */
+    }
 </style>
 @endpush
 
@@ -88,6 +106,16 @@ if ($isPolling && $polling) {
                 </span>
             </div>
         @endif
+        {{-- Tombol Back hanya untuk Superadmin & HC --}}
+@auth
+@if (in_array(Auth::user()->role, ['superadmin', 'hc']))
+        <a href="{{ route('announcement.index') }}"
+           class="action-button btn-back">
+            <i class="fas fa-arrow-left" style="margin-right: 6px;"></i> Back to List
+        </a>
+@endif
+@endauth
+
         {{-- Detail Informasi --}}
         <div style="margin-top: 24px">
             <div style="display: flex; margin-bottom: 12px">
@@ -108,10 +136,13 @@ if ($isPolling && $polling) {
                 <div style="min-width: 130px; font-weight: 600">Attachment</div>
                 <div>
                     @if ($announcement->attachment_file)
-                        <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" target="_blank">Lihat File</a>
+                        <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
+                        target="_blank"
+                        title="Click here to view the attachment">Lihat File</a>
                     @else
                         -
                     @endif
+
                 </div>
             </div>
 
@@ -125,7 +156,11 @@ if ($isPolling && $polling) {
                 <div style="min-width: 130px; font-weight: 600">External Link</div>
                 <div>
                     @if ($announcement->external_link)
-                      <a href="{{ $announcement->external_link }}" target="_blank">{{ $announcement->external_link }}</a>
+                        <a href="{{ $announcement->external_link }}" 
+                        target="_blank"
+                        title="Click here to open the link">
+                        {{ $announcement->external_link }}
+                        </a>
                     @else
                         -
                     @endif

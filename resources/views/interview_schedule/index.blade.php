@@ -87,6 +87,8 @@
 
     .btn-detail:hover {
         background-color: #333;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .pagination {
@@ -131,6 +133,8 @@
 
     .btn-back:hover {
         background-color: #5a6268;
+        color: white;
+        text-decoration: none;
     }
 </style>
 @endpush
@@ -155,11 +159,12 @@
     $userRole = Auth::user()->role;
 @endphp
 
-@if(in_array($userRole, ['superadmin', 'hc']))
+@if($canAddInterview)
 <div style="text-align: right; margin-bottom: 1rem;">
     <a href="{{ route('interview-schedule.create', $applicant->id) }}" class="btn-add">+ Add Interview Schedule</a>
 </div>
 @endif
+
 <table class="interview-table">
     <thead>
         <tr>

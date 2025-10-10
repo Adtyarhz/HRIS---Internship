@@ -84,7 +84,13 @@
 @endpush
 
 @section('content_header')
-    <div class="header-with-icon">
+    <div class="header-with-icon d-flex align-items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             width="24" height="24" viewBox="0 0 24 24" 
+             class="mr-2" fill="currentColor">
+            <path d="M12 20A8 8 0 1 0 12 4a8 8 0 0 0 0 16m0-18a10 10 0 1 1 0 20
+                     a10 10 0 0 1 0-20m.5 5v5.25l4.5 2.67l-.75 1.23L11 11V7h1.5Z"/>
+        </svg>
         Edit Overtime Application
     </div>
 @endsection

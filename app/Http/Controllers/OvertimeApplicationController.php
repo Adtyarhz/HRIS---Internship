@@ -153,7 +153,7 @@ public function store(Request $request)
 
         } elseif (in_array($user->role, ['staff_bisnis', 'staff_support'])) {
             return redirect()->route('overtime-applications.index')
-                ->with('error', 'Anda tidak memiliki akses untuk mengajukan lembur.');
+                ->with('error', 'You do not have access to apply for overtime.');
         } else {
             abort(403, 'Unauthorized access.');
         }
@@ -163,7 +163,7 @@ public function store(Request $request)
     $request->validate([
         'employee_id'    => ['required', 'exists:employees,id', function ($attr, $value, $fail) use ($employees) {
             if (!in_array($value, $employees)) {
-                $fail('Anda tidak berhak mengajukan lembur untuk pegawai ini.');
+                $fail('You are not entitled to request overtime for this employee..');
             }
         }],
         'start_datetime' => 'required|date',
@@ -182,7 +182,7 @@ public function store(Request $request)
         'reason'         => $request->reason,
         'status'         => 'Pending',
     ]);
-
+    $employeeName = $application->employee->full_name ?? 'Pegawai';
     // ✅ Simpan tasks jika ada
     if ($request->has('tasks')) {
         foreach ($request->tasks as $task) {
@@ -201,19 +201,19 @@ public function store(Request $request)
         'overtime_application_id' => $application->id,
         'action_by'   => Auth::id(),
         'action_type' => 'Created',
-        'description' => 'Pengajuan lembur dibuat.',
+        'description' => 'Overtime request made.',
         'created_at'  => now(),
     ]);
     $hcUsers = User::whereIn('role', ['hc', 'superadmin'])->get();
 foreach ($hcUsers as $hc) {
-    $hc->notify(new OvertimeApplicationNotification($application, "Pengajuan lembur baru menunggu persetujuan."));
+    $hc->notify(new OvertimeApplicationNotification($application, "New overtime request ($employeeName) pending approval."));
 }
 $employeeUser = $application->employee->user ?? null;
 if ($employeeUser) {
-    $employeeUser->notify(new OvertimeApplicationNotification($application, "Anda diajukan untuk lembur, status: Pending."));
+    $employeeUser->notify(new OvertimeApplicationNotification($application, "You are submitted for overtime, status: Pending."));
 }
     return redirect()->route('overtime-applications.index')
-        ->with('success', 'Pengajuan lembur berhasil dibuat.');
+        ->with('success', 'Overtime request successfully created.');
 }
 
    // Form edit
@@ -261,7 +261,7 @@ public function edit(OvertimeApplication $overtime_application)
     if (in_array($overtime_application->status, ['Approved', 'Rejected'])) {
         return redirect()
             ->route('overtime-applications.index')
-            ->with('error', 'Pengajuan yang sudah disetujui/ditolak tidak bisa diubah.');
+            ->with('error', 'Applications that have been approved/rejected cannot be changed.');
     }
         $request->validate([
             'employee_id'    => 'required|exists:employees,id',
@@ -278,7 +278,7 @@ public function edit(OvertimeApplication $overtime_application)
             'end_datetime'   => $request->end_datetime,
             'reason'         => $request->reason,
         ]);
-
+        $employeeName = $overtime_application->employee->full_name ?? 'Pegawai';
         // ✅ Update tasks (hapus lama → buat baru lagi)
         $overtime_application->tasks()->delete();
         if ($request->has('tasks')) {
@@ -298,22 +298,22 @@ public function edit(OvertimeApplication $overtime_application)
             'overtime_application_id' => $overtime_application->id,
             'action_by'   => Auth::id(),
             'action_type' => 'Updated',
-            'description' => 'Pengajuan lembur diperbarui.',
+            'description' => 'Overtime request updated.',
             'created_at'  => now(),
         ]);
         // setelah update & history disimpan
 $hcUsers = User::whereIn('role', ['hc', 'superadmin'])->get();
 foreach ($hcUsers as $hc) {
-    $hc->notify(new OvertimeApplicationNotification($overtime_application, "Pengajuan lembur diperbarui, menunggu persetujuan."));
+    $hc->notify(new OvertimeApplicationNotification($overtime_application, "Overtime request ($employeeName) updated, awaiting approval."));
 }
 
 $employeeUser = $overtime_application->employee->user ?? null;
 if ($employeeUser) {
-    $employeeUser->notify(new OvertimeApplicationNotification($overtime_application, "Pengajuan lembur Anda diperbarui, status: Pending."));
+    $employeeUser->notify(new OvertimeApplicationNotification($overtime_application, "Your overtime request is updated, status: Pending."));
 }
 
         return redirect()->route('overtime-applications.index')
-                         ->with('success', 'Pengajuan lembur berhasil diperbarui.');
+                         ->with('success', 'Overtime request successfully updated.');
     }
 
     // Detail pengajuan lembur
@@ -341,27 +341,27 @@ public function approve($id)
         'approved_by' => $user->id,
         'approved_at' => now(),
     ]);
-
+    $employeeName = $application->employee->full_name ?? 'Pegawai';
     // ✅ Tambah riwayat
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => $user->id,
         'action_type' => 'Approved',
-        'description' => 'Pengajuan lembur disetujui.',
+        'description' => 'Overtime request approved.',
         'created_at'  => now(),
     ]);
     // setelah update status & history disimpan
 $employeeUser = $application->employee->user ?? null;
 if ($employeeUser) {
-    $employeeUser->notify(new OvertimeApplicationNotification($application, "Pengajuan lembur Anda {$application->status}."));
+    $employeeUser->notify(new OvertimeApplicationNotification($application, "Your overtime application {$application->status}."));
 }
 
 $requester = $application->requester;
 if ($requester) {
-    $requester->notify(new OvertimeApplicationNotification($application, "Pengajuan lembur yang Anda buat {$application->status}."));
+    $requester->notify(new OvertimeApplicationNotification($application, "Overtime application ($employeeName) has {$application->status}."));
 }
 
-    return back()->with('success', 'Pengajuan lembur disetujui.');
+    return back()->with('success', 'Overtime request approved.');
 }
 
 // Reject lembur
@@ -385,28 +385,28 @@ public function reject($id, Request $request)
         'approved_by' => $user->id,
         'approved_at' => now(),
     ]);
-
+    $employeeName = $application->employee->full_name ?? 'Pegawai';
     // ✅ Tambah riwayat dengan alasan
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => $user->id,
         'action_type' => 'Rejected',
-        'description' => 'Pengajuan lembur ditolak dengan alasan: '.$request->reason, // simpan alasan
+        'description' => 'Overtime request rejected for the following reasons: '.$request->reason, // simpan alasan
         'created_at'  => now(),
     ]);
     // setelah update status & history disimpan
 $employeeUser = $application->employee->user ?? null;
 if ($employeeUser) {
-    $employeeUser->notify(new OvertimeApplicationNotification($application, "Pengajuan lembur Anda {$application->status}."));
+    $employeeUser->notify(new OvertimeApplicationNotification($application, "Your Overtime Application {$application->status}."));
 }
 
 $requester = $application->requester;
 if ($requester) {
-    $requester->notify(new OvertimeApplicationNotification($application, "Pengajuan lembur yang Anda buat {$application->status}."));
+    $requester->notify(new OvertimeApplicationNotification($application, "Overtime application ($employeeName) has {$application->status}."));
 }
 
     return redirect()->route('overtime-applications.show', $application->id)
-        ->with('success', 'Pengajuan lembur ditolak dengan alasan: '.$request->reason);
+        ->with('success', 'Overtime request rejected for the following reasons: '.$request->reason);
 }
 
    public function toggleTask(Request $request, OvertimeApplicationTask $task)
@@ -420,12 +420,12 @@ if ($requester) {
 
     // 🚫 Jika lemburnya sudah ditolak → tidak boleh update task
     if ($application->status === 'Rejected') {
-        return back()->with('error', 'Task tidak bisa diperbarui karena pengajuan lembur sudah ditolak.');
+        return back()->with('error', 'The task cannot be updated because the overtime request has been rejected.');
     }
 
     // 🚫 Jika lemburnya masih pending → tidak boleh update task
     if ($application->status === 'Pending') {
-        return back()->with('error', 'Task tidak bisa diperbarui karena pengajuan lembur masih menunggu persetujuan.');
+        return back()->with('error', 'The task cannot be updated because the overtime request is still awaiting approval.');
     }
 
     // ✅ Hanya jika lembur sudah disetujui → task boleh diupdate
@@ -442,29 +442,29 @@ if ($requester) {
             'completed_at' => now(),
         ]);
     }
-
+    $employeeName = $application->employee->full_name ?? 'Pegawai';
     // Simpan riwayat
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $task->overtime_application_id,
         'action_by'   => Auth::id(),
         'action_type' => 'Task Updated',
-        'description' => "Task '{$task->task_description}' ditandai sebagai " 
-            . ($task->is_completed ? "selesai" : "belum selesai"),
+        'description' => "Task '{$task->task_description}' is marked as " 
+            . ($task->is_completed ? "finished" : "not finished yet"),
         'created_at'  => now(),
     ]);
     // setelah update task & history disimpan
 $requester = $application->requester;
 if ($requester) {
-    $requester->notify(new OvertimeApplicationNotification($application, "Task pada lembur yang Anda buat diperbarui."));
+    $requester->notify(new OvertimeApplicationNotification($application, "($employeeName) overtime task status updated."));
 }
 
 // HC & superadmin
 $hcUsers = User::whereIn('role', ['hc', 'superadmin'])->get();
 foreach ($hcUsers as $hc) {
-    $hc->notify(new OvertimeApplicationNotification($application, "Task lembur diperbarui oleh karyawan."));
+    $hc->notify(new OvertimeApplicationNotification($application, "($employeeName) overtime task status updated."));
 }
 
-    return back()->with('success', 'Task berhasil diperbarui.');
+    return back()->with('success', 'Task updated successfully.');
 }
 
 
@@ -486,7 +486,7 @@ public function destroy($id)
     $application->tasks()->delete(); // hapus semua tasks terkait
     $application->delete();
 
-    return back()->with('success', 'Pengajuan lembur dihapus.');
+    return back()->with('success', 'Overtime application removed.');
 }
 
 }

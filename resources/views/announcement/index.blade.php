@@ -44,6 +44,8 @@
 
     .btn-add:hover {
         background-color: #7a2f2f;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .filter-form {
@@ -72,7 +74,11 @@
         font-weight: bold;
         cursor: pointer;
     }
-
+    .btn-filter:hover {
+        background-color: #7a2f2f;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
+    }
     .btn-detail {
         background-color: #b44343ff;
         color: white;
@@ -89,6 +95,8 @@
 
     .btn-detail:hover {
         background-color: #333;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .announcement-table {
@@ -161,8 +169,6 @@
 @endsection
 
 @section('content')
-
-    @include('announcement.alert')
     <div class="announcement-header">
         <h2>Announcement</h2>
         <a href="{{ route('announcement.create') }}" class="btn-add">+ Add Announcement</a>
@@ -200,10 +206,13 @@
                     <td>{{ $announcement->announcement_type }}</td>
                     <td>{{ $announcement->label }}</td>
                     <td>
-                        @if ($announcement->attachment_file)
-                            <a href="{{ asset('storage/announcement' . $announcement->attachment_file) }}" class="btn-view" target="_blank">View PDF Doc</a>
+                        @if (!empty($announcement->attachment_file))
+                            <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
+                            class="btn-detail" target="_blank" title="Click here to view the attachment">
+                                <i class="fas fa-file-pdf"></i> View File
+                            </a>
                         @else
-                            N/A
+                            <span style="color:#999; font-style:italic;">No File</span>
                         @endif
                     </td>
                     <td>{{ $announcement->created_at->format('d F Y H:i') }}</td>

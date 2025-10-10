@@ -313,7 +313,7 @@
                 <label for="announcement_type" class="fw-semibold">Type:</label>
                 <div class="type-select">
                     <select name="announcement_type" id="announcement_type" class="form-control" disabled>
-                        @foreach (['Umum', 'Divisi', 'Urgent', 'Informasi', 'Polling'] as $tipe)
+                        @foreach (['Umum', 'Urgent', 'Informasi', 'Polling'] as $tipe)
                             <option value="{{ $tipe }}" {{ $announcement->announcement_type === $tipe ? 'selected' : '' }}>{{ $tipe }}</option>
                         @endforeach
                     </select>

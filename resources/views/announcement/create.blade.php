@@ -256,7 +256,7 @@
                 <div class="type-select">
                     <select name="announcement_type" id="announcement_type" class="form-control" required>
                         <option value="">Not Specified</option>
-                        @foreach (['Umum', 'Divisi', 'Urgent', 'Informasi', 'Polling'] as $tipe)
+                        @foreach (['Umum', 'Urgent', 'Informasi', 'Polling'] as $tipe)
                             <option value="{{ $tipe }}" {{ old('announcement_type') == $tipe ? 'selected' : '' }}>{{ $tipe }}</option>
                         @endforeach
                     </select>

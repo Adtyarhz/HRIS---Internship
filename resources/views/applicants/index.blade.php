@@ -45,6 +45,8 @@
 
     .btn-add:hover {
         background-color: #7a2f2f;
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 
     .filter-form {
@@ -168,7 +170,6 @@
 @endsection
 
 @section('content')
-    @include('applicants.alert')
 
     <div class="announcement-header">
         <h2>Applicants</h2>
@@ -195,22 +196,12 @@
         </button>
         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
             <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => 'asc'])) }}">
-                    <i class="bi bi-hash"></i> ID (Asc)
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => 'desc'])) }}">
-                    <i class="bi bi-hash"></i> ID (Desc)
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'applied_position', 'direction' => 'asc'])) }}">
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'position', 'direction' => 'asc'])) }}">
                     <i class="bi bi-sort-alpha-down"></i> A to Z
                 </a>
             </li>
             <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'applied_position', 'direction' => 'desc'])) }}">
+                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'position', 'direction' => 'desc'])) }}">
                     <i class="bi bi-sort-alpha-up"></i> Z to A
                 </a>
             </li>
@@ -230,7 +221,7 @@
                             {{ $applicant->full_name }}
                         </a>
                     </td>
-                    <td>{{ $applicant->applied_position }}</td>
+                    <td>{{ $applicant->position?->title }}</td>
                     <td>
                         <a href="{{ route('recruitment-progress.show', $applicant) }}" class="link-applicant">See Recruitment Progress</a>
                     </td>
