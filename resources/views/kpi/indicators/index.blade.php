@@ -59,8 +59,14 @@
             margin-left: auto;
         }
 
-        .btn-info:hover { background-color: #098ba5; }
-        .add-button:hover { background-color: #803030; color: #fff; }
+        .btn-info:hover {
+            background-color: #098ba5;
+        }
+
+        .add-button:hover {
+            background-color: #803030;
+            color: #fff;
+        }
 
         .action-buttons {
             display: flex;
@@ -68,7 +74,8 @@
             justify-content: center;
         }
 
-        .gg--trash-indicator, .material-symbols--edit {
+        .gg--trash-indicator,
+        .material-symbols--edit {
             display: inline-block;
             width: 18px;
             height: 18px;
@@ -86,70 +93,69 @@
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('kpi.partials.tab-menu')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
-                
-                {{-- Section Title + Add Button --}}
-                <div class="assessment-section-title d-flex justify-content-between align-items-center">
-                    KPI Indicator Library
-                    <a href="{{ route('kpi-indicators.create') }}" class="add-button">
-                        <i class="fas fa-plus"></i>Add New Indicator
-                    </a>
-                </div>
+                    {{-- Section Title + Add Button --}}
+                    <div class="assessment-section-title d-flex justify-content-between align-items-center">
+                        KPI Indicator Library
+                        <a href="{{ route('kpi-indicators.create') }}" class="add-button">
+                            <i class="fas fa-plus"></i>Add New Indicator
+                        </a>
+                    </div>
 
-                {{-- Table --}}
-                <div class="table-responsive">
-                    <table class="table table-bordered table-custom text-center align-middle">
-                        <thead>
-                            <tr>
-                                <th>Indicator Name</th>
-                                <th>Measurement Unit</th>
-                                <th>Assessment Type</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($kpiIndicators as $indicator)
+                    {{-- Table --}}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-custom text-center align-middle">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <strong>{{ $indicator->indicator_name }}</strong><br>
-                                        <small class="text-muted">{{ $indicator->description }}</small>
-                                    </td>
-                                    <td>{{ $indicator->measurement_unit }}</td>
-                                    <td>
-                                        @if ($indicator->higher_is_better)
-                                            <span class="badge badge-success">Higher Value is Better</span>
-                                        @else
-                                            <span class="badge badge-danger">Lower Value is Better</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="{{ route('kpi-indicators.edit', $indicator->id) }}" class="btn-info"
-                                                title="Edit Indicator">
-                                                <span class="material-symbols--edit"></span>Edit
-                                            </a>
-                                        </div>
-                                    </td>
+                                    <th>Indicator Name</th>
+                                    <th>Measurement Unit</th>
+                                    <th>Assessment Type</th>
+                                    <th>Actions</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted">No KPI indicators available.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse ($kpiIndicators as $indicator)
+                                    <tr>
+                                        <td>
+                                            <strong>{{ $indicator->indicator_name }}</strong><br>
+                                            <small class="text-muted">{{ $indicator->description }}</small>
+                                        </td>
+                                        <td>{{ $indicator->measurement_unit }}</td>
+                                        <td>
+                                            @if ($indicator->higher_is_better)
+                                                <span class="badge badge-success">Higher Value is Better</span>
+                                            @else
+                                                <span class="badge badge-danger">Lower Value is Better</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{{ route('kpi-indicators.edit', $indicator->id) }}" class="btn-info"
+                                                    title="Edit Indicator">
+                                                    <span class="material-symbols--edit"></span>Edit
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No KPI indicators available.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $kpiIndicators->links() }}
+                    </div>
                 </div>
-
-                <div class="mt-3">
-                    {{ $kpiIndicators->links() }}
-                </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

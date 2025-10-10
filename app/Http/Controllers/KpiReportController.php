@@ -48,7 +48,7 @@ class KpiReportController extends Controller
 
         // --- Hak akses ---
         if ($user->role === 'hc' || $user->role === 'superadmin') {
-            $divisions = Division::orderBy('name')->get();
+            $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
             $positions = Position::orderBy('title')->get();
         } elseif ($user->role === 'manager') {
             if (!$user->employee || !$user->employee->division_id) {
@@ -127,6 +127,39 @@ class KpiReportController extends Controller
         }
 
         return view('kpi.reports.index', compact('assessments', 'divisions', 'positions', 'periods'));
+    }
+
+    public function show(KpiAssessment $kpiAssessment)
+    {
+        $user = Auth::user();
+
+        $hasPermission = false;
+
+        if (in_array($user->role, ['hc', 'superadmin'])) {
+            $hasPermission = true;
+        } elseif ($user->role === 'manager' && 
+                $user->employee && 
+                $kpiAssessment->employee && 
+                $user->employee->division_id === $kpiAssessment->employee->division_id) {
+            $hasPermission = true;
+        } elseif ($kpiAssessment->employee->user_id === $user->id || 
+                $kpiAssessment->participants()->where('assessor_id', $user->id)->exists() || 
+                $user->id === $kpiAssessment->primary_supervisor_id) {
+            $hasPermission = true;
+        }
+
+        abort_unless($hasPermission, 403, 'Anda tidak memiliki hak akses untuk melihat detail penilaian ini.');
+
+        $kpiAssessment->load(
+            'assessmentItems.indicator',
+            'assessmentItems.scoringRules',
+            'assessmentItems.scores.participant',
+            'participants.assessor',
+            'employee',
+            'period'
+        );
+
+        return view('kpi.reports.show', compact('kpiAssessment'));
     }
 
     private function getAllSubordinatePositionIds($parentPositionId)

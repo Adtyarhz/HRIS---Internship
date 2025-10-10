@@ -6,7 +6,6 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
-use App\Models\EmployeeEditRequest;
 use App\Models\CareerHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,6 +14,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
+use App\Services\RequestNotifierService;
+use App\Notifications\EmployeeEditRequestNotification;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ApplicantController; 
 use App\Models\Applicant;
 
@@ -25,15 +27,15 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        // Update status otomatis jika separation_date sudah lewat
+        // Automatically update status if separation_date has passed
         Employee::whereNotNull('separation_date')
             ->where('separation_date', '<', Carbon::today())
             ->where('status', '!=', 'Tidak Aktif')
             ->update(['status' => 'Tidak Aktif']);
 
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Jika superadmin, lihat semua karyawan aktif
+        // If superadmin or HC, view all active employees
         if (in_array($user->role, ['superadmin', 'hc'])) {
             $query = Employee::where('status', 'Aktif');
         } else {
@@ -42,7 +44,7 @@ class EmployeeController extends Controller
                 ->where('user_id', $user->id);
         }
 
-        // Filter pencarian jika ada
+        // Apply search filter if provided
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -67,8 +69,8 @@ class EmployeeController extends Controller
             $query->where('office', $request->office);
         }
 
-        // Ambil data tambahan untuk filter
-        $divisions = Division::orderBy('name')->get();
+        // Fetch additional data for filters
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get(); // except N/A
         $positions = Position::orderBy('title')->get();
 
         // Pagination
@@ -79,9 +81,9 @@ class EmployeeController extends Controller
 
     public function indexCareer(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Cek role superadmin vs user biasa
+        // Check role: superadmin, hc, or direksi vs regular user
         if (in_array($user->role, ['superadmin', 'hc', 'direksi'])) {
             $query = Employee::where('status', 'Aktif');
         } else {
@@ -89,7 +91,7 @@ class EmployeeController extends Controller
                 ->where('user_id', $user->id);
         }
 
-        // Filter pencarian
+        // Apply search filter
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -98,7 +100,7 @@ class EmployeeController extends Controller
             });
         }
 
-        // Filter tambahan
+        // Additional filters
         if ($request->filled('division_id')) {
             $query->where('division_id', $request->division_id);
         }
@@ -115,7 +117,7 @@ class EmployeeController extends Controller
             $query->where('office', $request->office);
         }
 
-        $divisions = Division::orderBy('name')->get();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         $positions = Position::orderBy('title')->get();
 
         $employees = $query->latest()->paginate(9)->withQueryString();
@@ -128,7 +130,7 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        $divisions = Division::orderBy('name')->get();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get(); // except N/A
         $positions = Position::orderBy('title')->get();
         $users = User::whereDoesntHave('employee')->orderBy('name')->get();
         return view('employees.data.create', compact('divisions', 'positions', 'users'));
@@ -181,10 +183,20 @@ class EmployeeController extends Controller
                 $validateData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
 
+            // Make sure Division_id has default 'N/A' if empty/null
+            if (empty($validatedData['division_id'])) {
+                // Find or create default division 'N/A'
+                $defaultDivision = Division::firstOrCreate(
+                    ['name' => 'N/A'],
+                    ['description' => 'Default division for undefined employees'] // optional column
+                );
+                $validatedData['division_id'] = $defaultDivision->id;
+            }
+
             $employee = Employee::create($validateData);
 
             // Create initial CareerHistory entry
-            if ($validateData['position_id'] && $validateData['division_id']) {
+            if ($validateData['position_id']) {
                 CareerHistory::create([
                     'employee_id' => $employee->id,
                     'position_id' => $validateData['position_id'],
@@ -198,11 +210,11 @@ class EmployeeController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil ditambahkan.');
+            return redirect()->route('employees.index')->with('success', 'Employee data added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Hapus file yang sudah terupload jika gagal
+            // Delete uploaded files if operation fails
             if (isset($validateData['cv_file'])) {
                 Storage::disk('public')->delete($validateData['cv_file']);
             }
@@ -210,7 +222,7 @@ class EmployeeController extends Controller
                 Storage::disk('public')->delete($validateData['photo']);
             }
 
-            return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Error occurred while saving data: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -238,11 +250,11 @@ class EmployeeController extends Controller
      */
     public function showCareer(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Hanya superadmin, hc, direksi, atau pemilik data yang bisa melihat
+        // Only superadmin, hc, direksi, or data owner can view
         if (!in_array($user->role, ['superadmin', 'hc', 'direksi']) && $employee->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses ke data ini.');
+            abort(403, 'You do not have access to this data.');
         }
 
         $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
@@ -256,14 +268,14 @@ class EmployeeController extends Controller
      */
     public function edit(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Bukan superadmin -> hanya bisa edit milik sendiri
+        // Non-superadmin/hc can only edit their own data
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses untuk mengedit data ini.');
+            abort(403, 'You do not have access to edit this data.');
         }
 
-        $divisions = Division::orderBy('name')->get();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get(); // except N/A
         $positions = Position::orderBy('title')->get();
         $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
 
@@ -275,14 +287,14 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Bukan superadmin/hc → hanya bisa update milik sendiri
+        // Non-superadmin/hc can only update their own data
         if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses untuk mengupdate data ini.');
+            abort(403, 'You do not have access to update this data.');
         }
 
-        // Validasi
+        // Validation
         $validatedData = $request->validate([
             'nik' => ['required', 'string', 'size:16', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
             'nip' => ['nullable', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^[0-9]+$/'],
@@ -312,7 +324,7 @@ class EmployeeController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle file upload (jika ada), tapi simpan sementara, jangan update DB langsung jika bukan superadmin/hc
+            // Handle file uploads (if any), but store temporarily, don't update DB directly if not superadmin/hc
             if ($request->hasFile('cv_file')) {
                 $file = $request->file('cv_file');
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
@@ -325,38 +337,27 @@ class EmployeeController extends Controller
                 $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
 
-            // Jika bukan superadmin/hc → buat request edit
+            // If not superadmin/hc → create edit request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+                $notifier = new RequestNotifierService();
 
-                EmployeeEditRequest::create([
-                    'employee_id' => $employee->id,
-                    'method' => 'update',
-                    'model' => Employee::class,
-                    'model_id' => $employee->id,
-                    'original_data' => array_merge(
-                        $employee->only(array_keys($validatedData)),
-                        [
-                            'position' => $employee->position->title ?? null,
-                            'division' => $employee->division->name ?? null,
-                            'employee_type' => $employee->employee_type,
-                        ]
-                    ),
-                    'changed_data' => array_merge($validatedData, [
-                        'position' => optional(Position::find($request->input('position_id')))->title,
-                        'division' => optional(Division::find($request->input('division_id')))->name,
-                        'employee_type' => $request->input('employee_type', $employee->employee_type),
-                    ]),
-                    'status' => 'waiting',
-                    'requested_by' => $user->id,
-                    'requested_at' => now(),
-                ]);
-
+                $editRequest = $notifier->createEditRequest(
+                    $employee,
+                    $validatedData,
+                    EmployeeEditRequestNotification::class,
+                    [
+                        'employee_id' => $employee->id,
+                    ]
+                );
+                if (!$editRequest) {
+                    return back()->with('error', 'Failed to create data update request.');
+                }
                 DB::commit();
                 return redirect()->route('employees.show', $employee->id)
-                    ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Data update request has been sent and is awaiting approval.');
             }
 
-            // Jika superadmin / hc → langsung update ke database
+            // If superadmin/hc → directly update the database
             if ($request->hasFile('cv_file') && $employee->cv_file) {
                 Storage::disk('public')->delete($employee->cv_file);
             }
@@ -365,15 +366,25 @@ class EmployeeController extends Controller
                 Storage::disk('public')->delete($employee->photo);
             }
 
-            // Simpan data lama sebelum update
-            $oldPosition = $employee->position_id;
+            // Store old data before update
+            $oldPosition = $employee->position;
             $oldDivision = $employee->division_id;
             $oldType = $employee->employee_type;
 
             $employee->update($validatedData);
 
-            // Cek perubahan karir
-            $newPosition = \App\Models\Position::find($validatedData['position_id'] ?? $employee->position_id);
+            // Make sure Division_id has default 'N/A' if empty/null
+            if (empty($validatedData['division_id'])) {
+                // Find or create default division 'N/A'
+                $defaultDivision = Division::firstOrCreate(
+                    ['name' => 'N/A'],
+                    ['description' => 'Default division for undefined employees'] // optional column
+                );
+                $validatedData['division_id'] = $defaultDivision->id;
+            }
+
+            // Check for career changes
+            $newPosition = Position::find($validatedData['position_id'] ?? $employee->position_id);
             $newDivision = $validatedData['division_id'] ?? $employee->division_id;
             $newType = $validatedData['employee_type'] ?? $employee->employee_type;
 
@@ -395,10 +406,10 @@ class EmployeeController extends Controller
                 $careerType = 'Mutasi';
             }
 
-            // Jika ada perubahan posisi/divisi/tipe karyawan
+            // If there are changes in position/division/employee type
             if ($careerType) {
-                // Tutup career history aktif sebelumnya
-                $activeCareer = \App\Models\CareerHistory::where('employee_id', $employee->id)
+                // Close active career history
+                $activeCareer = CareerHistory::where('employee_id', $employee->id)
                     ->whereNull('end_date')
                     ->first();
 
@@ -408,8 +419,8 @@ class EmployeeController extends Controller
                     ]);
                 }
 
-                // Tambahkan riwayat baru
-                \App\Models\CareerHistory::create([
+                // Add new career history
+                CareerHistory::create([
                     'employee_id' => $employee->id,
                     'position_id' => $newPosition ? $newPosition->id : null,
                     'division_id' => $newDivision,
@@ -422,10 +433,10 @@ class EmployeeController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('employees.show', $employee->id)->with('success', 'Data karyawan berhasil diperbarui.');
+            return redirect()->route('employees.show', $employee->id)->with('success', 'Employee data updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Error occurred while updating data: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -447,11 +458,11 @@ class EmployeeController extends Controller
 
             $employee->delete();
             DB::commit();
-            return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil dihapus.');
+            return redirect()->route('employees.index')->with('success', 'Employee data deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return redirect()->route('employees.index')->with('error', 'Gagal menghapus data karyawan. Mungkin data ini masih terhubung dengan data lain.');
+            return redirect()->route('employees.index')->with('error', 'Failed to delete employee data. It may be linked to other data.');
         }
     }
 
@@ -462,24 +473,24 @@ class EmployeeController extends Controller
             $employee->separation_date = now();
             $employee->save();
 
-            return redirect()->back()->with('success', 'Status karyawan berhasil diubah menjadi Tidak Aktif.');
+            return redirect()->back()->with('success', 'Employee status changed to Inactive successfully.');
         }
 
-        return redirect()->back()->with('info', 'Karyawan sudah berstatus Tidak Aktif.');
+        return redirect()->back()->with('info', 'Employee is already Inactive.');
     }
 
     public function editAddress(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Jika bukan HC & Superadmin → hanya boleh akses datanya sendiri
+        // If not HC or Superadmin, only allow access to own data
         if (!in_array($user->role, ['superadmin', 'hc'])) {
             if (!$user->employee || $user->employee->id !== $employee->id) {
                 abort(403, 'Unauthorized access to address data.');
             }
         }
 
-        $divisions = Division::orderBy('name')->get();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get(); // except N/A
         $positions = Position::orderBy('title')->get();
         $users = User::whereDoesntHave('employee')
             ->orWhere('id', $employee->user_id)

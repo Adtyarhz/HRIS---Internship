@@ -28,61 +28,59 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-        <div class="form-content-container">
-            <div class="card-body">
+                    <form id="updateForm"
+                        action="{{ route('employees.family-dependents.update', [$employee->id, $familyDependent->id]) }}"
+                        method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
 
-                <form id="updateForm"
-                    action="{{ route('employees.family-dependents.update', [$employee->id, $familyDependent->id]) }}"
-                    method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="_method" value="PUT">
-
-                    <div class="row">
-                        <div class="col-12">
-                            
-                          @include('employees.family-dependents._form', ['familyDependent' => $familyDependent])
-
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="form-buttons-container">
-                                <button type="button" class="btn btn-delete" onclick="showDeleteModal('family-dependent-{{ $familyDependent->id }}')">Delete</button>
-                                <a href="{{ route('employees.family-dependents.index', $employee->id) }}"
-                                    class="btn btn-cancel">Cancel</a>
-                                <button type="submit" class="btn btn-submit" form="updateForm">Submit</button>
+                        <div class="row">
+                            <div class="col-12">
+                                @include('employees.family-dependents._form', ['familyDependent' => $familyDependent])
                             </div>
                         </div>
-                    </div>
-                </form>
 
-                <!-- Komponen Modal Delete -->
-                <x-delete-modal 
-                    modalId="family-dependent-{{ $familyDependent->id }}" 
-                    :action="route('employees.family-dependents.destroy', [$employee->id, $familyDependent->id])" 
-                    message="Are you sure to delete this Family Dependent?" 
-                />
-                
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="form-buttons-container">
+                                    <button type="button" class="btn btn-delete"
+                                        onclick="showDeleteModal('family-dependent-{{ $familyDependent->id }}')">
+                                        Delete
+                                    </button>
+                                    <a href="{{ route('employees.family-dependents.index', $employee->id) }}"
+                                        class="btn btn-cancel">Cancel</a>
+                                    <button type="submit" class="btn btn-submit" form="updateForm">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    {{-- Delete Modal --}}
+                    <x-delete-modal modalId="family-dependent-{{ $familyDependent->id }}"
+                        :action="route('employees.family-dependents.destroy', [$employee->id, $familyDependent->id])"
+                        message="Are you sure to delete this Family Dependent?" />
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection
 
 @push('scripts')
     <script>
-        // Nonaktifkan tombol submit saat pengiriman dan log data
-        document.getElementById('updateForm').addEventListener('submit', function(e) {
+        document.getElementById('updateForm').addEventListener('submit', function (e) {
             console.log('Form submitted with method: PUT');
             console.log('Form data:', new FormData(this));
             const submitButton = this.querySelector('button[type="submit"]');
             if (submitButton) {
                 submitButton.disabled = true;
-                submitButton.innerText = 'Menyimpan...';
+                submitButton.innerText = 'Saving...';
             }
         });
     </script>

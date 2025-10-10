@@ -331,7 +331,7 @@
     <div class="col-12">
         <div class="form-buttons-container">
             <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
-            <button type="submit" class="btn btn-submit">Update</button>
+            <button type="submit" form="updateForm" class="btn btn-submit">Update</button>
         </div>
     </div>
 </div>

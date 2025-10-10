@@ -28,56 +28,48 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-        <div class="form-content-container">
-            <div class="card-body">
+                    <form id="updateForm"
+                        action="{{ route('employees.educationhistory.update', [$employee->id, $educationHistory->id]) }}"
+                        method="POST">
+                        @csrf
+                        @method('PUT')
 
-                {{-- Flash messages --}}
-                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
-                @endif
-                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-
-                <form id="updateForm"
-                      action="{{ route('employees.educationhistory.update', [$employee->id, $educationHistory->id]) }}"
-                      method="POST">
-                    @csrf
-                    @method('PUT')
-
-                    <div class="row">
-                        <div class="col-12">
-                            @include('employees.educationhistory._form', ['education' => $educationHistory])
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="form-buttons-container">
-                                <button type="button" class="btn btn-delete"
-                                        onclick="showDeleteModal('education-history-{{ $educationHistory->id }}')">
-                                    Delete
-                                </button>
-                                <a href="{{ route('employees.educationhistory.index', $employee->id) }}"
-                                   class="btn btn-cancel">Cancel</a>
-                                <button type="submit" class="btn btn-submit" form="updateForm">Submit</button>
+                        <div class="row">
+                            <div class="col-12">
+                                @include('employees.educationhistory._form', ['education' => $educationHistory])
                             </div>
                         </div>
-                    </div>
-                </form>
 
-                {{-- Delete Modal --}}
-                <x-delete-modal
-                    modalId="education-history-{{ $educationHistory->id }}"
-                    :action="route('employees.educationhistory.destroy', [$employee->id, $educationHistory->id])"
-                    message="Are you sure you want to delete this Education History?" />
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="form-buttons-container">
+                                    <button type="button" class="btn btn-delete"
+                                        onclick="showDeleteModal('education-history-{{ $educationHistory->id }}')">
+                                        Delete
+                                    </button>
+                                    <a href="{{ route('employees.educationhistory.index', $employee->id) }}"
+                                        class="btn btn-cancel">Cancel</a>
+                                    <button type="submit" class="btn btn-submit" form="updateForm">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    {{-- Delete Modal --}}
+                    <x-delete-modal modalId="education-history-{{ $educationHistory->id }}"
+                        :action="route('employees.educationhistory.destroy', [$employee->id, $educationHistory->id])"
+                        message="Are you sure you want to delete this Education History?" />
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection
 
 @push('scripts')

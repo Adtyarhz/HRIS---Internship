@@ -204,96 +204,97 @@
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Certifications</strong>
+                        <a href="{{ route('employees.certifications.create', $employee->id) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Certification
+                        </a>
+                    </div>
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Certifications</strong>
-                    <a href="{{ route('employees.certifications.create', $employee->id) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Certification
-                    </a>
-                </div>
-
-                {{-- Table / Card --}}
-                @if ($certifications->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Certification Name</th>
-                                    <th>Issuer</th>
-                                    <th>Date Obtained</th>
-                                    <th>Expiry Date</th>
-                                    <th>Main Certificate</th>
-                                    <th>Material Files</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($certifications as $certification)
+                    {{-- Table / Card --}}
+                    @if ($certifications->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $loop->iteration }}</td>
-                                        <td data-label="Certification Name">{{ $certification->certification_name }}</td>
-                                        <td data-label="Issuer">{{ $certification->issuer }}</td>
-                                        <td data-label="Date Obtained">{{ $certification->date_obtained->format('d F Y') }}</td>
-                                        <td data-label="Expiry Date">{{ $certification->expiry_date ? $certification->expiry_date->format('d F Y') : '-' }}</td>
-                                        <td data-label="Main Certificate">
-                                            @if ($certification->certificate_file)
-                                                <a href="{{ asset('storage/' . $certification->certificate_file) }}" target="_blank" class="file-link">
-                                                    <i class="fa-regular fa-file"></i>
-                                                    {{ Str::afterLast($certification->certificate_file, '_') }}
-                                                </a>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td data-label="Material Files">
-                                            @if ($certification->certificationMaterials->isNotEmpty())
-                                                <ul class="file-list">
-                                                    @foreach ($certification->certificationMaterials as $index => $material)
-                                                        <li>
-                                                            <a href="{{ asset('storage/' . $material->file_path) }}" target="_blank" class="file-link">
-                                                                <i class="fa-regular fa-file"></i>
-                                                                Certification Material {{ $index + 1 }}
-                                                            </a>
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            @else
-                                                No file
-                                            @endif
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.certifications.edit', [$employee->id, $certification->id]) }}"
-                                                   class="btn-info" title="Edit Certification">
-                                                   <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Certification Name</th>
+                                        <th>Issuer</th>
+                                        <th>Date Obtained</th>
+                                        <th>Expiry Date</th>
+                                        <th>Main Certificate</th>
+                                        <th>Material Files</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center text-muted py-4">
-                        No certifications available for this employee.
-                    </div>
-                @endif
+                                </thead>
+                                <tbody>
+                                    @foreach ($certifications as $certification)
+                                        <tr>
+                                            <td data-label="No.">{{ $loop->iteration }}</td>
+                                            <td data-label="Certification Name">{{ $certification->certification_name }}</td>
+                                            <td data-label="Issuer">{{ $certification->issuer }}</td>
+                                            <td data-label="Date Obtained">{{ $certification->date_obtained->format('d F Y') }}</td>
+                                            <td data-label="Expiry Date">{{ $certification->expiry_date ? $certification->expiry_date->format('d F Y') : '-' }}</td>
+                                            <td data-label="Main Certificate">
+                                                @if ($certification->certificate_file)
+                                                    <a href="{{ asset('storage/' . $certification->certificate_file) }}" target="_blank" class="file-link">
+                                                        <i class="fa-regular fa-file"></i>
+                                                        {{ Str::afterLast($certification->certificate_file, '_') }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td data-label="Material Files">
+                                                @if ($certification->certificationMaterials->isNotEmpty())
+                                                    <ul class="file-list">
+                                                        @foreach ($certification->certificationMaterials as $index => $material)
+                                                            <li>
+                                                                <a href="{{ asset('storage/' . $material->file_path) }}" target="_blank" class="file-link">
+                                                                    <i class="fa-regular fa-file"></i>
+                                                                    Certification Files {{ $index + 1 }}
+                                                                </a>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @else
+                                                    No file
+                                                @endif
+                                            </td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.certifications.edit', [$employee->id, $certification->id]) }}"
+                                                    class="btn-info" title="Edit Certification">
+                                                    <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            No certifications available for this employee.
+                        </div>
+                    @endif
 
-                {{-- Cancel Button --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    {{-- Cancel Button --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    </div>
+
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

@@ -128,7 +128,7 @@ class EmployeeEditRequestController extends Controller
                         'new_value' => $newValue,
                         'model_id'  => $model->id,
                     ]);
-                    } else {
+                } else {
                     // normalisasi path lama & baru
                     if (in_array($field, ['certificate_file', 'insurance_file'])) {
                         $oldValue = $this->normalizeFilePath($oldValue, $table, false);
@@ -140,6 +140,10 @@ class EmployeeEditRequestController extends Controller
                 if ($field === 'material_files' && in_array($table, ['certifications', 'training_histories'])) {
                     $relationName = ($table === 'certifications') ? 'certificationMaterials' : 'trainingMaterials';
                     $oldFiles = $model->$relationName()->pluck('file_path')->toArray();
+
+                    // normalisasi semua path lama
+                    $oldFiles = array_map(fn($f) => $this->normalizeFilePath($f, $table, true), $oldFiles);
+
                     $newFiles = $oldFiles;
                     // normalisasi semua path lama
                     $oldFiles = array_map(fn($f) => $this->normalizeFilePath($f, $table, true), $oldFiles);
@@ -272,6 +276,7 @@ class EmployeeEditRequestController extends Controller
             throw new \Exception("Model {$editRequest->model} tidak ditemukan.");
         }
 
+        // ====== HANDLE CREATE ======
         if (strtolower($editRequest->method) === 'create') {
             $model = new $modelClass();
 
@@ -292,6 +297,27 @@ class EmployeeEditRequestController extends Controller
             $editRequest->approved_by = auth()->id();
             $editRequest->status = 'approved';
             $editRequest->save();
+
+        // ====== HANDLE DELETE ======
+        } elseif (strtolower($editRequest->method) === 'delete') {
+            $model = $modelClass::find($editRequest->model_id);
+
+            if (!$model) {
+                throw new \Exception("Data {$editRequest->model} dengan ID {$editRequest->model_id} tidak ditemukan.");
+            }
+
+            // Simpan backup data sebelum hapus (opsional)
+            Log::info("Menghapus data {$modelClass} ID {$editRequest->model_id} atas persetujuan HC/Superadmin.", [
+                'deleted_data' => $model->toArray(),
+            ]);
+
+            $model->delete();
+
+            $editRequest->approved_by = auth()->id();
+            $editRequest->status = 'approved';
+            $editRequest->save();
+
+        // ====== HANDLE UPDATE ======
         } else {
             $model = $modelClass::find($editRequest->model_id);
             if (!$model) {
@@ -329,9 +355,7 @@ class EmployeeEditRequestController extends Controller
                     } else {
                         $careerType = 'Mutasi';
                     }
-                } elseif ($oldDivision != $newDivision) {
-                    $careerType = 'Mutasi';
-                } elseif ($oldType != $newType) {
+                } elseif ($oldDivision != $newDivision || $oldType != $newType) {
                     $careerType = 'Mutasi';
                 }
 
@@ -367,6 +391,7 @@ class EmployeeEditRequestController extends Controller
             $editRequest->save();
         }
 
+        // === Kirim notifikasi ke user pengaju ===
         $user = $editRequest->employee->user ?? null;
         if ($user) {
             $user->notify(new EmployeeEditStatusNotification(
@@ -474,5 +499,22 @@ class EmployeeEditRequestController extends Controller
     private function isDateField($field)
     {
         return str_contains($field, 'date') || str_contains($field, 'start_year') || str_contains($field, 'end_year');
+    }
+
+    /**
+     * Normalisasi path file supaya konsisten (ada folder prefix)
+     */
+    private function normalizeFilePath($path, $table, $isMaterial = false)
+    {
+        if (empty($path)) return $path;
+
+        // Jika path sudah ada folder prefix, langsung return
+        if (str_contains($path, '/')) {
+            return $path;
+        }
+
+        return $isMaterial
+            ? "{$table}/materials/{$path}"
+            : "{$table}/{$path}";
     }
 }

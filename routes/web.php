@@ -288,6 +288,7 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc,manager')->group(function () {
         Route::get('/kpi-reports', [KpiReportController::class, 'index'])->name('kpi-reports.index');
         Route::get('/kpi-reports/export', [KpiReportController::class, 'export'])->name('kpi-reports.export');
+        Route::get('kpi/reports/{kpiAssessment}', [KpiReportController::class, 'show'])->name('kpi-reports.show');
     });
 
     // Akses untuk semua role kecuali superadmin

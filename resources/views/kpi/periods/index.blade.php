@@ -50,8 +50,14 @@
             margin-left: auto;
         }
 
-        .btn-info:hover {background-color: #098ba5; }
-        .add-button:hover { background-color: #803030; color: #fff; }
+        .btn-info:hover {
+            background-color: #098ba5;
+        }
+
+        .add-button:hover {
+            background-color: #803030;
+            color: #fff;
+        }
 
         .action-buttons {
             display: flex;
@@ -59,7 +65,8 @@
             justify-content: center;
         }
 
-        .gg--trash-period, .material-symbols--edit {
+        .gg--trash-period,
+        .material-symbols--edit {
             display: inline-block;
             width: 18px;
             height: 18px;
@@ -74,66 +81,64 @@
         .material-symbols--edit {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M3 21v-4.25L16.2 3.575q.3-.275.663-.425t.762-.15t.775.15t.65.45L20.425 5q.3.275.438.65T21 6.4q0 .4-.137.763t-.438.662L7.25 21zM17.6 7.8L19 6.4L17.6 5l-1.4 1.4z'/%3E%3C/svg%3E");
         }
-        
     </style>
 @endpush
 
-@section('content')
-    {{-- Tab Menu --}}
+@section('content-wrapper')
     @include('kpi.partials.tab-menu')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+                    {{-- Section Title + Add Button --}}
+                    <div class="assessment-section-title d-flex justify-content-between align-items-center">
+                        KPI Periods List
+                        <a href="{{ route('kpi-periods.create') }}" class="add-button">
+                            <i class="fas fa-plus"></i>Add New Period
+                        </a>
+                    </div>
 
-                {{-- Section Title + Add Button --}}
-                <div class="assessment-section-title d-flex justify-content-between align-items-center">
-                    KPI Periods List
-                    <a href="{{ route('kpi-periods.create') }}" class="add-button">
-                        <i class="fas fa-plus"></i>Add New Period
-                    </a>
-                </div>
-
-                {{-- Table --}}
-                <div class="table-responsive">
-                    <table class="table table-bordered table-custom text-center align-middle">
-                        <thead>
-                            <tr>
-                                <th>Period Name</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($kpiPeriods as $period)
+                    {{-- Table --}}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-custom text-center align-middle">
+                            <thead>
                                 <tr>
-                                    <td>{{ $period->period_name }}</td>
-                                    <td>{{ $period->start_date->format('d M Y') }}</td>
-                                    <td>{{ $period->end_date->format('d M Y') }}</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="{{ route('kpi-periods.edit', $period->id) }}" class="btn-info"
-                                                title="Edit Period">
-                                                <span class="material-symbols--edit"></span>Edit
-                                            </a>
-                                        </div>
-                                    </td>
+                                    <th>Period Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted">No KPI periods available.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                @forelse ($kpiPeriods as $period)
+                                    <tr>
+                                        <td>{{ $period->period_name }}</td>
+                                        <td>{{ $period->start_date->format('d M Y') }}</td>
+                                        <td>{{ $period->end_date->format('d M Y') }}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{{ route('kpi-periods.edit', $period->id) }}" class="btn-info"
+                                                    title="Edit Period">
+                                                    <span class="material-symbols--edit"></span>Edit
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No KPI periods available.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $kpiPeriods->links() }}
+                    </div>
 
-                <div class="mt-3">
-                    {{ $kpiPeriods->links() }}
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

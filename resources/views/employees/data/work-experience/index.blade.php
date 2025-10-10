@@ -204,95 +204,96 @@
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Work Experience
+                        <a href="{{ route('employees.work-experience.create', $employee) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Work Experience
+                        </a>
+                    </div>
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Work Experience
-                    <a href="{{ route('employees.work-experience.create', $employee) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Work Experience
-                    </a>
-                </div>
-
-                {{-- Table / Card --}}
-                @if ($workExperiences->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Company Name</th>
-                                    <th>Start - End Date</th>
-                                    <th>Last Salary</th>
-                                    <th>Reference Letter</th>
-                                    <th>Salary Slip</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($workExperiences as $index => $experience)
+                    {{-- Table / Card --}}
+                    @if ($workExperiences->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $loop->iteration }}</td>
-                                        <td data-label="Company Name">{{ $experience->company_name }}</td>
-                                        <td data-label="Start - End Date">
-                                            {{ \Carbon\Carbon::parse($experience->start_date)->format('d/m/Y') }} -
-                                            {{ $experience->end_date ? \Carbon\Carbon::parse($experience->end_date)->format('d/m/Y') : 'Present' }}
-                                        </td>
-                                        <td data-label="Last Salary">
-                                            Rp{{ number_format($experience->last_salary, 2, ',', '.') }}
-                                        </td>
-                                        <td data-label="Reference Letter">
-                                            @if ($experience->reference_letter_file)
-                                                <a href="{{ asset('storage/' . $experience->reference_letter_file) }}" target="_blank"
-                                                    class="file-link">
-                                                    <i class="fa-regular fa-file"></i>
-                                                    {{ Str::afterLast($experience->reference_letter_file, '_') }}
-                                                </a>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td data-label="Salary Slip">
-                                            @if ($experience->salary_slip_file)
-                                                <a href="{{ asset('storage/' . $experience->salary_slip_file) }}" target="_blank"
-                                                    class="file-link">
-                                                    <i class="fa-regular fa-file"></i>
-                                                    {{ Str::afterLast($experience->salary_slip_file, '_') }}
-                                                </a>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.work-experience.edit', [$employee, $experience]) }}"
-                                                    class="btn-info" title="Edit Work Experience">
-                                                    <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Company Name</th>
+                                        <th>Start - End Date</th>
+                                        <th>Last Salary</th>
+                                        <th>Reference Letter</th>
+                                        <th>Salary Slip</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center text-muted py-4">
-                        No work experience available for this employee.
-                    </div>
-                @endif
+                                </thead>
+                                <tbody>
+                                    @foreach ($workExperiences as $index => $experience)
+                                        <tr>
+                                            <td data-label="No.">{{ $loop->iteration }}</td>
+                                            <td data-label="Company Name">{{ $experience->company_name }}</td>
+                                            <td data-label="Start - End Date">
+                                                {{ \Carbon\Carbon::parse($experience->start_date)->format('d/m/Y') }} -
+                                                {{ $experience->end_date ? \Carbon\Carbon::parse($experience->end_date)->format('d/m/Y') : 'Present' }}
+                                            </td>
+                                            <td data-label="Last Salary">
+                                                Rp{{ number_format($experience->last_salary, 2, ',', '.') }}
+                                            </td>
+                                            <td data-label="Reference Letter">
+                                                @if ($experience->reference_letter_file)
+                                                    <a href="{{ asset('storage/' . $experience->reference_letter_file) }}"
+                                                        target="_blank" class="file-link">
+                                                        <i class="fa-regular fa-file"></i>
+                                                        {{ Str::afterLast($experience->reference_letter_file, '_') }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td data-label="Salary Slip">
+                                                @if ($experience->salary_slip_file)
+                                                    <a href="{{ asset('storage/' . $experience->salary_slip_file) }}" target="_blank"
+                                                        class="file-link">
+                                                        <i class="fa-regular fa-file"></i>
+                                                        {{ Str::afterLast($experience->salary_slip_file, '_') }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.work-experience.edit', [$employee, $experience]) }}"
+                                                        class="btn-info" title="Edit Work Experience">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            No work experience available for this employee.
+                        </div>
+                    @endif
 
-                {{-- Cancel Button --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
+                    {{-- Cancel Button --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.index') }}" class="btn btn-cancel">Cancel</a>
+                    </div>
+
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

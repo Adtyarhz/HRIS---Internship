@@ -12,11 +12,13 @@
                 flex-direction: column-reverse;
                 gap: 15px;
             }
+
             .btn-submit,
             .btn-cancel {
                 width: 100%;
                 max-width: 100%;
             }
+
             .btn-submit {
                 margin-left: 0;
             }
@@ -24,37 +26,27 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        {{-- Tab Menu --}}
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-        <div class="form-content-container">
-            <div class="card-body">
-                {{-- Error Message --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0 ps-3">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                    <form action="{{ route('employees.educationhistory.store', $employee) }}" method="POST">
+                        @csrf
 
-                <form action="{{ route('employees.educationhistory.store', $employee) }}" method="POST">
-                    @csrf
+                        @include('employees.educationhistory._form', ['education' => null])
 
-                    {{-- Include partial form --}}
-                    @include('employees.educationhistory._form', ['education' => null])
+                        <div class="form-buttons-container mt-4">
+                            <a href="{{ route('employees.educationhistory.index', $employee) }}"
+                                class="btn btn-cancel">Cancel</a>
+                            <button type="submit" class="btn btn-submit">Submit</button>
+                        </div>
 
-                    {{-- Buttons --}}
-                    <div class="form-buttons-container mt-4">
-                        <a href="{{ route('employees.educationhistory.index', $employee) }}" class="btn btn-cancel">Cancel</a>
-                        <button type="submit" class="btn btn-submit">Submit</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection

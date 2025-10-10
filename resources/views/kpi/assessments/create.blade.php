@@ -50,96 +50,101 @@
     </style>
 @endpush
 
-@section('content')
+@section('content-wrapper')
     @include('kpi.partials.tab-menu')
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-                {{-- Form --}}
-                <form action="{{ route('kpi-assessments.store') }}" method="POST">
-                    @csrf
+                    {{-- Form --}}
+                    <form action="{{ route('kpi-assessments.store') }}" method="POST">
+                        @csrf
 
-                    {{-- Select Period --}}
-                    <div class="form-group row align-items-center">
-                        <label for="kpi_period_id" class="col-md-2 col-form-label">Assessment Period <span class="text-danger">*</span>:</label>
-                        <div class="col-md-4">
-                            <select name="kpi_period_id" id="kpi_period_id" class="form-control @error('kpi_period_id') is-invalid @enderror" required>
-                                <option value="">-- Select Period --</option>
-                                @foreach($periods as $period)
-                                    <option value="{{ $period->id }}" {{ old('kpi_period_id') == $period->id ? 'selected' : '' }}>
-                                        {{ $period->period_name }} ({{ $period->start_date->format('d-m-Y') }} - {{ $period->end_date->format('d-m-Y') }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('kpi_period_id')
-                                <span class="invalid-feedback d-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- Subordinates & Template --}}
-                    <div class="assessment-section-title">Choose Subordinates and KPI Template</div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 60px;">Select</th>
-                                    <th>Employee Name</th>
-                                    <th>Position</th>
-                                    <th>KPI Template</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($subordinates as $subordinate)
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" name="selected_employees[]" value="{{ $subordinate->id }}"
-                                                class="form-check-input">
-                                        </td>
-                                        <td>{{ $subordinate->full_name }}</td>
-                                        <td>{{ $subordinate->position->title }}</td>
-                                        <td>
-                                            <select name="employees[{{ $subordinate->id }}]"
-                                                class="form-control @error('employees.' . $subordinate->id) is-invalid @enderror">
-                                                <option value="">-- Select Template --</option>
-                                                @if(isset($templatesByPosition[$subordinate->position_id]))
-                                                    @foreach($templatesByPosition[$subordinate->position_id] as $template)
-                                                        <option value="{{ $template->id }}"
-                                                            {{ old('employees.' . $subordinate->id) == $template->id ? 'selected' : '' }}>
-                                                            {{ $template->template_name }}
-                                                        </option>
-                                                    @endforeach
-                                                @endif
-                                            </select>
-                                            @error('employees.' . $subordinate->id)
-                                                <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No subordinates available.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {{-- Buttons --}}
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="form-buttons-container">
-                                <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
-                                <button type="submit" class="btn btn-submit">Submit</button>
+                        {{-- Select Period --}}
+                        <div class="form-group row align-items-center">
+                            <label for="kpi_period_id" class="col-md-2 col-form-label">Assessment Period <span class="text-danger">*</span>:</label>
+                            <div class="col-md-4">
+                                <select name="kpi_period_id" id="kpi_period_id" class="form-control @error('kpi_period_id') is-invalid @enderror" required>
+                                    <option value="">-- Select Period --</option>
+                                    @foreach($periods as $period)
+                                        <option value="{{ $period->id }}" {{ old('kpi_period_id') == $period->id ? 'selected' : '' }}>
+                                            {{ $period->period_name }} ({{ $period->start_date->format('d-m-Y') }} - {{ $period->end_date->format('d-m-Y') }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('kpi_period_id')
+                                    <span class="invalid-feedback d-block">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
-                    </div>
-                </form>
+
+                        {{-- Subordinates & Template --}}
+                        <div class="assessment-section-title">Choose Subordinates and KPI Template</div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">Select</th>
+                                        <th>Employee Name</th>
+                                        <th>Position</th>
+                                        <th>KPI Template</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($subordinates as $subordinate)
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="selected_employees[]" value="{{ $subordinate->id }}"
+                                                    class="form-check-input">
+                                            </td>
+                                            <td>{{ $subordinate->full_name }}</td>
+                                            <td>{{ $subordinate->position->title }}</td>
+                                            <td>
+                                                <select name="employees[{{ $subordinate->id }}]"
+                                                    class="form-control @error('employees.' . $subordinate->id) is-invalid @enderror">
+                                                    <option value="">-- Select Template --</option>
+                                                    @if(isset($templatesByPosition[$subordinate->position_id]))
+                                                        @foreach($templatesByPosition[$subordinate->position_id] as $template)
+                                                            <option value="{{ $template->id }}"
+                                                                {{ old('employees.' . $subordinate->id) == $template->id ? 'selected' : '' }}>
+                                                                {{ $template->template_name }}
+                                                            </option>
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                                @error('employees.' . $subordinate->id)
+                                                    <span class="invalid-feedback d-block">{{ $message }}</span>
+                                                @enderror
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">No subordinates available.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="form-buttons-container">
+                                    <a href="{{ route('kpi-assessments.index') }}" class="btn btn-cancel">Cancel</a>
+                                    <button type="submit" class="btn btn-submit">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                </div>
             </div>
         </div>
-    </div>
+    </section>
+@endsection
 
+@push('scripts')
     {{-- Checkbox & Row Click Logic --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -170,4 +175,4 @@
             });
         });
     </script>
-@endsection
+@endpush

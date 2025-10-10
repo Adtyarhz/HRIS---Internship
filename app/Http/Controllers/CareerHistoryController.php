@@ -31,7 +31,7 @@ class CareerHistoryController extends Controller
             ->orderBy('id')
             ->get();
 
-        $divisions = Division::orderBy('name')->get();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get(); // except N/A
         $positions = Position::orderBy('title')->get();
 
         return view('career-path.career_histories.index', compact('careerHistories', 'employee', 'divisions', 'positions'));
@@ -49,7 +49,7 @@ class CareerHistoryController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk menambah riwayat karir ini.');
         }
         $positions = Position::orderBy('title')->get()->pluck('title', 'id');
-        $divisions = Division::orderBy('name')->get()->pluck('name', 'id');
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get()->pluck('name', 'id');
         return view('career-path.career_histories.create', compact('employee', 'positions', 'divisions'));
     }
 
@@ -157,7 +157,7 @@ class CareerHistoryController extends Controller
         }
 
         $positions = Position::orderBy('title')->get()->pluck('title', 'id');
-        $divisions = Division::orderBy('name')->get()->pluck('name', 'id');
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get()->pluck('name', 'id');
         return view('career-path.career_histories.edit', compact('employee', 'careerHistory', 'positions', 'divisions'));
     }
 

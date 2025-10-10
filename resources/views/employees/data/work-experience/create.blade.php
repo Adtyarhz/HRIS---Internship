@@ -26,39 +26,39 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="container-fluid">
-        {{-- ✅ Tab Menu --}}
-        @include('employees.partials.tab-menu', ['employee' => $employee])
+@section('content-wrapper')
+    @include('employees.partials.tab-menu', ['employee' => $employee])
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    {{-- Error Message --}}
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0 ps-3">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-        <div class="form-content-container">
-            <div class="card-body">
-                {{-- Error Message --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0 ps-3">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                    <form action="{{ route('employees.work-experience.store', $employee) }}" method="POST"
+                        enctype="multipart/form-data">
+                        @csrf
 
-                <form action="{{ route('employees.work-experience.store', $employee) }}" method="POST"
-                    enctype="multipart/form-data">
-                    @csrf
+                        {{-- ⛳ Ini WAJIB: kirim nilai null ke partial --}}
+                        @include('employees.data.work-experience._form', ['workExperience' => null])
 
-                    {{-- ⛳ Ini WAJIB: kirim nilai null ke partial --}}
-                    @include('employees.data.work-experience._form', ['workExperience' => null])
-
-                    {{-- ✅ Tombol di kanan bawah --}}
-                    <div class="form-buttons-container mt-4">
-                        <a href="{{ route('employees.work-experience.index', $employee) }}"
-                            class="btn btn-cancel">Cancel</a>
-                        <button type="submit" class="btn btn-submit">Submit</button>
-                    </div>
-                </form>
+                        {{-- ✅ Tombol di kanan bawah --}}
+                        <div class="form-buttons-container mt-4">
+                            <a href="{{ route('employees.work-experience.index', $employee) }}"
+                                class="btn btn-cancel">Cancel</a>
+                            <button type="submit" class="btn btn-submit">Submit</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 @endsection

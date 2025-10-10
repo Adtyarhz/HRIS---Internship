@@ -2,7 +2,7 @@
 <style>
     /* Container styling to handle layout integration with AdminLTE */
     .tabs-container {
-        margin: 0px 0px 20px 0px;
+        margin: 0px 0px 0px 0px;
         width: 100%;
         overflow: hidden;
     }
@@ -128,52 +128,59 @@
     $employeeId = $employee->id ?? null;
 
     $allTabs = [
-        'employees.edit'             => 'Personal',
-        'employees.address.edit'     => 'Address',
-        'employees.family-dependents.index' => 'Family &<br/>Dependent',
+        'employees.edit'                     => 'Personal',
+        'employees.address.edit'             => 'Address',
+        'employees.family-dependents.index'  => 'Family &<br/>Dependent',
         'employees.educationhistory.index'   => 'Education<br/>History',
         'employees.training-histories.index' => 'Training<br/>Record',
-        'employees.health.edit'      => 'Health<br/>History',
-        'employees.certifications.index' => 'Certification',
-        'employees.insurance.index'   => 'Insurance',
-        'employees.work-experience.index'  => 'Work<br/>Experience',
+        'employees.health.edit'              => 'Health<br/>History',
+        'employees.certifications.index'     => 'Certification',
+        'employees.insurance.index'          => 'Insurance',
+        'employees.work-experience.index'    => 'Work<br/>Experience',
     ];
 @endphp
 
 <div class="tabs-container">
     <nav class="tabs-nav">
         @foreach ($allTabs as $route => $label)
-        @php
-            $isRouteActive = Route::has($route) && $employeeId;
-            $isActivePage = request()->routeIs($route . '*') 
-                || (
-                    $route === 'employees.work-experience.index' && 
-                    (request()->routeIs('employees.work-experience.create') || request()->routeIs('employees.work-experience.edit'))
-                )
-                || (
-                    $route === 'employees.educationhistory.index' && 
-                    (request()->routeIs('employees.educationhistory.create') || request()->routeIs('employees.educationhistory.edit'))
-                )
-                || (request()->routeIs('employees.create') && $route == 'employees.edit');
+            @php
+                $isRouteActive = Route::has($route) && $employeeId;
 
-            $classes = 'tabs-nav__item';
+                // Get route prefix without CRUD suffix
+                $routePrefix = preg_replace('/\.(index|edit|create|show)$/', '', $route);
 
-            if ($isActivePage) {
-                $classes .= ' tabs-nav__item--active';
-            } elseif (!$isRouteActive && !request()->routeIs('employees.create')) {
-                $classes .= ' tabs-nav__item--inactive';
-            }
-        @endphp
+                // Get the current route name
+                $currentRoute = request()->route()->getName();
 
-        @if ($isRouteActive)
-            <a href="{{ route($route, $employeeId) }}" class="{{ $classes }}">
-                <span class="tabs-nav__item-text">{!! $label !!}</span>
-            </a>
-        @else
-            <div class="{{ $classes }}" @if (!Route::has($route)) title="Fitur ini belum tersedia" @endif>
-                <span class="tabs-nav__item-text">{!! $label !!}</span>
-            </div>
-        @endif
-    @endforeach
+                // Check if the current route starts with the same prefix and the next segment is the same (not just 'employees.')
+                $isActivePage =
+                    $currentRoute === $route ||
+                    Str::startsWith($currentRoute, $routePrefix . '.') &&
+                    Str::startsWith($routePrefix, 'employees.') &&
+                    explode('.', $currentRoute)[1] === explode('.', $routePrefix)[1];
+
+                // Add exception for when creating new employee
+                if (request()->routeIs('employees.create') && $route === 'employees.edit') {
+                    $isActivePage = true;
+                }
+
+                $classes = 'tabs-nav__item';
+                if ($isActivePage) {
+                    $classes .= ' tabs-nav__item--active';
+                } elseif (!$isRouteActive && !request()->routeIs('employees.create')) {
+                    $classes .= ' tabs-nav__item--inactive';
+                }
+            @endphp
+
+            @if ($isRouteActive)
+                <a href="{{ route($route, $employeeId) }}" class="{{ $classes }}">
+                    <span class="tabs-nav__item-text">{!! $label !!}</span>
+                </a>
+            @else
+                <div class="{{ $classes }}" @if (!Route::has($route)) title="Fitur ini belum tersedia" @endif>
+                    <span class="tabs-nav__item-text">{!! $label !!}</span>
+                </div>
+            @endif
+        @endforeach
     </nav>
 </div>

@@ -204,89 +204,91 @@
     </style>
 @endpush
 
-@section('content')
-    {{-- Tab Menu --}}
+@section('content-wrapper')
     @include('employees.partials.tab-menu', ['employee' => $employee])
-    <div class="container-fluid">
-        <div class="form-content-container">
-            <div class="card-body">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
 
-                {{-- Section Title + Add Button --}}
-                <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
-                    Training History
-                    <a href="{{ route('employees.training-histories.create', $employee->id) }}" class="add-button">
-                        <i class="fas fa-plus"></i> Add Training Record
-                    </a>
-                </div>
+                    {{-- Section Title + Add Button --}}
+                    <div class="section-title d-flex justify-content-between align-items-center flex-wrap">
+                        Training History
+                        <a href="{{ route('employees.training-histories.create', $employee->id) }}" class="add-button">
+                            <i class="fas fa-plus"></i> Add Training Record
+                        </a>
+                    </div>
 
-                {{-- Table / Card --}}
-                @if ($trainingHistories->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-custom text-center align-middle">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>Training Name</th>
-                                    <th>Provider</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Certificate Number</th>
-                                    <th>File</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($trainingHistories as $trainingHistory)
+                    {{-- Table / Card --}}
+                    @if ($trainingHistories->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom text-center align-middle">
+                                <thead>
                                     <tr>
-                                        <td data-label="No.">{{ $loop->iteration }}</td>
-                                        <td data-label="Training Name">{{ $trainingHistory->training_name }}</td>
-                                        <td data-label="Provider">{{ $trainingHistory->provider }}</td>
-                                        <td data-label="Start Date">{{ $trainingHistory->start_date->format('d F Y') }}</td>
-                                        <td data-label="End Date">{{ $trainingHistory->end_date->format('d F Y') }}</td>
-                                        <td data-label="Certificate Number">
-                                            {{ $trainingHistory->certificate_number ?? '-' }}</td>
-                                        <td data-label="File">
-                                            @if ($trainingHistory->trainingMaterials->isNotEmpty())
-                                                <ul class="file-list">
-                                                    @foreach ($trainingHistory->trainingMaterials as $index => $material)
-                                                        <li>
-                                                            <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
-                                                                target="_blank" class="file-link">
-                                                                <i class="fa-regular fa-file"></i>
-                                                                Training Material {{ $index + 1 }}
-                                                            </a>
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            @else
-                                                No file
-                                            @endif
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="{{ route('employees.training-histories.edit', [$employee->id, $trainingHistory->id]) }}"
-                                                    class="btn-info" title="Edit Training">
-                                                    <span class="material-symbols--edit"></span>Edit
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <th>No.</th>
+                                        <th>Training Name</th>
+                                        <th>Provider</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Certificate Number</th>
+                                        <th>File</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center text-muted py-4">
-                        No training history available for this employee.
-                    </div>
-                @endif
+                                </thead>
+                                <tbody>
+                                    @foreach ($trainingHistories as $trainingHistory)
+                                        <tr>
+                                            <td data-label="No.">{{ $loop->iteration }}</td>
+                                            <td data-label="Training Name">{{ $trainingHistory->training_name }}</td>
+                                            <td data-label="Provider">{{ $trainingHistory->provider }}</td>
+                                            <td data-label="Start Date">{{ $trainingHistory->start_date->format('d F Y') }}</td>
+                                            <td data-label="End Date">{{ $trainingHistory->end_date->format('d F Y') }}</td>
+                                            <td data-label="Certificate Number">
+                                                {{ $trainingHistory->certificate_number ?? '-' }}
+                                            </td>
+                                            <td data-label="File">
+                                                @if ($trainingHistory->trainingMaterials->isNotEmpty())
+                                                    <ul class="file-list">
+                                                        @foreach ($trainingHistory->trainingMaterials as $index => $material)
+                                                            <li>
+                                                                <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
+                                                                    target="_blank" class="file-link">
+                                                                    <i class="fa-regular fa-file"></i>
+                                                                    Training File {{ $index + 1 }}
+                                                                </a>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @else
+                                                    No file
+                                                @endif
+                                            </td>
+                                            <td data-label="Actions">
+                                                <div class="action-buttons">
+                                                    <a href="{{ route('employees.training-histories.edit', [$employee->id, $trainingHistory->id]) }}"
+                                                        class="btn-info" title="Edit Training">
+                                                        <span class="material-symbols--edit"></span>Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            No training history available for this employee.
+                        </div>
+                    @endif
 
-                {{-- Button cancel --}}
-                <div class="form-buttons-container mt-3">
-                    <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    {{-- Button cancel --}}
+                    <div class="form-buttons-container mt-3">
+                        <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">Cancel</a>
+                    </div>
+
                 </div>
-
             </div>
         </div>
-    </div>
+    </section>
 @endsection

@@ -63,7 +63,7 @@ class ApplicantController extends Controller
 
     public function create()
     {
-        $divisions = Division::all();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         $positions = Position::all();
         return view('applicants.create', compact('divisions', 'positions'));
     }
@@ -119,7 +119,7 @@ class ApplicantController extends Controller
     {
          $user = auth()->user();
     if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
-        $divisions = Division::all();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         $positions = Position::all();
         return view('applicants.edit', compact('applicant', 'divisions', 'positions'));
     }

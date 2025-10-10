@@ -43,7 +43,7 @@ class AnnouncementController extends Controller
                     return [$englishKey => $value];
                 });
 
-            $divisionStats = Division::withCount('employees')->get();
+            $divisionStats = Division::where('name', '!=', 'N/A')->withCount('employees')->get();
         }
 
         // === ROLE MANAGER ===
