@@ -6,7 +6,7 @@ use App\Models\Employee;
 use App\Models\FamilyDependent;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\EmployeeEditRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
@@ -14,16 +14,16 @@ use App\Notifications\EmployeeEditRequestNotification;
 class FamilyDependentController extends Controller
 {
     /**
-     * Menampilkan daftar tanggungan keluarga untuk karyawan tertentu.
+     * Ensure the user has access to this employee's family dependents.
      */
     private function authorizeEmployeeAccess(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Jika bukan HC & Superadmin → hanya boleh akses miliknya sendiri
+        // If not HC or Superadmin, only allow access to own data
         if (!in_array($user->role, ['superadmin', 'hc'])) {
             if (!$user->employee || $user->employee->id !== $employee->id) {
-                abort(403, 'Unauthorized access to this employee\'s family dependents.');
+                abort(403, 'You do not have permission to access this data.');
             }
         }
     }
@@ -56,11 +56,11 @@ class FamilyDependentController extends Controller
             'province' => 'required|string|max:50',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
-            // Jika bukan superadmin/hc → buat permintaan edit
+            // If not superadmin/hc, create an edit request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -68,25 +68,26 @@ class FamilyDependentController extends Controller
                     new FamilyDependent(),
                     $validatedData,
                     EmployeeEditRequestNotification::class,
-                    ['employee_id' => $employee->id,]
+                    ['employee_id' => $employee->id]
                 );
                 if (!$editRequest) {
-                    return back()->with('error', 'Gagal membuat permintaan perubahan data.');
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create family dependent request.');
                 }
                 DB::commit();
                 return redirect()->route('employees.family-dependents.index', $employee->id)
-                    ->with('info', 'Permintaan penambahan tanggungan keluarga telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Family dependent addition request has been sent and is awaiting approval.');
             }
 
-            // Jika superadmin/hc → langsung simpan
+            // If superadmin/hc, directly save
             $employee->familyDependents()->create($validatedData);
             DB::commit();
 
             return redirect()->route('employees.family-dependents.index', $employee->id)
-                ->with('success', 'Data tanggungan keluarga berhasil ditambahkan.');
+                ->with('success', 'Family dependent data added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to save data: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -110,7 +111,7 @@ class FamilyDependentController extends Controller
             'province' => 'required|string|max:50',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
@@ -125,22 +126,22 @@ class FamilyDependentController extends Controller
                 );
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan perubahan data.');
+                    return back()->with('error', 'Failed to create family dependent update request.');
                 }
                 DB::commit();
                 return redirect()->route('employees.family-dependents.index', $employee->id)
-                    ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Family dependent update request has been sent and is awaiting approval.');
             }
 
-            // Jika superadmin/hc → langsung update
+            // If superadmin/hc, directly update
             $familyDependent->update($validatedData);
             DB::commit();
 
             return redirect()->route('employees.family-dependents.index', $employee->id)
-                ->with('success', 'Data tanggungan keluarga berhasil diperbarui.');
+                ->with('success', 'Family dependent data updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to update data: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -148,11 +149,11 @@ class FamilyDependentController extends Controller
     {
         $this->authorizeEmployeeAccess($employee);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
-            // Jika bukan superadmin/hc → buat permintaan approval hapus
+            // If not superadmin/hc, create a delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -166,23 +167,23 @@ class FamilyDependentController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan penghapusan data tanggungan keluarga.');
+                    return back()->with('error', 'Failed to create family dependent deletion request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.family-dependents.index', $employee->id)
-                    ->with('info', 'Permintaan penghapusan tanggungan keluarga telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Family dependent deletion request has been sent and is awaiting approval.');
             }
 
-            // Jika superadmin/hc → langsung hapus data
+            // If superadmin/hc, directly delete data
             $familyDependent->delete();
 
             DB::commit();
             return redirect()->route('employees.family-dependents.index', $employee->id)
-                ->with('success', 'Data tanggungan keluarga berhasil dihapus.');
+                ->with('success', 'Family dependent data deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete data: ' . $e->getMessage());
         }
     }
 }

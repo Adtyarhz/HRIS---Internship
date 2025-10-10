@@ -48,7 +48,7 @@ class KpiReportController extends Controller
 
         // --- Hak akses ---
         if ($user->role === 'hc' || $user->role === 'superadmin') {
-            $divisions = Division::orderBy('name')->get();
+            $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
             $positions = Position::orderBy('title')->get();
         } elseif ($user->role === 'manager') {
             if (!$user->employee || !$user->employee->division_id) {

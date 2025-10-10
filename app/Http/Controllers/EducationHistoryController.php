@@ -4,22 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\EducationHistory;
-use App\Models\EmployeeEditRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
+use Illuminate\Support\Facades\Auth;
 
 class EducationHistoryController extends Controller
 {
     private function authorizeEmployeeAccess(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Jika bukan HC & Superadmin → hanya boleh akses miliknya sendiri
+        // If not HC or Superadmin, only allow access to own data
         if (!in_array($user->role, ['superadmin', 'hc'])) {
             if (!$user->employee || $user->employee->id !== $employee->id) {
-                abort(403, 'Unauthorized access to this employee\'s education history.');
+                abort(403, 'You do not have permission to access this data.');
             }
         }
     }
@@ -53,7 +53,7 @@ class EducationHistoryController extends Controller
             'certificate_number'   => 'nullable|string|max:50',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
@@ -68,22 +68,22 @@ class EducationHistoryController extends Controller
                 );
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan pembuatan data pendidikan.');
+                    return back()->with('error', 'Failed to create education history request.');
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Permintaan penambahan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
+                                 ->with('info', 'Education history addition request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC langsung simpan
+            // Superadmin/HC directly save
             $employee->educationHistory()->create($validated);
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Employee Education was Added.');
+                             ->with('success', 'Education history added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
+            return back()->with('error', 'Failed to save data: '.$e->getMessage())->withInput();
         }
     }
 
@@ -108,12 +108,11 @@ class EducationHistoryController extends Controller
             'certificate_number'   => 'nullable|string|max:50',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
-
                 $notifier = new RequestNotifierService();
 
                 $editRequest = $notifier->createEditRequest(
@@ -124,22 +123,22 @@ class EducationHistoryController extends Controller
                 );
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan pengubahan data pendidikan.');
+                    return back()->with('error', 'Failed to create education history update request.');
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                                 ->with('info', 'Education history update request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC langsung update
+            // Superadmin/HC directly update
             $educationHistory->update($validated);
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Employee Education was Updated.');
+                             ->with('success', 'Education history updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage())->withInput();
+            return back()->with('error', 'Failed to update data: '.$e->getMessage())->withInput();
         }
     }
 
@@ -147,7 +146,7 @@ class EducationHistoryController extends Controller
     {
         $this->authorizeEmployeeAccess($employee);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
@@ -158,28 +157,28 @@ class EducationHistoryController extends Controller
                     $educationHistory,
                     [],
                     EmployeeEditRequestNotification::class,
-                    ['employee_id' => $employee->id],          
+                    ['employee_id' => $employee->id],
                     'delete'
                 );
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan penghapusan data pendidikan.');
+                    return back()->with('error', 'Failed to create education history deletion request.');
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Permintaan penghapusan riwayat pendidikan telah dikirim dan menunggu persetujuan.');
+                                 ->with('info', 'Education history deletion request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC langsung hapus
+            // Superadmin/HC directly delete
             $educationHistory->delete();
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Employee Education was Deleted.');
+                             ->with('success', 'Education history deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
+            return back()->with('error', 'Failed to delete data: '.$e->getMessage());
         }
     }
 }

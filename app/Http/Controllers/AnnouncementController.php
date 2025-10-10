@@ -27,7 +27,7 @@ class AnnouncementController extends Controller
             ->pluck('total', 'gender');
 
         // Hitung jumlah karyawan berdasarkan divisi
-        $divisionStats = Division::withCount('employees')->get();
+        $divisionStats = Division::where('name', '!=', 'N/A')->withCount('employees')->get();
 
         return view('dashboard', compact('announcements', 'genderStats', 'divisionStats'));
     } catch (\Exception $e) {

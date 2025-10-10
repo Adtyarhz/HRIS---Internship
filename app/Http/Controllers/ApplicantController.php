@@ -39,7 +39,7 @@ class ApplicantController extends Controller
 
     public function create()
     {
-        $divisions = Division::all();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         return view('applicants.create', compact('divisions'));
     }
 
@@ -71,7 +71,7 @@ class ApplicantController extends Controller
 
     public function edit(Applicant $applicant)
     {
-        $divisions = Division::all();
+        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         return view('applicants.edit', compact('applicant', 'divisions'));
     }
 

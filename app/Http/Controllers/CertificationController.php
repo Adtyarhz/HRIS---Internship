@@ -10,22 +10,21 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\EmployeeEditRequest;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
 
 class CertificationController extends Controller
 {
     /**
-     * Pastikan user punya akses ke data karyawan ini.
+     * Ensure the user has access to this employee's data.
      */
     private function authorizeAccess(Employee $employee)
     {
         $user = Auth::user();
 
-        // Jika bukan HC atau Superadmin, hanya boleh akses data milik sendiri
+        // If not HC or Superadmin, only allow access to own data
         if (!in_array($user->role, ['hc', 'superadmin']) && $employee->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki hak akses ke data ini.');
+            abort(403, 'You do not have permission to access this data.');
         }
     }
 
@@ -64,22 +63,22 @@ class CertificationController extends Controller
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
         try {
             if (!in_array($user->role, ['hc', 'superadmin'])) {
-                // Simpan file utama ke storage
+                // Store the main file
                 if ($request->hasFile('certificate_file')) {
                     $mainFile = $request->file('certificate_file');
                     $mainFileName = time() . '_cert_' . Str::slug(pathinfo($mainFile->getClientOriginalName(), PATHINFO_FILENAME))
                         . '.' . $mainFile->getClientOriginalExtension();
                     $mainFile->storeAs('certifications', $mainFileName, 'public');
 
-                    // Simpan path string, bukan object file
+                    // Store the file path as a string
                     $validatedData['certificate_file'] = 'certifications/' . $mainFileName;
                 }
 
-                // Simpan file materi jika ada
+                // Store material files if provided
                 $materials = [];
                 if ($request->hasFile('material_files')) {
                     foreach ($request->file('material_files') as $materialFile) {
@@ -90,10 +89,10 @@ class CertificationController extends Controller
                     }
                 }
 
-                // Simpan path file materials (string array / json)
+                // Store material file paths as a string array/json
                 $validatedData['material_files'] = $materials;
 
-                // Kirim ke service (data sudah bersih dari object file)
+                // Send to service (data is cleaned of file objects)
                 $notifier = new RequestNotifierService();
                 $editRequest = $notifier->createEditRequest(
                     new Certification(),
@@ -104,15 +103,15 @@ class CertificationController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan pembuatan data sertifikasi.');
+                    return back()->with('error', 'Failed to create certification request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.certifications.index', $employee->id)
-                    ->with('info', 'Permintaan penambahan sertifikasi telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Certification addition request has been sent and is awaiting approval.');
             }
 
-            // Proses langsung jika HC/Superadmin
+            // Direct processing for HC/Superadmin
             $mainFile = $request->file('certificate_file');
             $mainFileName = time() . '_cert_' . Str::slug(pathinfo($mainFile->getClientOriginalName(), PATHINFO_FILENAME))
                 . '.' . $mainFile->getClientOriginalExtension();
@@ -124,7 +123,7 @@ class CertificationController extends Controller
                 'issuer' => $validatedData['issuer'],
                 'date_obtained' => $validatedData['date_obtained'],
                 'expiry_date' => $validatedData['expiry_date'] ?? null,
-                'certificate_file' => 'certifications/' . $mainFileName, // ✅ konsisten
+                'certificate_file' => 'certifications/' . $mainFileName,
             ]);
 
             if ($request->hasFile('material_files')) {
@@ -141,19 +140,20 @@ class CertificationController extends Controller
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                ->with('success', 'Sertifikasi dan materi berhasil ditambahkan.');
+                ->with('success', 'Certification and materials added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Storage::disk('public')->delete('certifications/main/' . ($mainFileName ?? ''));
-            return back()->with('error', 'Gagal menyimpan sertifikasi: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to save certification: ' . $e->getMessage())->withInput();
         }
     }
+
     public function edit(Employee $employee, Certification $certification)
     {
         $this->authorizeAccess($employee);
 
         if ($certification->employee_id !== $employee->id) {
-            abort(403, 'Sertifikasi tidak terkait dengan karyawan ini.');
+            abort(403, 'Certification is not associated with this employee.');
         }
 
         $certification->load('certificationMaterials');
@@ -165,7 +165,7 @@ class CertificationController extends Controller
         $this->authorizeAccess($employee);
 
         if ($certification->employee_id !== $employee->id) {
-            abort(403, 'Sertifikasi tidak terkait dengan karyawan ini.');
+            abort(403, 'Certification is not associated with this employee.');
         }
 
         $validatedData = $request->validate([
@@ -182,23 +182,23 @@ class CertificationController extends Controller
             'delete_materials.*' => 'exists:certification_materials,id'
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
             if (!in_array($user->role, ['hc', 'superadmin'])) {
-                // Simpan file utama ke storage
+                // Store the main file
                 if ($request->hasFile('certificate_file')) {
                     $mainFile = $request->file('certificate_file');
                     $mainFileName = time() . '_cert_' . Str::slug(pathinfo($mainFile->getClientOriginalName(), PATHINFO_FILENAME))
                         . '.' . $mainFile->getClientOriginalExtension();
                     $mainFile->storeAs('certifications', $mainFileName, 'public');
 
-                    // Simpan path string, bukan object file
+                    // Store the file path as a string
                     $validatedData['certificate_file'] = 'certifications/' . $mainFileName;
                 }
 
-                // Simpan file materi jika ada
+                // Store material files if provided
                 $materials = [];
                 if ($request->hasFile('material_files')) {
                     foreach ($request->file('material_files') as $materialFile) {
@@ -209,10 +209,10 @@ class CertificationController extends Controller
                     }
                 }
 
-                // Simpan path file materials (string array / json)
+                // Store material file paths as a string array/json
                 $validatedData['material_files'] = $materials;
 
-                // Kirim ke service (data sudah bersih dari object file)
+                // Send to service (data is cleaned of file objects)
                 $notifier = new RequestNotifierService();
                 $editRequest = $notifier->createEditRequest(
                     $certification,
@@ -226,15 +226,15 @@ class CertificationController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan pembuatan data sertifikasi.');
+                    return back()->with('error', 'Failed to create certification update request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.certifications.index', $employee->id)
-                    ->with('info', 'Permintaan perubahan sertifikasi telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Certification update request has been sent and is awaiting approval.');
             }
 
-            // Bagian HC/Superadmin → update langsung
+            // HC/Superadmin section → direct update
             if (!empty($validatedData['delete_materials'])) {
                 foreach ($validatedData['delete_materials'] as $materialId) {
                     $material = CertificationMaterial::where('certification_id', $certification->id)
@@ -284,10 +284,10 @@ class CertificationController extends Controller
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                ->with('success', 'Sertifikasi berhasil diperbarui.');
+                ->with('success', 'Certification updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui sertifikasi: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to update certification: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -296,13 +296,13 @@ class CertificationController extends Controller
         $this->authorizeAccess($employee);
 
         if ($certification->employee_id !== $employee->id) {
-            abort(403, 'Sertifikasi tidak terkait dengan karyawan ini.');
+            abort(403, 'Certification is not associated with this employee.');
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
         try {
-            // Jika bukan superadmin/hc → buat permintaan approval hapus
+            // If not superadmin/hc → create delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -316,12 +316,12 @@ class CertificationController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan penghapusan data pelatihan.');
+                    return back()->with('error', 'Failed to create certification deletion request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.certifications.index', $employee->id)
-                    ->with('info', 'Permintaan penghapusan riwayat pelatihan telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Certification deletion request has been sent and is awaiting approval.');
             }
 
             Storage::disk('public')->delete('certifications/main/' . $certification->certificate_file);
@@ -335,10 +335,10 @@ class CertificationController extends Controller
 
             DB::commit();
             return redirect()->route('employees.certifications.index', $employee->id)
-                ->with('success', 'Sertifikasi berhasil dihapus.');
+                ->with('success', 'Certification deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus sertifikasi: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete certification: ' . $e->getMessage());
         }
     }
 
@@ -347,7 +347,7 @@ class CertificationController extends Controller
         $this->authorizeAccess($employee);
 
         if ($certification->employee_id !== $employee->id || $material->certification_id !== $certification->id) {
-            abort(403, 'File materi tidak terkait dengan sertifikasi ini.');
+            abort(403, 'Material file is not associated with this certification.');
         }
 
         DB::beginTransaction();
@@ -356,10 +356,10 @@ class CertificationController extends Controller
             $material->delete();
 
             DB::commit();
-            return back()->with('success', 'File materi berhasil dihapus.');
+            return back()->with('success', 'Material file deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus file materi: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete material file: ' . $e->getMessage());
         }
     }
 }

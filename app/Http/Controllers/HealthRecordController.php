@@ -9,37 +9,38 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\EmployeeEditRequestNotification;
 use App\Services\RequestNotifierService;
+use Illuminate\Support\Facades\Auth;
 
 class HealthRecordController extends Controller
 {
     private function authorizeEmployeeAccess(Employee $employee)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Jika bukan HC & Superadmin → hanya boleh akses miliknya sendiri
+        // If not HC or Superadmin, only allow access to own data
         if (!in_array($user->role, ['superadmin', 'hc'])) {
             if (!$user->employee || $user->employee->id !== $employee->id) {
-                abort(403, 'Unauthorized access to this employee\'s health record.');
+                abort(403, 'You do not have permission to access this data.');
             }
         }
     }
 
     /**
-     * Menampilkan form untuk membuat atau mengedit riwayat kesehatan karyawan.
-     * Karena relasinya HasOne, form create dan edit adalah sama.
+     * Display the form for creating or editing an employee's health record.
+     * Since the relationship is HasOne, the create and edit form is the same.
      */
     public function edit(Employee $employee)
     {
         $this->authorizeEmployeeAccess($employee);
 
-        // Mengambil data riwayat kesehatan yang sudah ada, atau null jika belum ada.
+        // Retrieve existing health record, or null if none exists
         $healthRecord = $employee->healthRecord;
 
         return view('employees.health-records.form', compact('employee', 'healthRecord'));
     }
 
     /**
-     * Menyimpan atau memperbarui riwayat kesehatan untuk karyawan tertentu.
+     * Store or update the health record for a specific employee.
      */
     public function storeOrUpdate(Request $request, Employee $employee)
     {
@@ -57,13 +58,13 @@ class HealthRecordController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
             $healthRecord = $employee->healthRecord;
 
-            // Jika bukan superadmin/hc → buat request edit
+            // If not superadmin/hc, create an edit request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -79,15 +80,17 @@ class HealthRecordController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan perubahan data.');
+                    return back()->with('error', 'Failed to create health record request.');
                 }
                 DB::commit();
-
-                return redirect()->back()
-                    ->with('info', 'Permintaan perubahan data telah dikirim dan menunggu persetujuan.');
+                $message = $healthRecord
+                ? 'Health record creation request has been sent and is awaiting approval.'
+                : 'Health record update request has been sent and is awaiting approval.';
+                
+                return redirect()->back()->with('info', $message);
             }
 
-            // Jika superadmin/hc → langsung update atau buat
+            // If superadmin/hc, directly update or create
             $employee->healthRecord()->updateOrCreate(
                 ['employee_id' => $employee->id],
                 $validated
@@ -95,21 +98,21 @@ class HealthRecordController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Riwayat kesehatan karyawan berhasil disimpan.');
+            return redirect()->back()->with('success', 'Health record saved successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Error occurred while saving data: ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Menghapus riwayat kesehatan milik seorang karyawan.
+     * Delete the health record of an employee.
      */
     public function destroy(Employee $employee)
     {
         $this->authorizeEmployeeAccess($employee);
 
-        $user = auth()->user();
+        $user = Auth::user();
         DB::beginTransaction();
 
         try {
@@ -117,10 +120,10 @@ class HealthRecordController extends Controller
 
             if (!$healthRecord) {
                 return redirect()->route('employees.show', $employee->id)
-                    ->with('info', 'Karyawan ini tidak memiliki data riwayat kesehatan untuk dihapus.');
+                    ->with('info', 'This employee has no health record to delete.');
             }
 
-            // Jika bukan superadmin/hc → buat request approval
+            // If not superadmin/hc, create a delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -134,24 +137,24 @@ class HealthRecordController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Gagal membuat permintaan penghapusan data riwayat kesehatan.');
+                    return back()->with('error', 'Failed to create health record deletion request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.show', $employee->id)
-                    ->with('info', 'Permintaan penghapusan riwayat kesehatan telah dikirim dan menunggu persetujuan.');
+                    ->with('info', 'Health record deletion request has been sent and is awaiting approval.');
             }
 
-            // Jika superadmin/hc → langsung hapus
+            // If superadmin/hc, directly delete
             $healthRecord->delete();
             DB::commit();
 
             return redirect()->route('employees.show', $employee->id)
-                ->with('success', 'Riwayat kesehatan berhasil dihapus.');
+                ->with('success', 'Health record deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('employees.show', $employee->id)
-                ->with('error', 'Gagal menghapus data riwayat kesehatan: ' . $e->getMessage());
+                ->with('error', 'Failed to delete health record: ' . $e->getMessage());
         }
     }
 }
