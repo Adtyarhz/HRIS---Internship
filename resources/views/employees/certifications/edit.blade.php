@@ -132,7 +132,7 @@
                                             <input type="date"
                                                 class="form-control @error('date_obtained') is-invalid @enderror"
                                                 id="date_obtained" name="date_obtained"
-                                                value="{{ old('date_obtained', $certification->date_obtained->format('Y-m-d')) }}"
+                                                value="{{ old('date_obtained', $certification->date_obtained) }}"
                                                 required>
                                             <label for="date_obtained" class="input-group-append">
                                                 <span class="input-group-text">

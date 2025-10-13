@@ -205,7 +205,7 @@
                                                 class="form-control @error('last_checkup_date') is-invalid @enderror"
                                                 id="last_checkup_date"
                                                 name="last_checkup_date"
-                                                value="{{ old('last_checkup_date', $healthRecord ? optional($healthRecord->last_checkup_date)->format('Y-m-d') : '') }}"
+                                                value="{{ old('last_checkup_date', optional($healthRecord->last_checkup_date ? \Carbon\Carbon::parse($healthRecord->last_checkup_date) : null)->format('Y-m-d')) }}"
                                             >
                                             <label for="last_checkup_date" class="input-group-append">
                                                 <span class="input-group-text">

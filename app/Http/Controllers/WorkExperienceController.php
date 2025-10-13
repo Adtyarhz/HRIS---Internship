@@ -39,7 +39,7 @@ class WorkExperienceController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:150',
             'company_address' => 'required|string',
-            'company_phone' => 'required|string|max:20|regex:/^\+?[0-9]{8,20}$/',
+            'company_phone' => 'required|string|max:25|regex:/^[0-9+\-\s\(\)]+$/',
             'position_title' => 'required|string|max:100',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -136,7 +136,7 @@ class WorkExperienceController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:150',
             'company_address' => 'required|string',
-            'company_phone' => 'required|string|max:20|regex:/^\+?[0-9]{8,20}$/',
+            'company_phone' => 'required|string|max:25|regex:/^[0-9+\-\s\(\)]+$/',
             'position_title' => 'required|string|max:100',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',

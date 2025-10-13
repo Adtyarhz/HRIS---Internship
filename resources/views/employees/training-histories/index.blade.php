@@ -241,8 +241,8 @@
                                             <td data-label="No.">{{ $loop->iteration }}</td>
                                             <td data-label="Training Name">{{ $trainingHistory->training_name }}</td>
                                             <td data-label="Provider">{{ $trainingHistory->provider }}</td>
-                                            <td data-label="Start Date">{{ $trainingHistory->start_date->format('d F Y') }}</td>
-                                            <td data-label="End Date">{{ $trainingHistory->end_date->format('d F Y') }}</td>
+                                            <td data-label="Start Date">{{ $trainingHistory->start_date }}</td>
+                                            <td data-label="End Date">{{ $trainingHistory->end_date }}</td>
                                             <td data-label="Certificate Number">
                                                 {{ $trainingHistory->certificate_number ?? '-' }}
                                             </td>
