@@ -30,7 +30,7 @@
             @if($genderStats->isNotEmpty() || $divisionStats->isNotEmpty())
                 <div style="flex: 2; min-width: 300px; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.2); padding: 20px;">
                     <div style="text-align: center; font-size: 22px; font-family: Montserrat; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.3); padding-bottom: 10px; margin-bottom: 20px;">
-                        Employee Statistics
+                        <b>Employee Statistics</b>
                     </div>
 
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
@@ -64,7 +64,7 @@
             {{-- Right Panel: Announcements --}}
             <div style="flex: 1; min-width: 280px; background: #FFFEF9; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.2); padding: 20px; overflow-y: auto; max-height: 800px;">
                 <div style="font-size: 22px; font-family: Montserrat; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.3); padding-bottom: 8px; margin-bottom: 16px;">
-                    Announcements
+                    <b>Announcements</b>
                 </div>
 
                 @if ($announcements->isEmpty())
