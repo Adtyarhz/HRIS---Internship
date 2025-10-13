@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use PhpParser\Node\Expr\Empty_;
+use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Insurance extends Model
 {
@@ -21,10 +22,20 @@ class Insurance extends Model
         'insurance_file',
     ];
 
-    protected $casts = [
-        'start_date' => 'date',
-        'expiry_date' => 'date',
-    ];
+    // ✅ Format tanggal
+    protected function startDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    protected function expiryDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
 
     public function employee(): BelongsTo
     {

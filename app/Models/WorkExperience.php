@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class WorkExperience extends Model
 {
@@ -26,10 +28,23 @@ class WorkExperience extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
         'last_salary' => 'decimal:2',
     ];
+
+    // ✅ Format tanggal
+    protected function startDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    protected function endDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
 
     public function employee(): BelongsTo
     {

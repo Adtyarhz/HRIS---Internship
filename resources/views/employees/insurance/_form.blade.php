@@ -38,9 +38,12 @@
     <label for="start_date" class="col-md-2 col-form-label">Start Date <span class="text-danger">*</span> :</label>
     <div class="col-md-3">
         <div class="input-group date-input-group">
-            <input type="date" class="form-control @error('start_date') is-invalid @enderror" id="start_date"
-                name="start_date" value="{{ old('start_date', optional($insurance?->start_date)->format('Y-m-d')) }}"
-                required>
+            {{-- Start Date --}}
+<input type="date" class="form-control @error('start_date') is-invalid @enderror" id="start_date"
+    name="start_date"
+    value="{{ old('start_date', optional($insurance->start_date ? \Carbon\Carbon::parse($insurance->start_date) : null)->format('Y-m-d')) }}"
+    required>
+
             <label for="start_date" class="input-group-append">
                 <span class="input-group-text">
                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">
@@ -58,9 +61,12 @@
     <label for="expiry_date" class="col-md-2 col-form-label">Expiry Date <span class="text-danger">*</span> :</label>
     <div class="col-md-3">
         <div class="input-group date-input-group">
-            <input type="date" class="form-control @error('expiry_date') is-invalid @enderror" id="expiry_date"
-                name="expiry_date" value="{{ old('expiry_date', optional($insurance?->expiry_date)->format('Y-m-d')) }}"
-                required>
+            {{-- Expiry Date --}}
+<input type="date" class="form-control @error('expiry_date') is-invalid @enderror" id="expiry_date"
+    name="expiry_date"
+    value="{{ old('expiry_date', optional($insurance->expiry_date ? \Carbon\Carbon::parse($insurance->expiry_date) : null)->format('Y-m-d')) }}"
+    required>
+
             <label for="expiry_date" class="input-group-append">
                 <span class="input-group-text">
                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">

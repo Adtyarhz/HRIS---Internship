@@ -241,8 +241,8 @@
                                             <td data-label="No.">{{ $loop->iteration }}</td>
                                             <td data-label="Certification Name">{{ $certification->certification_name }}</td>
                                             <td data-label="Issuer">{{ $certification->issuer }}</td>
-                                            <td data-label="Date Obtained">{{ $certification->date_obtained->format('d F Y') }}</td>
-                                            <td data-label="Expiry Date">{{ $certification->expiry_date ? $certification->expiry_date->format('d F Y') : '-' }}</td>
+                                            <td data-label="Date Obtained">{{ $certification->date_obtained }}</td>
+                                            <td data-label="Expiry Date">{{ $certification->expiry_date ? $certification->expiry_date : '-' }}</td>
                                             <td data-label="Main Certificate">
                                                 @if ($certification->certificate_file)
                                                     <a href="{{ asset('storage/' . $certification->certificate_file) }}" target="_blank" class="file-link">

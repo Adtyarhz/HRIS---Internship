@@ -61,13 +61,20 @@
     </div>
 </div>
 
+{{-- Start Date --}}
 <div class="form-group row align-items-center">
-    <label for="start_date" class="col-md-2 col-form-label">Start Date <span class="text-danger">*</span> :</label>
+    <label for="start_date" class="col-md-2 col-form-label">
+        Start Date <span class="text-danger">*</span> :
+    </label>
     <div class="col-md-2">
         <div class="input-group date-input-group">
-            <input type="date" class="form-control @error('start_date') is-invalid @enderror" id="start_date"
+            <input
+                type="date"
+                id="start_date"
                 name="start_date"
-                value="{{ old('start_date', optional($workExperience?->start_date)->format('Y-m-d')) }}" required>
+                class="form-control @error('start_date') is-invalid @enderror"
+                value="{{ old('start_date', optional($workExperience?->start_date ? \Carbon\Carbon::parse($workExperience->start_date) : null)->format('Y-m-d')) }}"
+                required>
             <label for="start_date" class="input-group-append">
                 <span class="input-group-text">
                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">
@@ -80,13 +87,19 @@
     </div>
 </div>
 
+{{-- End Date --}}
 <div class="form-group row align-items-center">
-    <label for="end_date" class="col-md-2 col-form-label">End Date <span class="text-danger">*</span>:</label>
+    <label for="end_date" class="col-md-2 col-form-label">
+        End Date <span class="text-danger">*</span> :
+    </label>
     <div class="col-md-2">
         <div class="input-group date-input-group">
-            <input type="date" class="form-control @error('end_date') is-invalid @enderror" id="end_date"
-                name="end_date" value="{{ old('end_date', optional($workExperience?->end_date)->format('Y-m-d')) }}"
-                re>
+            <input
+                type="date"
+                id="end_date"
+                name="end_date"
+                class="form-control @error('end_date') is-invalid @enderror"
+                value="{{ old('end_date', optional($workExperience?->end_date ? \Carbon\Carbon::parse($workExperience->end_date) : null)->format('Y-m-d')) }}">
             <label for="end_date" class="input-group-append">
                 <span class="input-group-text">
                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">

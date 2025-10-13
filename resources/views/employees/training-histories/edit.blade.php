@@ -132,7 +132,7 @@
                                             <input type="date"
                                                 class="form-control @error('start_date') is-invalid @enderror"
                                                 id="start_date" name="start_date"
-                                                value="{{ old('start_date', $trainingHistory->start_date->format('Y-m-d')) }}"
+                                                value="{{ old('start_date', \Carbon\Carbon::parse($trainingHistory->start_date)->format('Y-m-d')) }}"
                                                 required>
                                             <label for="start_date" class="input-group-append">
                                                 <span class="input-group-text">
@@ -153,7 +153,7 @@
                                         <div class="input-group date-input-group">
                                             <input type="date" class="form-control @error('end_date') is-invalid @enderror"
                                                 id="end_date" name="end_date"
-                                                value="{{ old('end_date', optional($trainingHistory->end_date)->format('Y-m-d')) }}"
+                                                value="{{ old('end_date', optional(\Carbon\Carbon::parse($trainingHistory->end_date ?? ''))->format('Y-m-d')) }}"
                                                 required>
                                             <label for="end_date" class="input-group-append">
                                                 <span class="input-group-text">

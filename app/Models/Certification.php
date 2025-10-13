@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Certification extends Model
 {
@@ -23,10 +25,23 @@ class Certification extends Model
     ];
 
     protected $casts = [
-        'date_obtained' => 'date',
-        'expiry_date' => 'date',
         'cost' => 'decimal:2'
     ];
+
+    // ✅ Format tanggal YYYY-MM-DD
+    protected function dateObtained(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    protected function expiryDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
 
     public function employee(): BelongsTo
     {
