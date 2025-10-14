@@ -151,13 +151,30 @@ document.addEventListener('DOMContentLoaded', function () {
         padding: 10px 20px;
         border: none;
         border-radius: 6px;
+        transition: background-color 0.3s ease;
     }
+
+    .btn-submit:hover,
+    .btn-submit:focus {
+        background-color: #3d7194ff;
+        color: white;
+    }
+
     .btn-cancel {
         background-color: #8B1E1E;
         color: white;
         padding: 10px 20px;
         border: none;
         border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .btn-cancel:hover,
+    .btn-cancel:focus,
+    .btn-cancel:active {
+        background-color: #c34a4aff;
+        color: white !important;
         text-decoration: none;
     }
 </style>

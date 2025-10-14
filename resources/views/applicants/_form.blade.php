@@ -24,17 +24,48 @@
         padding: 6px 12px;
         border-radius: 5px;
         border: 1px solid #ccc;
+        width: 100%;
     }
 
     .file-upload-wrapper {
         display: flex;
         gap: 8px;
         align-items: center;
+        flex-wrap: wrap;
     }
 
     .file-upload-name {
         font-size: 12px;
         color: #225E7F;
+    }
+
+    /* Responsif: ubah jadi 1 kolom untuk layar kecil */
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+        }
+
+        .form-grid label {
+            margin-top: 8px;
+        }
+
+        .form-control {
+            height: auto;
+            font-size: 14px;
+        }
+
+        .file-upload-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    /* Tambahan agar tabel tetap scrollable di layar kecil */
+    @media (max-width: 576px) {
+        .form-grid {
+            overflow-x: auto;
+        }
     }
 </style>
 @endpush
@@ -55,7 +86,7 @@
     <label class="required">Address</label>
     <input type="text" name="address" class="form-control" required value="{{ old('address', $applicant->address ?? '') }}">
 
-        <label class="required">Applied Position</label>
+    <label class="required">Applied Position</label>
     <select name="applied_position" class="form-control" required>
         <option value="">-- Select Position --</option>
         @foreach($positions as $position)
@@ -65,7 +96,6 @@
             </option>
         @endforeach
     </select>
-
 
     <label>Last Education</label>
     <input type="text" name="last_education" class="form-control" value="{{ old('last_education', $applicant->last_education ?? '') }}">
