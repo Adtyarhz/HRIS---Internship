@@ -64,6 +64,8 @@
 
     .btn-back:hover {
         background-color: #888;
+        text-decoration: none;
+        color: white;
     }
 
     .task-item {

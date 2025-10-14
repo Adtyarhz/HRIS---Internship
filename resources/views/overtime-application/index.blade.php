@@ -44,13 +44,13 @@
 
     .btn-add:hover {
         background-color: #7a2f2f;
-        color: white;              /* biar teks tetap putih */
-        text-decoration: none;     /* hilangkan underline */
+        color: white;
+        text-decoration: none;
     }
 
-    .btn-detail,
-    .btn-edit,
-    .btn-delete {
+    .btn-detail {
+        background-color: #4b7bec;
+        color: white;
         border: none;
         padding: 6px 14px;
         border-radius: 6px;
@@ -63,30 +63,26 @@
         margin: 0 2px;
     }
 
-    .btn-detail {
-        background-color: #4b7bec;
-        color: white;
-    }
     .btn-detail:hover {
         background-color: #3867d6;
-        color: white;   /* biar teks tetap putih */ 
+        color: white;
         text-decoration: none;
     }
 
-    .btn-edit {
-        background-color: #f7b731;
-        color: white;
-    }
-    .btn-edit:hover {
-        background-color: #e1a500;
+    .table-wrapper {
+        width: 100%;
+        overflow-x: hidden; /* default: tidak scroll di desktop */
     }
 
-    .btn-delete {
-        background-color: #eb3b5a;
-        color: white;
-    }
-    .btn-delete:hover {
-        background-color: #c23616;
+    @media (max-width: 992px) {
+        .table-wrapper {
+            overflow-x: auto; /* scroll hanya aktif di mobile */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .overtime-table {
+            min-width: 800px; /* jaga lebar minimum supaya scroll muncul */
+        }
     }
 
     .overtime-table {
@@ -102,6 +98,7 @@
         padding: 12px 10px;
         border: 1px solid #aaa;
         text-align: center;
+        white-space: nowrap;
     }
 
     .overtime-table tbody td {
@@ -127,7 +124,7 @@
 
     .badge-warning { background-color: #f7b731; color: white; }
     .badge-success { background-color: #20bf6b; color: white; }
-    .badge-danger { background-color: #eb3b5a; color: white; }
+    .badge-danger  { background-color: #eb3b5a; color: white; }
 
     .pagination {
         display: flex;
@@ -171,28 +168,22 @@
     </div>
 @endsection
 
-
 @section('content')
-    <div class="overtime-header">
+<div class="overtime-header">
     <h2>Overtime Applications</h2>
 
     @php
         $user = Auth::user();
         $employee = $user->employee ?? null;
         $divisionId = $employee->division_id ?? null;
-
-        // cek apakah ada manager di divisi
         $hasManager = false;
         if ($divisionId) {
             $hasManager = \App\Models\Employee::where('division_id', $divisionId)
-                ->whereHas('user', function ($q) {
-                    $q->where('role', 'manager');
-                })
+                ->whereHas('user', fn($q) => $q->where('role', 'manager'))
                 ->exists();
         }
     @endphp
 
-    {{-- tampilkan button sesuai rules --}}
     @if(
         ($user->role === 'manager' && $hasManager) ||
         ($user->role === 'section_head' && !$hasManager) ||
@@ -202,6 +193,7 @@
     @endif
 </div>
 
+<div class="table-wrapper">
     <table class="overtime-table">
         <thead>
             <tr>
@@ -220,7 +212,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $application->employee->full_name ?? '-' }}</td>
                     <td>{{ $application->requester->name ?? '-' }}</td>
-                   <td>
+                    <td>
                         {{ \Carbon\Carbon::parse($application->start_datetime)->format('d/m/Y H:i') }}
                         -
                         {{ \Carbon\Carbon::parse($application->end_datetime)->format('d/m/Y H:i') }}
@@ -236,20 +228,21 @@
                     </td>
                     <td>{!! nl2br(e($application->reason)) !!}</td>
                     <td>
-                    <div class="actions">
-                        <a href="{{ route('overtime-applications.show', $application->id) }}" class="btn-detail">Details</a>
-                    </div>
-                </td>
+                        <div class="actions">
+                            <a href="{{ route('overtime-applications.show', $application->id) }}" class="btn-detail">Details</a>
+                        </div>
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8">No overtime applications found.</td>
+                    <td colspan="7">No overtime applications found.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
+</div>
 
-    <div class="pagination">
-        {{ $applications->links('vendor.pagination.custom') }}
-    </div>
+<div class="pagination">
+    {{ $applications->links('vendor.pagination.custom') }}
+</div>
 @endsection
