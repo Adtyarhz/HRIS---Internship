@@ -27,8 +27,9 @@ class KpiIndicatorController extends Controller
             'measurement_unit' => 'required|string|max:50',
             'higher_is_better' => 'required|boolean',
         ]);
+
         KpiIndicator::create($validatedData);
-        return redirect()->route('kpi-indicators.index')->with('success', 'Indikator KPI berhasil dibuat.');
+        return redirect()->route('kpi-indicators.index')->with('success', 'KPI indicator created successfully.');
     }
 
     public function edit(KpiIndicator $kpiIndicator)
@@ -44,14 +45,19 @@ class KpiIndicatorController extends Controller
             'measurement_unit' => 'required|string|max:50',
             'higher_is_better' => 'required|boolean',
         ]);
+
         $kpiIndicator->update($validatedData);
-        return redirect()->route('kpi-indicators.index')->with('success', 'Indikator KPI berhasil diperbarui.');
+        return redirect()->route('kpi-indicators.index')->with('success', 'KPI indicator updated successfully.');
     }
 
     public function destroy(KpiIndicator $kpiIndicator)
     {
-        // Tambahkan pengecekan jika indikator sudah digunakan di templat
+        // Check if the indicator is used in any templates
+        if ($kpiIndicator->templates()->exists()) {
+            return redirect()->route('kpi-indicators.index')->with('error', 'Failed! This KPI indicator is used in templates and cannot be deleted.');
+        }
+
         $kpiIndicator->delete();
-        return redirect()->route('kpi-indicators.index')->with('success', 'Indikator KPI berhasil dihapus.');
+        return redirect()->route('kpi-indicators.index')->with('success', 'KPI indicator deleted successfully.');
     }
 }

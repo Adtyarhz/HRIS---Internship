@@ -10,25 +10,25 @@ use Illuminate\Validation\Rule;
 class KpiPeriodController extends Controller
 {
     /**
-     * Menampilkan daftar periode KPI dan memeriksa/membuat periode otomatis.
+     * Display a listing of KPI periods and check/create automatic periods.
      */
     public function index()
     {
-        // Perbarui status periode terlebih dahulu
+        // Update period statuses first
         $this->updatePeriodStatuses();
 
-        // Periksa dan buat periode otomatis untuk periode saat ini
+        // Generate automatic periods for the current period
         $this->generateAutomaticPeriods();
 
-        // Ambil hanya periode dengan status Aktif
-        $kpiPeriods = KpiPeriod::where('status', 'Aktif')
+        // Retrieve only active periods
+        $kpiPeriods = KpiPeriod::where('status', 'Active')
             ->orderByDesc('start_date')
             ->paginate(10);
         return view('kpi.periods.index', compact('kpiPeriods'));
     }
 
     /**
-     * Menampilkan form untuk membuat periode KPI manual.
+     * Display the form for creating a manual KPI period.
      */
     public function create()
     {
@@ -36,7 +36,7 @@ class KpiPeriodController extends Controller
     }
 
     /**
-     * Menyimpan periode KPI manual.
+     * Store a manually created KPI period.
      */
     public function store(Request $request)
     {
@@ -45,7 +45,7 @@ class KpiPeriodController extends Controller
             'start_date' => [
                 'required',
                 'date',
-                // Validasi untuk memastikan tidak ada periode lain dengan start_date dan end_date yang sama
+                // Ensure no other period has the same start_date and end_date
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
                         ->where('end_date', $request->end_date);
@@ -54,15 +54,15 @@ class KpiPeriodController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'status' => ['required', Rule::in(['Aktif', 'Ditutup'])],
         ], [
-            'start_date.unique' => 'Periode dengan tanggal mulai dan selesai yang sama sudah ada. Silakan gunakan nama periode lain atau ubah tanggal.',
+            'start_date.unique' => 'A period with the same start and end dates already exists. Please use a different period name or change the dates.',
         ]);
 
         KpiPeriod::create($validatedData);
-        return redirect()->route('kpi-periods.index')->with('success', 'Periode KPI manual berhasil dibuat.');
+        return redirect()->route('kpi-periods.index')->with('success', 'KPI period created successfully.');
     }
 
     /**
-     * Menampilkan form untuk mengedit periode KPI.
+     * Display the form for editing a KPI period.
      */
     public function edit(KpiPeriod $kpiPeriod)
     {
@@ -70,7 +70,7 @@ class KpiPeriodController extends Controller
     }
 
     /**
-     * Memperbarui periode KPI.
+     * Update a KPI period.
      */
     public function update(Request $request, KpiPeriod $kpiPeriod)
     {
@@ -79,7 +79,7 @@ class KpiPeriodController extends Controller
             'start_date' => [
                 'required',
                 'date',
-                // Validasi untuk memastikan tidak ada periode lain dengan start_date dan end_date yang sama
+                // Ensure no other period has the same start_date and end_date
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
                         ->where('end_date', $request->end_date);
@@ -88,27 +88,27 @@ class KpiPeriodController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'status' => ['required', Rule::in(['Aktif', 'Ditutup'])],
         ], [
-            'start_date.unique' => 'Periode dengan tanggal mulai dan selesai yang sama sudah ada. Silakan gunakan nama periode lain atau ubah tanggal.',
+            'start_date.unique' => 'A period with the same start and end dates already exists. Please use a different period name or change the dates.',
         ]);
 
         $kpiPeriod->update($validatedData);
-        return redirect()->route('kpi-periods.index')->with('success', 'Periode KPI berhasil diperbarui.');
+        return redirect()->route('kpi-periods.index')->with('success', 'KPI period updated successfully.');
     }
 
     /**
-     * Menghapus periode KPI jika tidak digunakan.
+     * Delete a KPI period if it is not used.
      */
     public function destroy(KpiPeriod $kpiPeriod)
     {
         if ($kpiPeriod->assessments()->exists()) {
-            return redirect()->route('kpi-periods.index')->with('error', 'Gagal! Periode ini sudah digunakan dalam penilaian dan tidak dapat dihapus.');
+            return redirect()->route('kpi-periods.index')->with('error', 'Failed! This period is used in assessments and cannot be deleted.');
         }
         $kpiPeriod->delete();
-        return redirect()->route('kpi-periods.index')->with('success', 'Periode KPI berhasil dihapus.');
+        return redirect()->route('kpi-periods.index')->with('success', 'KPI period deleted successfully.');
     }
 
     /**
-     * Membuat periode otomatis untuk periode saat ini berdasarkan tipe periode.
+     * Generate automatic periods for the current period based on period type.
      */
     protected function generateAutomaticPeriods()
     {
@@ -157,10 +157,10 @@ class KpiPeriodController extends Controller
                 continue;
             }
 
-            // Label tampilan
+            // Display label
             $periodName = $baseName . ' (' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . ')';
 
-            // Cek dengan kombinasi period_name + start_date + end_date
+            // Check for existing period with same start_date and end_date
             $exists = KpiPeriod::whereDate('start_date', $startDate->format('Y-m-d'))
                 ->whereDate('end_date', $endDate->format('Y-m-d'))
                 ->exists();
@@ -177,7 +177,7 @@ class KpiPeriodController extends Controller
     }
 
     /**
-     * Memperbarui status periode secara otomatis berdasarkan tanggal saat ini.
+     * Update period statuses automatically based on the current date.
      */
     protected function updatePeriodStatuses()
     {
