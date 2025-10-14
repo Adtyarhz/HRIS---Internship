@@ -71,7 +71,7 @@
                 <div class="input-group date-input-group">
                     <input type="date" name="start_date" id="start_date"
                         class="form-control @error('start_date') is-invalid @enderror"
-                        value="{{ old('start_date', optional($careerHistory)->start_date ? $careerHistory->start_date->format('Y-m-d') : '') }}"
+                        value="{{ old('start_date', optional($careerHistory)->start_date ? $careerHistory->start_date : '') }}"
                         required>
                     <label for="start_date" class="input-group-append">
                         <span class="input-group-text">
@@ -92,7 +92,7 @@
                 <div class="input-group date-input-group">
                     <input type="date" name="end_date" id="end_date"
                         class="form-control @error('end_date') is-invalid @enderror"
-                        value="{{ old('end_date', optional($careerHistory)->end_date ? $careerHistory->end_date->format('Y-m-d') : '') }}"
+                        value="{{ old('end_date', optional($careerHistory)->end_date ? $careerHistory->end_date : '') }}"
                         @if (isset($careerHistory) && is_null($careerHistory->end_date)) disabled @endif>
                     <label for="end_date" class="input-group-append">
                         <span class="input-group-text">

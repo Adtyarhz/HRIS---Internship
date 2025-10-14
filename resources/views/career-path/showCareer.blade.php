@@ -186,12 +186,12 @@
                                 </div>
                                 <div class="data-item">
                                     <span class="data-label">Start Date</span>
-                                    <span class="data-value">{{ $careerHistory->start_date->toDateString() }}</span>
+                                    <span class="data-value">{{ $careerHistory->start_date }}</span>
                                 </div>
                                 <div class="data-item">
                                     <span class="data-label">End Date</span>
                                     <span
-                                        class="data-value">{{ $careerHistory->end_date ? $careerHistory->end_date->toDateString() : '-' }}</span>
+                                        class="data-value">{{ $careerHistory->end_date ? $careerHistory->end_date : '-' }}</span>
                                 </div>
                                 <div class="data-item">
                                     <span class="data-label">Type</span>
