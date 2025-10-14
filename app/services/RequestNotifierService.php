@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 class RequestNotifierService
 {
     /**
-     * Buat request perubahan data (create/update/delete) dan kirim notifikasi ke HC/Superadmin.
+     * Create a data change request (create/update/delete) and send notification to HC/Superadmin.
      *
      * @param  Model   $model
      * @param  array   $validatedData
@@ -31,23 +31,23 @@ class RequestNotifierService
             $user = Auth::user();
             $modelName = class_basename($model);
 
-            // Cari class EditRequest-nya (misal: EmployeeEditRequest)
+            // Find the appropriate EditRequest class (e.g., EmployeeEditRequest)
             $editRequestClass = "App\\Models\\{$modelName}EditRequest";
             if (!class_exists($editRequestClass)) {
-                // fallback: gunakan EmployeeEditRequest default
+                // Fallback: use default EmployeeEditRequest
                 $editRequestClass = "App\\Models\\EmployeeEditRequest";
             }
 
-            // Tentukan method otomatis jika belum diberikan
+            // Auto-detect method if not provided
             $method = $operation ?? $this->detectMethod($model, $validatedData);
 
-            // Data original hanya untuk update/delete
+            // Original data only for update/delete
             $originalData = null;
             if ($method === 'update' && $model->exists) {
                 $originalData = $model->only(array_keys($validatedData));
             }
 
-            // Buat request perubahan data
+            // Create data change request
             $editRequest = $editRequestClass::create(array_merge([
                 'employee_id'   => $extraData['employee_id'] ?? ($model->employee_id ?? null),
                 'method'        => $method,
@@ -60,24 +60,27 @@ class RequestNotifierService
                 'requested_at'  => now(),
             ], $extraData));
 
-            // Kirim notifikasi ke HC & Superadmin
+            // Send notification to HC & Superadmin
             $admins = User::whereIn('role', ['hc', 'superadmin'])
                 ->whereKeyNot($user->id)
                 ->get();
 
             if ($admins->isEmpty()) {
-                Log::warning("Tidak ada penerima notifikasi HC/Superadmin untuk {$modelName}.");
+                Log::warning("No HC/Superadmin recipients found for {$modelName} notification.");
                 return $editRequest;
             }
 
             foreach ($admins as $admin) {
+                $employeeGender = $user->employee->gender;
+
                 $admin->notify(new $notificationClass(
                     $user->name ?? 'Karyawan',
-                    $editRequest->id
+                    $editRequest->id,
+                    $employeeGender
                 ));
             }
 
-            Log::info("Notifikasi {$method} request berhasil dikirim.", [
+            Log::info("{$method} request notification sent successfully.", [
                 'model' => $modelName,
                 'request_id' => $editRequest->id,
                 'recipients' => $admins->pluck('id')->all(),
@@ -85,7 +88,7 @@ class RequestNotifierService
 
             return $editRequest;
         } catch (\Throwable $e) {
-            Log::error("Gagal membuat request notifikasi edit", [
+            Log::error("Failed to create edit request notification", [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -94,7 +97,7 @@ class RequestNotifierService
     }
 
     /**
-     * Deteksi jenis operasi berdasarkan model & datanya.
+     * Detect operation type based on model and data.
      */
     protected function detectMethod(Model $model, array $data): string
     {
@@ -102,7 +105,7 @@ class RequestNotifierService
             return 'create';
         }
 
-        // Jika tidak ada perbedaan data, anggap tidak berubah
+        // If no data differences, consider it unchanged
         $dirty = collect($data)->filter(function ($value, $key) use ($model) {
             return $model->{$key} != $value;
         });

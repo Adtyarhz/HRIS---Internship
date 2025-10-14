@@ -15,18 +15,20 @@ class KpiNotifier
     {
         foreach ($subordinates as $bawahan) {
             $bawahan->notify(new KpiNotification(
-                "Sesi KPI baru telah dimulai untuk periode {$period->period_name}. Silakan cek target Anda."
+                "A new KPI session has started for the {$period->period_name} period. Please check your targets."
             ));
         }
 
-        $atasanPositionId->notify(new KpiNotification("Sesi KPI {$bawahan->employee->full_name} berhasil dibuat untuk periode {$period->period_name}. Silakan atur target dan penilaian."));
+        $atasanPositionId->notify(new KpiNotification(
+            "KPI session for {$bawahan->employee->full_name} has been created for the {$period->period_name} period. Please set targets and assessment."
+        ));
     }
 
     public static function notifyTargetAdjusted($subordinates)
     {
         foreach ($subordinates as $bawahan) {
             $bawahan->notify(new KpiNotification(
-                "Target KPI Anda sudah ditetapkan. Silakan isi penilaian diri."
+                "Your KPI targets have been set. Please complete your self-assessment."
             ));
         }
     }
@@ -34,19 +36,19 @@ class KpiNotifier
     public static function notifySelfSubmitted(User $atasanPositionId, User $bawahan, KpiPeriod $period)
     {
         $atasanPositionId->notify(new KpiNotification(
-            "{$bawahan->employee->full_name} telah menyelesaikan penilaian diri untuk periode {$period->period_name}."
+            "{$bawahan->employee->full_name} has completed their self-assessment for the {$period->period_name} period."
         ));
     }
 
     public static function notifySupervisorSubmitted(User $bawahan, $hrUsers, KpiPeriod $period)
     {
         $bawahan->notify(new KpiNotification(
-            "Penilaian atasan Anda untuk periode {$period->period_name} sudah selesai. Hasil akhir dapat dilihat."
+            "Your supervisor's assessment for the {$period->period_name} period is complete. Final results are now available."
         ));
 
         foreach ($hrUsers as $hr) {
             $hr->notify(new KpiNotification(
-                "Penilaian KPI periode {$period->period_name} untuk {$bawahan->employee->full_name} telah selesai."
+                "KPI assessment for the {$period->period_name} period for {$bawahan->employee->full_name} has been completed."
             ));
         }
     }
@@ -55,28 +57,28 @@ class KpiNotifier
     {
         foreach ($subordinates as $bawahan) {
             $bawahan->notify(new KpiNotification(
-                "Assessment periode {$old->name} telah ditutup. Assessment baru untuk periode {$new->name} sudah dibuat."
+                "The assessment for the {$old->name} period has been closed. A new assessment for the {$new->name} period has been created."
             ));
         }
 
         $atasanPositionId->notify(new KpiNotification(
-            "Assessment periode {$old->name} ditutup, sistem sudah membuat periode baru: {$new->name}."
+            "The {$old->name} period assessment has been closed. The system has created a new period: {$new->name}."
         ));
     }
 
     public static function notifyReminder(User $bawahan, int $daysRemaining)
     {
         $bawahan->notify(new KpiNotification(
-            "Periode penilaian KPI akan berakhir dalam {$daysRemaining} hari. Silakan submit penilaian Anda."
+            "The KPI assessment period will end in {$daysRemaining} days. Please submit your assessment."
         ));
     }
 
     public static function send(User $user, string $message)
     {
-        // Bisa pakai Laravel Notification
+        // Use Laravel Notification
         Notification::send($user, new KpiReminderNotification($message));
 
-        // Untuk debug/logging
-        Log::info("Reminder KPI terkirim ke {$user->name}: {$message}");
+        // For debugging/logging
+        Log::info("KPI reminder sent to {$user->name}: {$message}");
     }
 }
