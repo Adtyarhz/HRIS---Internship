@@ -12,10 +12,10 @@
     }
 
     .header-with-icon .custom-hamburger {
-        margin-right: 6px; /* Jarak antara ikon dan teks */
-        width: 35px; /* Diperbesar untuk sesuai dengan font-size teks 24px */
-        height: 35px; /* Diperbesar untuk sesuai dengan font-size teks 24px */
-        color: #000; /* Warna ikon */
+        margin-right: 6px;
+        width: 35px;
+        height: 35px;
+        color: #000;
     }
 
     .announcement-header {
@@ -23,6 +23,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
     }
 
     .announcement-header h2 {
@@ -44,15 +45,16 @@
 
     .btn-add:hover {
         background-color: #7a2f2f;
-        color: white;              /* biar teks tetap putih */
-        text-decoration: none;     /* hilangkan underline */
+        color: white;
+        text-decoration: none;
     }
 
+    /* === FILTER FORM === */
     .filter-form {
         display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
         align-items: center;
+        flex-wrap: nowrap;
+        gap: 1rem;
         margin-bottom: 1rem;
     }
 
@@ -65,6 +67,14 @@
         font-family: 'Manrope', sans-serif;
     }
 
+    .filter-form input {
+        width: 220px;
+    }
+
+    .filter-form select {
+        width: 180px;
+    }
+
     .btn-filter {
         background-color: #b44343ff;
         color: white;
@@ -73,12 +83,14 @@
         border-radius: 6px;
         font-weight: bold;
         cursor: pointer;
+        white-space: nowrap;
     }
+
     .btn-filter:hover {
         background-color: #7a2f2f;
-        color: white;              /* biar teks tetap putih */
-        text-decoration: none;     /* hilangkan underline */
+        color: white;
     }
+
     .btn-detail {
         background-color: #b44343ff;
         color: white;
@@ -95,14 +107,22 @@
 
     .btn-detail:hover {
         background-color: #333;
-        color: white;              /* biar teks tetap putih */
-        text-decoration: none;     /* hilangkan underline */
+        color: white;
+    }
+
+    /* === TABLE === */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
     }
 
     .announcement-table {
         width: 100%;
         border-collapse: collapse;
         font-family: 'Manrope', sans-serif;
+        min-width: 700px;
     }
 
     .announcement-table thead th {
@@ -128,18 +148,19 @@
         align-items: center;
     }
 
-    /* Styling untuk paginasi */
+    /* === PAGINATION === */
     .pagination {
         display: flex;
         justify-content: center;
         align-items: center;
+        flex-wrap: wrap;
         gap: 10px;
         margin-top: 20px;
     }
 
     .pagination a,
     .pagination span {
-        padding: 4px 8px;
+        padding: 6px 10px;
         border: 1px solid #ccc;
         border-radius: 6px;
         text-decoration: none;
@@ -156,13 +177,64 @@
         color: #999;
         cursor: not-allowed;
     }
+
+    /* === RESPONSIVE MODE === */
+    @media (max-width: 991px) {
+        .filter-form {
+            flex-wrap: wrap;
+        }
+        .filter-form input,
+        .filter-form select,
+        .btn-filter {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .announcement-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .announcement-header h2 {
+            font-size: 20px;
+        }
+
+        .btn-add {
+            width: 100%;
+            text-align: center;
+        }
+
+        .announcement-table {
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .announcement-header h2 {
+            font-size: 18px;
+        }
+
+        .btn-detail,
+        .btn-filter {
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+
+        .pagination a,
+        .pagination span {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+    }
 </style>
 @endpush
 
 @section('content_header')
     <div class="header-with-icon">
-        <svg class="custom-hamburger" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+        <svg class="custom-hamburger" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+                d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2" />
         </svg>
         Announcement Management
     </div>
@@ -183,53 +255,54 @@
             <option value="Informasi" {{ request('announcement_type') == 'Informasi' ? 'selected' : '' }}>Informasi</option>
             <option value="Polling" {{ request('announcement_type') == 'Polling' ? 'selected' : '' }}>Polling</option>
         </select>
-        <input type="text" name="label" placeholder="Search by Label(HR, IT, ext..." value="{{ request('label') }}">
+        <input type="text" name="label" placeholder="Search by Label (HR, IT, etc...)" value="{{ request('label') }}">
         <button type="submit" class="btn-filter">Filter</button>
     </form>
 
-    <table class="announcement-table">
-        <thead>
-            <tr>
-                <th>Announcement Title</th>
-                <th>Announcement Type</th>
-                <th>Label</th>
-                <th>Attachment</th>
-                <th>Upload Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($announcements as $announcement)
+    <div class="table-responsive">
+        <table class="announcement-table">
+            <thead>
                 <tr>
-                    <td>{{ $announcement->title }}</td>
-                    <td>{{ $announcement->announcement_type }}</td>
-                    <td>{{ $announcement->label }}</td>
-                    <td>
-                        @if (!empty($announcement->attachment_file))
-                            <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
-                            class="btn-detail" target="_blank" title="Click here to view the attachment">
-                                <i class="fas fa-file-pdf"></i> View File
-                            </a>
-                        @else
-                            <span style="color:#999; font-style:italic;">No File</span>
-                        @endif
-                    </td>
-                    <td>{{ $announcement->created_at->format('d F Y H:i') }}</td>
-                    <td>
-                        <div class="actions">
-                            <a href="{{ route('announcement.show', $announcement->id) }}" class="btn-detail">Detail</a>
-                        </div>
-                    </td>
+                    <th>Announcement Title</th>
+                    <th>Type</th>
+                    <th>Label</th>
+                    <th>Attachment</th>
+                    <th>Upload Date</th>
+                    <th>Action</th>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="6">No announcements found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse ($announcements as $announcement)
+                    <tr>
+                        <td>{{ $announcement->title }}</td>
+                        <td>{{ $announcement->announcement_type }}</td>
+                        <td>{{ $announcement->label }}</td>
+                        <td>
+                            @if (!empty($announcement->attachment_file))
+                                <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
+                                   class="btn-detail" target="_blank" title="Click here to view the attachment">
+                                    <i class="fas fa-file-pdf"></i> View File
+                                </a>
+                            @else
+                                <span style="color:#999; font-style:italic;">No File</span>
+                            @endif
+                        </td>
+                        <td>{{ $announcement->created_at->format('d F Y H:i') }}</td>
+                        <td>
+                            <div class="actions">
+                                <a href="{{ route('announcement.show', $announcement->id) }}" class="btn-detail">Detail</a>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6">No announcements found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-    <!-- Tambahkan tautan paginasi sederhana (Previous dan Next) -->
     <div class="pagination">
         {{ $announcements->links('pagination::custom') }}
     </div>

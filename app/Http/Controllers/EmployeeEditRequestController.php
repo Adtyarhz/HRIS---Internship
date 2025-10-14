@@ -41,11 +41,32 @@ class EmployeeEditRequestController extends Controller
         'training_histories' => TrainingHistory::class,
     ];
 
-    public function index()
-    {
-        $requests = EmployeeEditRequest::with(['employee', 'approvedBy'])->latest()->get();
-        return view('employee_edit_requests.index', compact('requests'));
+   public function index(Request $request)
+{
+    $query = \App\Models\EmployeeEditRequest::with(['employee', 'approvedBy']);
+
+    // Filter status
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
     }
+
+    // Sort (default: terbaru)
+    $sort = $request->get('sort', 'desc');
+    $query->orderBy('requested_at', $sort);
+
+    // Filter berdasarkan nama karyawan
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->whereHas('employee', function ($q) use ($search) {
+            $q->where('full_name', 'like', "%{$search}%");
+        });
+    }
+
+    $requests = $query->paginate(9)->withQueryString();
+
+    return view('employee_edit_requests.index', compact('requests'));
+}
+
 
     public function show($id)
     {
