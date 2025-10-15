@@ -16,17 +16,17 @@ use Carbon\Carbon;
 class KpiAssessmentController extends Controller
 {
     /**
-     * Menampilkan dashboard penilaian.
+     * Display the assessment dashboard.
      */
     public function index()
     {
         $user = Auth::user();
         $employee = $user->employee;
 
-        // 🔄 Tutup assessment kadaluarsa + buat ulang otomatis
+        // Close expired assessments and recreate automatically
         $this->closeExpiredAssessments();
 
-        // Penilaian di mana pengguna adalah atasan utama
+        // Assessments where the user is the primary supervisor
         $assessmentsAsSupervisor = KpiAssessment::where('primary_supervisor_id', $user->id)
             ->with('employee.position', 'period')
             ->latest()->get();
@@ -36,19 +36,19 @@ class KpiAssessmentController extends Controller
         $activePeriods = collect();
 
         if ($employee) {
-            // Ambil penilaian yang sudah ada untuk diri sendiri
+            // Retrieve existing assessments for the user
             $myAssessments = KpiAssessment::where('employee_id', $employee->id)
                 ->with('supervisor', 'period')
                 ->latest()->get();
 
-            // Ambil template yang aktif dan relevan dengan jabatan karyawan
+            // Retrieve active templates relevant to the employee's position
             if ($employee->position_id) {
                 $availableTemplates = KpiTemplate::where('position_id', $employee->position_id)
                     ->where('is_active', true)
                     ->get();
             }
 
-            // Ambil periode yang aktif untuk memulai penilaian baru
+            // Retrieve active periods for starting new assessments
             $activePeriods = KpiPeriod::where('status', 'Aktif')
                 ->orderBy('start_date', 'desc')
                 ->get();
@@ -63,13 +63,13 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Menampilkan form untuk memulai sesi penilaian baru oleh atasan.
+     * Display the form to start a new assessment session by the supervisor.
      */
     public function create()
     {
         $periods = KpiPeriod::where('status', 'Aktif')->orderBy('start_date', 'desc')->get();
 
-        // Logika untuk mencari bawahan berdasarkan hierarki jabatan
+        // Logic to find subordinates based on position hierarchy
         $atasanPositionId = Auth::user()->employee->position_id ?? null;
         $subordinates = collect();
         if ($atasanPositionId) {
@@ -88,7 +88,7 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Menyimpan (menginisiasi) sesi penilaian baru oleh atasan.
+     * Store (initiate) a new assessment session by the supervisor.
      */
     public function store(Request $request)
     {
@@ -110,17 +110,17 @@ class KpiAssessmentController extends Controller
                 }
                 $templateId = $validatedData['employees'][$employeeId];
                 $employee = Employee::findOrFail($employeeId);
-                // MODIFIKASI: Eager load relasi templateItems beserta scoringRules-nya
                 $template = KpiTemplate::with('templateItems.scoringRules')->findOrFail($templateId);
 
                 if ($employee->position_id != $template->position_id) {
-                    throw new \Exception("Template '{$template->template_name}' tidak sesuai untuk jabatan {$employee->position->title}.");
+                    throw new \Exception("Template '{$template->template_name}' is not suitable for position {$employee->position->title}.");
                 }
                 $existing = KpiAssessment::where('employee_id', $employeeId)
                     ->where('kpi_period_id', $validatedData['kpi_period_id'])
                     ->exists();
-                if ($existing)
+                if ($existing) {
                     continue;
+                }
 
                 $assessment = KpiAssessment::create([
                     'employee_id' => $employee->id,
@@ -130,16 +130,12 @@ class KpiAssessmentController extends Controller
                 ]);
 
                 foreach ($template->templateItems as $templateItem) {
-                    // Buat assessment item dari template item
                     $assessmentItem = $assessment->assessmentItems()->create([
                         'kpi_indicator_id' => $templateItem->kpi_indicator_id,
                         'weight' => $templateItem->weight,
                         'target' => $templateItem->default_target,
                     ]);
 
-                    // MODIFIKASI: Salin (copy) setiap scoring rule dari template ke assessment item
-                    // PENJELASAN: Ini adalah langkah krusial. Kita membuat duplikat aturan skor
-                    // sehingga penyesuaian di assessment ini tidak akan mengubah master template.
                     if ($templateItem->scoringRules) {
                         foreach ($templateItem->scoringRules as $rule) {
                             $assessmentItem->scoringRules()->create([
@@ -152,21 +148,19 @@ class KpiAssessmentController extends Controller
                     }
                 }
 
-                // Tambahkan peserta atasan dulu untuk penyesuaian
                 $assessment->participants()->create(['assessor_id' => Auth::id(), 'role' => 'direct_supervisor']);
-
             }
             DB::commit();
-            // Setelah loop berhasil bikin assessment
-                \App\Services\KpiNotifier::notifyNewSession(
-                    KpiPeriod::find($validatedData['kpi_period_id']),
-                    Auth::user(),
-                    Employee::whereIn('id', $selectedEmployees)->get()->pluck('user')
-                );
-            return redirect()->route('kpi-assessments.index')->with('success', 'Sesi penilaian berhasil dibuat. Silakan sesuaikan target, bobot, dan aturan skor.');
+
+            \App\Services\KpiNotifier::notifyNewSession(
+                KpiPeriod::find($validatedData['kpi_period_id']),
+                Auth::user(),
+                Employee::whereIn('id', $selectedEmployees)->get()->pluck('user')
+            );
+            return redirect()->route('kpi-assessments.index')->with('success', 'Assessment session created successfully. Please adjust targets, weights, and scoring rules.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal membuat sesi: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to create session: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -174,24 +168,20 @@ class KpiAssessmentController extends Controller
     {
         $user = Auth::user();
 
-        // 🔄 Tutup assessment kadaluarsa + buat ulang otomatis
         $this->closeExpiredAssessments();
 
         $hasPermission = false;
 
-        // 1. HC / Admin
         if ($user->role === 'hc' || $user->role === 'superadmin') {
             $hasPermission = true;
         }
 
-        // 2. Manager divisi yang sama
         if (!$hasPermission && $user->role === 'manager') {
             if ($user->employee && $kpiAssessment->employee && $user->employee->division_id === $kpiAssessment->employee->division_id) {
                 $hasPermission = true;
             }
         }
 
-        // 3. Peserta langsung (penilai / dinilai)
         if (!$hasPermission) {
             $isParticipant = $kpiAssessment->participants()->where('assessor_id', $user->id)->exists();
             if ($kpiAssessment->employee->user_id === $user->id || $isParticipant) {
@@ -199,7 +189,6 @@ class KpiAssessmentController extends Controller
             }
         }
 
-        // 4. Atasan utama
         if (!$hasPermission) {
             if ($user->id === $kpiAssessment->primary_supervisor_id) {
                 $hasPermission = true;
@@ -207,7 +196,7 @@ class KpiAssessmentController extends Controller
         }
 
         if (!$hasPermission) {
-            abort(403, 'Anda tidak memiliki hak akses untuk melihat detail penilaian ini.');
+            abort(403, 'You do not have permission to view this assessment detail.');
         }
 
         $kpiAssessment->load(
@@ -223,16 +212,16 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Menyimpan penyesuaian (target, bobot, scoring rules) atau skor penilaian.
+     * Store adjustments (targets, weights, scoring rules) or assessment scores.
      */
     public function update(Request $request, KpiAssessment $kpiAssessment)
     {
         $user = Auth::user();
-        $action = $request->input('action', 'submit'); // 'save_draft' atau 'submit'
+        $action = $request->input('action', 'submit');
 
         DB::beginTransaction();
         try {
-            // === Tahap 1: Penyesuaian Target, Bobot, dan Aturan Skor ===
+            // Target Adjustment Phase
             if ($kpiAssessment->status === 'Penyesuaian Target') {
                 $validated = $request->validate([
                     'items' => 'required|array',
@@ -248,54 +237,46 @@ class KpiAssessmentController extends Controller
                 $totalWeight = array_sum(array_column($validated['items'], 'weight'));
                 if (round($totalWeight) != 100) {
                     DB::rollBack();
-                    return back()->with('error', 'Total bobot harus tepat 100%.')->withInput();
+                    return back()->with('error', 'Total weight must be exactly 100%.')->withInput();
                 }
 
                 foreach ($validated['items'] as $itemId => $data) {
                     $assessmentItem = $kpiAssessment->assessmentItems()->findOrFail($itemId);
                     $rules = $data['rules'] ?? [];
 
-                    $indicatorName = $assessmentItem->indicator?->indicator_name ?? 'Indikator Tidak Diketahui';
+                    $indicatorName = $assessmentItem->indicator?->indicator_name ?? 'Unknown Indicator';
 
-                    // ✅ Tambahan: validasi aturan scoring sesuai ketentuan
                     if (count($rules) === 2) {
-                        // target harus sama dengan value1 kedua aturan
                         $values = collect($rules)->pluck('value1')->unique();
                         if (!$values->contains($data['target'])) {
                             DB::rollBack();
-                            return back()->with('error', "Target dan kedua nilai aturan scoring harus sama untuk indikator {$indicatorName}")->withInput();
+                            return back()->with('error', "Target and both scoring rule values must match for indicator {$indicatorName}.")->withInput();
                         }
                     } elseif (count($rules) >= 3) {
-                        // cari aturan dengan score = 10
-                        $ruleTen = collect($rules)->firstWhere('score', 10);
-                        if ($ruleTen && $data['target'] != $ruleTen['value1']) {
+                        $maxScoreRule = collect($rules)->sortByDesc('score')->first();
+                        if ($maxScoreRule && $data['target'] != $maxScoreRule['value1']) {
                             DB::rollBack();
-                            return back()->with('error', "Target dan aturan scoring yang bernilai 10 harus sama untuk indikator {$indicatorName}")->withInput();
+                            return back()->with('error', "Target and scoring rule with score {$maxScoreRule['score']} must match for indicator {$indicatorName}.")->withInput();
                         }
                     }
 
-                    // cek aturan between agar selaras
                     foreach ($rules as $rule) {
                         if ($rule['operator'] === 'between') {
                             $val1 = (float) $rule['value1'];
                             $val2 = (float) $rule['value2'];
-
-                            // pastikan ada aturan lain yg menggunakan batasan ini
                             $allValues = collect($rules)->pluck('value1')->merge(collect($rules)->pluck('value2'))->filter();
                             if (!$allValues->contains($val1) || !$allValues->contains($val2)) {
                                 DB::rollBack();
-                                return back()->with('error', "Aturan 'between' untuk indikator {$indicatorName} harus sesuai dengan batas nilai aturan scoring lainnya")->withInput();
+                                return back()->with('error', "The 'between' rule for indicator {$indicatorName} must align with the boundary values of other scoring rules.")->withInput();
                             }
                         }
                     }
 
-                    // Simpan target & bobot
                     $assessmentItem->update([
                         'target' => $data['target'],
                         'weight' => $data['weight']
                     ]);
 
-                    // Replace aturan scoring lama
                     $assessmentItem->scoringRules()->delete();
                     if (!empty($rules)) {
                         foreach ($rules as $ruleData) {
@@ -304,7 +285,6 @@ class KpiAssessmentController extends Controller
                     }
                 }
 
-                // Tambahkan peserta (karyawan) dan update status
                 $kpiAssessment->participants()->firstOrCreate(
                     ['assessor_id' => $kpiAssessment->employee->user_id],
                     ['role' => 'self']
@@ -317,24 +297,22 @@ class KpiAssessmentController extends Controller
                 );
                 return redirect()
                     ->route('kpi-assessments.show', $kpiAssessment->id)
-                    ->with('success', 'Penyesuaian berhasil disimpan. Karyawan sekarang bisa mengisi penilaian diri.');
+                    ->with('success', 'Adjustments saved successfully. The employee can now complete their self-assessment.');
             }
 
-            // TAHAP 2: Menyimpan Penilaian Diri atau Atasan (dengan skor otomatis)
+            // Self or Supervisor Assessment Phase
             $participant = $kpiAssessment->participants()->where('assessor_id', $user->id)->firstOrFail();
 
-            // MODIFIKASI: Hapus validasi 'score' karena tidak lagi diinput manual
             $validatedData = $request->validate([
                 'items' => 'required|array',
-                'items.*.achievement_input' => 'nullable|string|max:255', // Ini jadi input utama
+                'items.*.achievement_input' => 'nullable|string|max:255',
                 'notes' => 'nullable|string',
             ]);
 
             foreach ($validatedData['items'] as $itemId => $itemData) {
                 $assessmentItem = $kpiAssessment->assessmentItems()->with('scoringRules')->findOrFail($itemId);
 
-                // MODIFIKASI: Hitung skor secara otomatis
-                $calculatedScore = 0; // Default score
+                $calculatedScore = 0;
                 if (is_numeric($itemData['achievement_input'])) {
                     $calculatedScore = $this->calculateScoreFromRules(
                         $itemData['achievement_input'],
@@ -342,51 +320,47 @@ class KpiAssessmentController extends Controller
                     );
                 }
 
-                // Simpan input pencapaian dan skor hasil kalkulasi
                 $assessmentItem->scores()->updateOrCreate(
                     ['participant_id' => $participant->id],
                     [
                         'achievement_input' => $itemData['achievement_input'],
-                        'score' => $calculatedScore // Gunakan skor hasil perhitungan
+                        'score' => $calculatedScore
                     ]
                 );
             }
 
             if ($action === 'submit') {
-                $periodEnd = $kpiAssessment->period->end_date->endOfDay(); // pastikan sampai akhir hari periode
+                $periodEnd = $kpiAssessment->period->end_date->endOfDay();
                 $now = now();
-                // Hitung sisa waktu dalam detik, lalu ubah ke hari (dengan pecahan)
                 $hoursRemaining = $now->diffInHours($periodEnd, false);
                 $daysRemaining = $hoursRemaining / 24;
 
-                // Jika masih lebih dari 5 hari (dalam hitungan jam), tolak submit
                 if ($daysRemaining > 5) {
                     DB::rollBack();
                     $daysRemainingInt = floor($daysRemaining);
                     return back()->with(
                         'error',
-                        "Penilaian hanya bisa disubmit ketika periode tersisa 5 hari atau kurang. Saat ini masih sekitar {$daysRemainingInt} hari lagi."
+                        "Assessment can only be submitted when 5 days or fewer remain in the period. Currently, about {$daysRemainingInt} days remain."
                     )->withInput();
                 }
 
                 $participant->update(['status' => 'Selesai', 'notes' => $validatedData['notes'] ?? null]);
                 $this->updateAssessmentStatus($kpiAssessment);
-                $successMessage = 'Penilaian berhasil diserahkan.';
+                $successMessage = 'Assessment submitted successfully.';
 
-                // === ✅ NOTIFIKASI: Self submit atau Supervisor submit ===
                 if ($participant->role === 'self') {
-                    // Bawahan submit → notify atasan
+                    
                     $atasan = $kpiAssessment->supervisor;
                     \App\Services\KpiNotifier::notifySelfSubmitted($atasan, $user, $kpiAssessment->period);
                 } elseif ($participant->role === 'direct_supervisor') {
-                    // Atasan submit → notify bawahan & HR
+                    
                     $user = $kpiAssessment->employee->user;
                     $hrUsers = \App\Models\User::whereIn('role', ['hc', 'superadmin'])->get();
                     \App\Services\KpiNotifier::notifySupervisorSubmitted($user, $hrUsers, $kpiAssessment->period);
                 }
-            } else { // 'save_draft'
+            } else {
                 $participant->update(['notes' => $validatedData['notes'] ?? null]);
-                $successMessage = 'Draft penilaian berhasil disimpan.';
+                $successMessage = 'Assessment draft saved successfully.';
             }
 
             DB::commit();
@@ -394,12 +368,12 @@ class KpiAssessmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Failed to save data: ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Memperbarui status alur kerja penilaian.
+     * Update the workflow status of the assessment.
      */
     protected function updateAssessmentStatus(KpiAssessment $assessment)
     {
@@ -419,7 +393,7 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Menghitung skor akhir berdasarkan aturan skor yang sudah disesuaikan.
+     * Calculate the final score based on adjusted scoring rules.
      */
     protected function finalizeAssessment(KpiAssessment $assessment)
     {
@@ -435,15 +409,13 @@ class KpiAssessmentController extends Controller
             $finalScoreRecord = $item->scores()->where('participant_id', $supervisorParticipant->id)->first();
 
             if ($finalScoreRecord && is_numeric($finalScoreRecord->achievement_input)) {
-                // MODIFIKASI: Logika ini sudah benar, kita pastikan untuk selalu menggunakannya.
                 $calculatedScore = $this->calculateScoreFromRules(
                     $finalScoreRecord->achievement_input,
-                    $item->scoringRules // Gunakan aturan dari assessment, bukan template
+                    $item->scoringRules
                 );
 
                 $itemScoreWeighted = ($calculatedScore) * ($item->weight / 100);
 
-                // Update item penilaian dengan data final
                 $item->update([
                     'achievement' => $finalScoreRecord->achievement_input,
                     'final_item_score' => $itemScoreWeighted
@@ -452,7 +424,6 @@ class KpiAssessmentController extends Controller
             }
         }
 
-        // Update penilaian utama dengan skor total dan status Selesai
         $assessment->update([
             'final_score' => $totalScore,
             'status' => 'Selesai'
@@ -460,67 +431,57 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Helper untuk menghitung skor berdasarkan pencapaian dan set aturan.
+     * Helper to calculate score based on achievement and rule set.
      */
     private function calculateScoreFromRules($achievement, $rules)
     {
         if ($rules->isEmpty()) {
-            return 0; // Tidak ada aturan, skor 0
+            return 0;
         }
         $achievement = (float) $achievement;
-        // Urutkan berdasarkan skor tertinggi, jadi aturan yang lebih menguntungkan dicek lebih dulu.
         foreach ($rules->sortByDesc('score') as $rule) {
             $value1 = (float) $rule->value1;
             $value2 = isset($rule->value2) ? (float) $rule->value2 : null;
 
             switch ($rule->operator) {
                 case '<':
-                    if ($achievement < $value1)
-                        return $rule->score;
+                    if ($achievement < $value1) return $rule->score;
                     break;
                 case '<=':
-                    if ($achievement <= $value1)
-                        return $rule->score;
+                    if ($achievement <= $value1) return $rule->score;
                     break;
                 case '=':
-                    if ($achievement == $value1)
-                        return $rule->score;
+                    if ($achievement == $value1) return $rule->score;
                     break;
                 case '>=':
-                    if ($achievement >= $value1)
-                        return $rule->score;
+                    if ($achievement >= $value1) return $rule->score;
                     break;
                 case '>':
-                    if ($achievement > $value1)
-                        return $rule->score;
+                    if ($achievement > $value1) return $rule->score;
                     break;
                 case 'between':
-                    if ($achievement >= $value1 && $achievement <= $value2)
-                        return $rule->score;
+                    if ($achievement >= $value1 && $achievement <= $value2) return $rule->score;
                     break;
             }
         }
-        return 0; // Skor default jika tidak ada aturan yang cocok
+        return 0;
     }
 
     /**
-     * Helper: menutup assessment kadaluarsa & buat baru dari awal
+     * Helper: close expired assessments and create new ones
      */
     private function closeExpiredAssessments()
     {
-        $now = \Carbon\Carbon::now();
+        $now = Carbon::now();
 
-        // Ambil assessment yang periodenya sudah lewat tapi belum kadaluarsa
         $expiredAssessments = KpiAssessment::whereHas('period', function ($q) use ($now) {
             $q->where('end_date', '<', $now);
         })->whereNotIn('status', ['Kadaluarsa', 'Selesai'])->get();
 
         foreach ($expiredAssessments as $assessment) {
             DB::transaction(function () use ($assessment) {
-                // Tandai assessment lama sebagai kadaluarsa
                 $assessment->update(['status' => 'Kadaluarsa']);
 
-                // Buat assessment baru di periode berikutnya
                 $periodType = $this->detectPeriodType($assessment->period);
                 $newPeriod = $this->getNextPeriod($assessment->period, $periodType);
 
@@ -543,12 +504,11 @@ class KpiAssessmentController extends Controller
                         }
                     }
 
-                    // 🔔 Tambahkan notifikasi di sini
                     \App\Services\KpiNotifier::notifyExpired(
-                        $assessment->period,          // periode lama
-                        $newPeriod,                   // periode baru
-                        $assessment->supervisor,      // atasan lama
-                        [$assessment->employee->user] // bawahan lama
+                        $assessment->period,
+                        $newPeriod,
+                        $assessment->supervisor,
+                        [$assessment->employee->user]
                     );
                 }
             });
@@ -556,7 +516,7 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Deteksi tipe periode dari label unik (Mingguan, Bulanan, dst.)
+     * Detect period type from unique label (Weekly, Monthly, etc.)
      */
     private function detectPeriodType(KpiPeriod $period): string
     {
@@ -576,7 +536,7 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Buat periode berikutnya dari periode lama
+     * Create the next period from the old period
      */
     private function getNextPeriod(KpiPeriod $oldPeriod, string $type): ?KpiPeriod
     {
@@ -609,7 +569,7 @@ class KpiAssessmentController extends Controller
                 $label = "4 Bulanan (" . $nextStart->format('M Y') . " - " . $nextEnd->format('M Y') . ")";
                 break;
 
-            case 'per_6_bulan': // Semester
+            case 'per_6_bulan':
                 $nextStart = Carbon::parse($oldPeriod->start_date)->addMonths(6)->startOfMonth();
                 $nextEnd = $nextStart->copy()->addMonths(5)->endOfMonth();
                 $semester = ($nextStart->month <= 6) ? 1 : 2;

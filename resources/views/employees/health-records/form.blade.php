@@ -177,7 +177,7 @@
                                 {{-- Chronic Diseases --}}
                                 <div class="form-group row">
                                     <label for="chronic_diseases" class="col-md-2 col-form-label">
-                                        Chronic Diseases :
+                                        Chronic Diseases <span class="text-danger">*</span> :
                                     </label>
                                     <div class="col-md-4">
                                         <textarea
@@ -186,7 +186,7 @@
                                             name="chronic_diseases"
                                             rows="4"
                                             placeholder="Description of Your Chronic Diseases"
-                                        >{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
+                                        required>{{ old('chronic_diseases', $healthRecord->chronic_diseases ?? '') }}</textarea>
                                         @error('chronic_diseases')
                                             <span class="invalid-feedback">{{ $message }}</span>
                                         @enderror
@@ -196,7 +196,7 @@
                                 {{-- Last Checkup --}}
                                 <div class="form-group row align-items-center">
                                     <label for="last_checkup_date" class="col-md-2 col-form-label">
-                                        Last Checkup :
+                                        Last Checkup <span class="text-danger">*</span> :
                                     </label>
                                     <div class="col-md-2">
                                         <div class="input-group date-input-group">
@@ -206,7 +206,7 @@
                                                 id="last_checkup_date"
                                                 name="last_checkup_date"
                                                 value="{{ old('last_checkup_date', isset($healthRecord) && $healthRecord->last_checkup_date ? \Carbon\Carbon::parse($healthRecord->last_checkup_date)->format('Y-m-d') : '') }}"
-                                            >
+                                            required>
                                             <label for="last_checkup_date" class="input-group-append">
                                                 <span class="input-group-text">
                                                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">
@@ -222,7 +222,7 @@
                                 {{-- Location Checkup --}}
                                 <div class="form-group row">
                                     <label for="checkup_loc" class="col-md-2 col-form-label">
-                                        Location Checkup :
+                                        Location Checkup <span class="text-danger">*</span> :
                                     </label>
                                     <div class="col-md-4">
                                         <textarea
@@ -231,7 +231,7 @@
                                             name="checkup_loc"
                                             rows="3"
                                             placeholder="e.g., University of Indonesia Hospital - Jl. Prof. Dr. Bahder Djohan, Pondok Cina, Beji District, Depok City, West Java"
-                                        >{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
+                                        required>{{ old('checkup_loc', $healthRecord->checkup_loc ?? '') }}</textarea>
                                         @error('checkup_loc')
                                             <span class="invalid-feedback">{{ $message }}</span>
                                         @enderror

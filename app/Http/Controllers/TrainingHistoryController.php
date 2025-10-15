@@ -55,21 +55,26 @@ class TrainingHistoryController extends Controller
             'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
             'certificate_number' => 'required|string|max:50',
-            'material_files' => 'nullable|array',
+            'material_files' => 'nullable|array|max:10',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
         ]);
 
         $user = Auth::user();
         DB::beginTransaction();
         try {
-            // Upload material files first (if any)
             $storedFiles = [];
+
+            // Upload training material files (if any)
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
-                    $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
-                        . '.' . $materialFile->getClientOriginalExtension();
-                    $materialFile->storeAs('training_materials', $materialFileName, 'public');
-                    $storedFiles[] = $materialFileName;
+                    if ($materialFile->isValid()) {
+                        $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                            . '.' . $materialFile->getClientOriginalExtension();
+                        $materialFile->storeAs('training_materials', $materialFileName, 'public');
+                        $storedFiles[] = 'training_materials/' . $materialFileName;
+                    } else {
+                        throw new \Exception('One or more training material files failed to upload.');
+                    }
                 }
             }
 
@@ -105,6 +110,14 @@ class TrainingHistoryController extends Controller
                 ->with('success', 'Training history added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Hapus file yang mungkin sudah ter-upload sebagian
+            if (!empty($storedFiles)) {
+                foreach ($storedFiles as $file) {
+                    Storage::disk('public')->delete($file);
+                }
+            }
+
             return back()->with('error', 'Failed to save training history: ' . $e->getMessage())->withInput();
         }
     }

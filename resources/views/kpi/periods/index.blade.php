@@ -81,6 +81,61 @@
         .material-symbols--edit {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M3 21v-4.25L16.2 3.575q.3-.275.663-.425t.762-.15t.775.15t.65.45L20.425 5q.3.275.438.65T21 6.4q0 .4-.137.763t-.438.662L7.25 21zM17.6 7.8L19 6.4L17.6 5l-1.4 1.4z'/%3E%3C/svg%3E");
         }
+
+        /* =================================== */
+        /* ==         PAGINATION            == */
+        /* =================================== */
+        .page-footer {
+            display: flex;
+            justify-content: center;
+            padding-top: 0.75rem;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            background-color: #f3efe2;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0 0.25rem;
+            height: 2.5rem;
+        }
+
+        .pagination li {
+            margin: 0 0.25rem;
+        }
+
+        .pagination li a,
+        .pagination li span {
+            font-family: "Poppins", sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .pagination li.active {
+            background-color: #fffdeb;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            height: 2.5rem;
+            line-height: 2.5rem;
+            margin: 0;
+            padding: 0 0.25rem;
+        }
+
+        .pagination li.active span {
+            font-weight: 600;
+        }
+
+        .pagination li.disabled span {
+            color: #6c757d;
+            cursor: default;
+        }
     </style>
 @endpush
 
@@ -133,10 +188,11 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-3">
-                        {{ $kpiPeriods->links() }}
-                    </div>
-
+                    @if ($kpiPeriods->hasPages())
+                        <footer class="page-footer">
+                            {{ $kpiPeriods->withQueryString()->links('vendor.pagination.custom') }}
+                        </footer>
+                    @endif
                 </div>
             </div>
         </div>

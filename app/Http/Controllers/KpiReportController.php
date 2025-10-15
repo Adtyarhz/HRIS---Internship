@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use App\Exports\KpiReportExport;
+
 class KpiReportController extends Controller
 {
     public function index(Request $request)
@@ -21,7 +22,7 @@ class KpiReportController extends Controller
         $divisions = collect();
         $positions = collect();
 
-        // --- Periode Manual ---
+        // Manual Periods
         $manualPeriods = KpiPeriod::whereNotIn('period_name', [
             'Mingguan',
             'Bulanan',
@@ -31,7 +32,7 @@ class KpiReportController extends Controller
             'Tahunan'
         ])->orderBy('start_date', 'desc')->get();
 
-        // --- Periode Otomatis ---
+        // Automatic Periods
         $specialPeriods = [
             ['id' => 'auto_mingguan', 'name' => 'Mingguan'],
             ['id' => 'auto_bulanan', 'name' => 'Bulanan'],
@@ -46,13 +47,13 @@ class KpiReportController extends Controller
             'special' => $specialPeriods,
         ];
 
-        // --- Hak akses ---
+        // Access control
         if ($user->role === 'hc' || $user->role === 'superadmin') {
             $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
             $positions = Position::orderBy('title')->get();
         } elseif ($user->role === 'manager') {
             if (!$user->employee || !$user->employee->division_id) {
-                abort(403, 'Data divisi Anda tidak lengkap untuk mengakses laporan ini.');
+                abort(403, 'Your division data is incomplete to access this report.');
             }
 
             if ($user->employee->position_id) {
@@ -62,10 +63,10 @@ class KpiReportController extends Controller
                 }
             }
         } else {
-            abort(403, 'Anda tidak memiliki hak akses untuk melihat laporan ini.');
+            abort(403, 'You do not have permission to view this report.');
         }
 
-        // --- Filter data berdasarkan request ---
+        // Apply filters if present
         $hasFilter = $request->filled('division_id') || $request->filled('position_id') || $request->filled('search') || $request->filled('period_id') || ($request->filled('start_date') && $request->filled('end_date'));
 
         if ($hasFilter) {
@@ -75,7 +76,7 @@ class KpiReportController extends Controller
                 ->join('positions', 'employees.position_id', '=', 'positions.id')
                 ->join('kpi_periods', 'kpi_assessments.kpi_period_id', '=', 'kpi_periods.id');
 
-            // Batasi data untuk manager
+            // Restrict data for managers
             if ($user->role === 'manager') {
                 $query->where('employees.division_id', $user->employee->division_id);
             }
@@ -90,12 +91,11 @@ class KpiReportController extends Controller
                 $query->where('employees.full_name', 'like', '%' . $request->search . '%');
             }
 
-            // --- Filter periode ---
+            // Period filter
             if ($request->filled('period_id')) {
                 $periodId = $request->period_id;
 
                 if (str_starts_with($periodId, 'auto_')) {
-                    // Periode otomatis → filter by LIKE (misal "Mingguan", "Bulanan")
                     $map = [
                         'mingguan' => 'Mingguan',
                         'bulanan' => 'Bulanan',
@@ -108,15 +108,16 @@ class KpiReportController extends Controller
                     if (isset($map[$key])) {
                         $query->where('kpi_periods.period_name', 'like', $map[$key] . '%');
                     }
+                } else {
+                    $query->where('kpi_assessments.kpi_period_id', $periodId);
                 }
             }
 
-            // [PERBAIKAN] Logika filter rentang tanggal yang lebih akurat
+            // Date range filter
             $query->when($request->filled('start_date') && $request->filled('end_date'), function ($q) use ($request) {
                 $start = Carbon::parse($request->start_date)->startOfDay();
                 $end = Carbon::parse($request->end_date)->endOfDay();
 
-                // Kueri ini akan menemukan semua periode yang tumpang tindih dengan rentang tanggal filter
                 $q->where(function ($subQuery) use ($start, $end) {
                     $subQuery->where('kpi_periods.start_date', '>=', $start)
                         ->where('kpi_periods.end_date', '<=', $end);
@@ -148,7 +149,7 @@ class KpiReportController extends Controller
             $hasPermission = true;
         }
 
-        abort_unless($hasPermission, 403, 'Anda tidak memiliki hak akses untuk melihat detail penilaian ini.');
+        abort_unless($hasPermission, 403, 'You do not have permission to view this assessment detail.');
 
         $kpiAssessment->load(
             'assessmentItems.indicator',
@@ -185,27 +186,27 @@ class KpiReportController extends Controller
             ->join('positions', 'employees.position_id', '=', 'positions.id')
             ->join('kpi_periods', 'kpi_assessments.kpi_period_id', '=', 'kpi_periods.id');
 
-        // Batasi data untuk manager
+        // Restrict data for managers
         if ($user->role === 'manager') {
             $query->where('employees.division_id', $user->employee->division_id);
         }
 
-        // Filter divisi
+        // Division filter
         if ($request->filled('division_id')) {
             $query->where('employees.division_id', $request->division_id);
         }
 
-        // Filter posisi
+        // Position filter
         if ($request->filled('position_id')) {
             $query->where('employees.position_id', $request->position_id);
         }
 
-        // Filter nama
+        // Name filter
         if ($request->filled('search')) {
             $query->where('employees.full_name', 'like', '%' . $request->search . '%');
         }
 
-        // Filter periode
+        // Period filter
         if ($request->filled('period_id')) {
             $periodId = $request->period_id;
 
@@ -227,7 +228,7 @@ class KpiReportController extends Controller
             }
         }
 
-        // Filter tanggal
+        // Date range filter
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $start = Carbon::parse($request->start_date)->startOfDay();
             $end = Carbon::parse($request->end_date)->endOfDay();
@@ -240,7 +241,7 @@ class KpiReportController extends Controller
 
         $assessments = $query->get();
 
-        // Eksekusi export
+        // Execute export
         return Excel::download(new KpiReportExport($assessments), 'kpi_report.xlsx');
     }
 }

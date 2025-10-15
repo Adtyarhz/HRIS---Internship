@@ -11,12 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * ======================================================================
  * KpiTemplateController
- * ======================================================================
- * Controller ini bertanggung jawab penuh atas manajemen Master Data Template KPI.
- * Logika utamanya adalah satu jabatan bisa memiliki lebih dari satu template,
- * yang dibedakan berdasarkan nama template yang unik untuk jabatan tersebut.
+ * This controller handles the management of KPI Template Master Data.
+ * The main logic is that one position can have multiple templates,
+ * distinguished by a unique template name for that position.
  */
 class KpiTemplateController extends Controller
 {
@@ -40,16 +38,15 @@ class KpiTemplateController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Validasi: Nama template harus unik untuk setiap position_id.
+                // Ensure template name is unique for the given position_id
                 Rule::unique('kpi_templates')->where(function ($query) use ($request) {
                     return $query->where('position_id', $request->position_id);
                 }),
             ],
-            // 'is_active' => 'required|boolean',
         ]);
 
         $template = KpiTemplate::create($validatedData);
-        return redirect()->route('kpi-templates.show', $template->id)->with('success', 'Templat berhasil dibuat. Silakan isi detail KPI.');
+        return redirect()->route('kpi-templates.show', $template->id)->with('success', 'Template created successfully. Please add KPI details.');
     }
 
     public function show(KpiTemplate $kpiTemplate)
@@ -68,7 +65,7 @@ class KpiTemplateController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Validasi unik, tapi abaikan ID template yang sedang diedit.
+                // Ensure unique template name for the position, ignoring current template
                 Rule::unique('kpi_templates')->where(function ($query) use ($request) {
                     return $query->where('position_id', $request->position_id);
                 })->ignore($kpiTemplate->id),
@@ -78,7 +75,7 @@ class KpiTemplateController extends Controller
 
         $kpiTemplate->update($validatedData);
 
-        return redirect()->route('kpi-templates.index')->with('success', 'Templat KPI berhasil diperbarui.');
+        return redirect()->route('kpi-templates.index')->with('success', 'KPI template updated successfully.');
     }
 
     public function edit(KpiTemplate $kpiTemplate)
@@ -89,15 +86,18 @@ class KpiTemplateController extends Controller
 
     public function destroy(KpiTemplate $kpiTemplate)
     {
-        // Sebaiknya tambahkan pengecekan apakah template pernah digunakan di assessment
-        // sebelum menghapus untuk menjaga integritas data.
+        // Check if the template is used in any assessments
+        if ($kpiTemplate->assessments()->exists()) {
+            return redirect()->route('kpi-templates.index')->with('error', 'Failed! This template is used in assessments and cannot be deleted.');
+        }
+
         $kpiTemplate->delete();
-        return redirect()->route('kpi-templates.index')->with('success', 'Templat KPI berhasil dihapus.');
+        return redirect()->route('kpi-templates.index')->with('success', 'KPI template deleted successfully.');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Metode untuk Manajemen Item & Aturan Skor di dalam Template
+    | Methods for Managing Template Items & Scoring Rules
     |--------------------------------------------------------------------------
     */
 
@@ -109,17 +109,17 @@ class KpiTemplateController extends Controller
             'weight' => 'required|numeric|min:0|max:100',
             'default_target' => 'required|string|max:255',
         ]);
+
         $kpiTemplate->templateItems()->create($validatedData);
-        return back()->with('success', 'Item KPI berhasil ditambahkan ke templat.');
+        return back()->with('success', 'KPI item added to template successfully.');
     }
 
     public function destroyItem(KpiTemplateItem $kpiTemplateItem)
     {
         $kpiTemplateItem->delete();
-        return back()->with('success', 'Item KPI berhasil dihapus dari templat.');
+        return back()->with('success', 'KPI item removed from template successfully.');
     }
 
-    // Metode untuk mengelola aturan skoring
     public function storeScoringRule(Request $request, KpiTemplateItem $kpiTemplateItem)
     {
         $validatedData = $request->validate([
@@ -128,13 +128,14 @@ class KpiTemplateController extends Controller
             'value2' => 'nullable|numeric|required_if:operator,between',
             'score' => 'required|numeric|min:0',
         ]);
+
         $kpiTemplateItem->scoringRules()->create($validatedData);
-        return back()->with('success', 'Aturan skoring berhasil ditambahkan.');
+        return back()->with('success', 'Scoring rule added successfully.');
     }
 
     public function destroyScoringRule(KpiScoringRule $kpiScoringRule)
     {
         $kpiScoringRule->delete();
-        return back()->with('success', 'Aturan skoring berhasil dihapus.');
+        return back()->with('success', 'Scoring rule removed successfully.');
     }
 }
