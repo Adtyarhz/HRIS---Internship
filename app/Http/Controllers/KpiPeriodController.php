@@ -21,7 +21,7 @@ class KpiPeriodController extends Controller
         $this->generateAutomaticPeriods();
 
         // Retrieve only active periods
-        $kpiPeriods = KpiPeriod::where('status', 'Active')
+        $kpiPeriods = KpiPeriod::where('status', 'Aktif')
             ->orderByDesc('start_date')
             ->paginate(10);
         return view('kpi.periods.index', compact('kpiPeriods'));
