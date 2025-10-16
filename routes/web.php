@@ -246,14 +246,29 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
 
 
         // Career Projection
-        Route::prefix('employees/{employee}/career-projection')
-            ->name('employees.career_projection.')
-            ->group(function () {
-                Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-                Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-                Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-            });
+        // Semua user bisa melihat daftar career path miliknya (atau milik karyawan lain jika diizinkan)
+        Route::get('/employees/{employee}/career-projections', 
+            [CareerProjectionController::class, 'index']
+        )->name('career-projections.index');
+        Route::get('/employees/{employee}/career-projections/create', 
+            [CareerProjectionController::class, 'create']
+        )->name('career-projections.create');
 
+        Route::post('/employees/{employee}/career-projections', 
+            [CareerProjectionController::class, 'store']
+        )->name('career-projections.store');
+
+        Route::get('/employees/{employee}/career-projections/{careerProjection}/edit', 
+            [CareerProjectionController::class, 'edit']
+        )->name('career-projections.edit');
+
+        Route::put('/employees/{employee}/career-projections/{careerProjection}', 
+            [CareerProjectionController::class, 'update']
+        )->name('career-projections.update');
+
+        Route::delete('/employees/{employee}/career-projections/{careerProjection}', 
+            [CareerProjectionController::class, 'destroy']
+        )->name('career-projections.destroy');
     });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
@@ -309,6 +324,28 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
         Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
     });
 
+    // Hanya superadmin, hc, manager, dan section_head yang boleh CRUD
+    // Route::middleware(['auth', 'role:superadmin,hc,manager,section_head'])->group(function () {
+    //     Route::get('/employees/{employee}/career-projections/create', 
+    //         [CareerProjectionController::class, 'create']
+    //     )->name('career-projections.create');
+
+    //     Route::post('/employees/{employee}/career-projections', 
+    //         [CareerProjectionController::class, 'store']
+    //     )->name('career-projections.store');
+
+    //     Route::get('/employees/{employee}/career-projections/{careerProjection}/edit', 
+    //         [CareerProjectionController::class, 'edit']
+    //     )->name('career-projections.edit');
+
+    //     Route::put('/employees/{employee}/career-projections/{careerProjection}', 
+    //         [CareerProjectionController::class, 'update']
+    //     )->name('career-projections.update');
+
+    //     Route::delete('/employees/{employee}/career-projections/{careerProjection}', 
+    //         [CareerProjectionController::class, 'destroy']
+    //     )->name('career-projections.destroy');
+    // });
 });
 // === GUEST ROUTES ===
 // Routes yang tidak memerlukan authentication bisa ditambahkan di sini

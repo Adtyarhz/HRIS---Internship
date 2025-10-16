@@ -11,18 +11,44 @@ use Illuminate\Support\Facades\Validator;
 
 class CareerProjectionController extends Controller
 {
+    /**
+     * Validasi akses pengguna terhadap data karyawan.
+     */
     private function authorizeAccess(Employee $employee)
     {
         $user = Auth::user();
 
-        // Jika bukan superadmin/hc → hanya bisa akses miliknya sendiri
-        if (!in_array($user->role, ['superadmin', 'hc']) && $employee->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses untuk data ini.');
+        // Superadmin dan HC bisa akses semua
+        if (in_array($user->role, ['superadmin', 'hc'])) {
+            return;
         }
+
+        // Manager bisa akses karyawan dalam divisinya
+        if ($user->role === 'manager' && $user->employee && $user->employee->division_id === $employee->division_id) {
+            return;
+        }
+
+        // Section Head bisa akses jika dalam divisi yang sama dan tidak ada manager
+        if ($user->role === 'section_head' && $user->employee && $user->employee->division_id === $employee->division_id) {
+            $managerExists = \App\Models\User::where('role', 'manager')
+                ->whereHas('employee', fn($q) => $q->where('division_id', $employee->division_id))
+                ->exists();
+
+            if (!$managerExists) {
+                return;
+            }
+        }
+
+        // Karyawan bisa akses miliknya sendiri
+        if ($employee->user_id === $user->id) {
+            return;
+        }
+
+        abort(403, 'Anda tidak memiliki akses untuk data ini.');
     }
 
     /**
-     * Display a listing of the career projections.
+     * Tampilkan daftar Career Projection karyawan.
      */
     public function index(Employee $employee)
     {
@@ -30,28 +56,29 @@ class CareerProjectionController extends Controller
 
         $careerProjections = CareerProjection::where('employee_id', $employee->id)
             ->with(['employee', 'projectedPosition', 'creator'])
+            ->orderBy('timeline')
             ->get();
 
         return view('career-path.career_projections.index', compact('careerProjections', 'employee'));
     }
 
     /**
-     * Show the form for creating career projection.
+     * Form untuk membuat Career Projection baru.
      */
-    public function form(Employee $employee)
+    public function create(Employee $employee)
     {
         $this->authorizeAccess($employee);
 
-        $careerProjection = CareerProjection::where('employee_id', $employee->id)->first();
         $positions = Position::orderBy('title')->pluck('title', 'id');
+        $timelines = ['1 Tahun', '3 Tahun', '5 Tahun'];
 
-        return view('career-path.career_projections.form', compact('employee', 'careerProjection', 'positions'));
+        return view('career-path.career_projections.form', compact('employee', 'positions', 'timelines'));
     }
 
     /**
-     * Store or Update a newly created career projection in storage.
+     * Simpan Career Projection baru.
      */
-    public function storeOrUpdate(Request $request, Employee $employee)
+    public function store(Request $request, Employee $employee)
     {
         $this->authorizeAccess($employee);
 
@@ -63,31 +90,74 @@ class CareerProjectionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['projected_position_id', 'timeline', 'status', 'readiness_notes']);
-        $data['employee_id'] = $employee->id;
+        CareerProjection::create([
+            'employee_id' => $employee->id,
+            'projected_position_id' => $request->projected_position_id,
+            'timeline' => $request->timeline,
+            'status' => $request->status,
+            'readiness_notes' => $request->readiness_notes,
+            'created_by' => Auth::id(),
+        ]);
 
-        $existing = CareerProjection::where('employee_id', $employee->id)->first();
-
-        if ($existing) {
-            // Update
-            $existing->update($data);
-            return redirect()->route('employees.showCareer', $employee)
-                ->with('success', 'Career projection updated successfully.');
-        } else {
-            // Create
-            $data['created_by'] = Auth::id();
-            CareerProjection::create($data);
-
-            return redirect()->route('employees.showCareer', $employee)
-                ->with('success', 'Career projection created successfully.');
-        }
+        return redirect()->route('employees.showCareer', $employee)
+            ->with('success', 'Career projection berhasil dibuat.');
     }
 
     /**
-     * Remove the specified career projection from storage.
+     * Edit Career Projection.
+     */
+    public function edit(Employee $employee, CareerProjection $careerProjection)
+    {
+        $this->authorizeAccess($employee);
+
+        if ($careerProjection->employee_id !== $employee->id) {
+            abort(404);
+        }
+
+        $positions = Position::orderBy('title')->pluck('title', 'id');
+        $timelines = ['1 Tahun', '3 Tahun', '5 Tahun'];
+
+        return view('career-path.career_projections.form', compact('employee', 'careerProjection', 'positions', 'timelines'));
+    }
+
+    /**
+     * Update Career Projection.
+     */
+    public function update(Request $request, Employee $employee, CareerProjection $careerProjection)
+    {
+        $this->authorizeAccess($employee);
+
+        if ($careerProjection->employee_id !== $employee->id) {
+            abort(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'projected_position_id' => 'required|exists:positions,id',
+            'timeline' => 'required|in:1 Tahun,3 Tahun,5 Tahun',
+            'status' => 'required|in:Direncanakan,Disetujui,Tercapai,Dibatalkan',
+            'readiness_notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $careerProjection->update([
+            'projected_position_id' => $request->projected_position_id,
+            'timeline' => $request->timeline,
+            'status' => $request->status,
+            'readiness_notes' => $request->readiness_notes,
+        ]);
+
+        return redirect()->route('employees.showCareer', $employee)
+            ->with('success', 'Career projection berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus Career Projection.
      */
     public function destroy(Employee $employee, CareerProjection $careerProjection)
     {
@@ -100,6 +170,6 @@ class CareerProjectionController extends Controller
         $careerProjection->delete();
 
         return redirect()->route('employees.showCareer', $employee)
-            ->with('success', 'Career projection deleted successfully.');
+            ->with('success', 'Career projection berhasil dihapus.');
     }
 }

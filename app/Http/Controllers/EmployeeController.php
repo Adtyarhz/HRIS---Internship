@@ -257,9 +257,9 @@ class EmployeeController extends Controller
         }
 
         $careerHistories = $employee->careerHistories()->with(['position', 'division'])->get();
-        $careerProjection = $employee->careerProjection()->with(['projectedPosition', 'creator'])->first();
+        $careerProjections = $employee->careerProjections()->with('projectedPosition')->orderBy('created_at', 'desc')->get();
 
-        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjection'));
+        return view('career-path.showCareer', compact('employee', 'careerHistories', 'careerProjections'));
     }
 
     /**
