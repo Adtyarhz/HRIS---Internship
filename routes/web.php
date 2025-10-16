@@ -29,7 +29,6 @@ use App\Http\Controllers\KpiTemplateController;
 use App\Http\Controllers\KpiAssessmentController;
 use App\Http\Controllers\OvertimeApplicationController;
 use App\Http\Controllers\KpiReportController; 
-use App\Http\Controllers\DivisionController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -62,14 +61,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/organization/structure/{position}/edit', [OrganizationalStructureController::class, 'edit'])->name('organization.structure.edit');
         Route::put('/organization/structure/{position}', [OrganizationalStructureController::class, 'update'])->name('organization.structure.update');
         Route::delete('/organization/structure/{position}', [OrganizationalStructureController::class, 'destroy'])->name('organization.structure.destroy');
-
-        Route::prefix('organization/division')->name('organization.division.')->group(function () {
-            Route::get('/create', [DivisionController::class, 'create'])->name('create');
-            Route::post('/', [DivisionController::class, 'store'])->name('store');
-            Route::get('/{division}/edit', [DivisionController::class, 'edit'])->name('edit');
-            Route::put('/{division}', [DivisionController::class, 'update'])->name('update');
-            Route::delete('/{division}', [DivisionController::class, 'destroy'])->name('destroy');
-        });
 
         // ========================================================================
         // KPI MANAGEMENT (SETUP)
@@ -286,7 +277,6 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
-    Route::get('/organization/division', [DivisionController::class, 'index'])->name('organization.division.index');
     Route::get('/test-notif', function () {
         $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 

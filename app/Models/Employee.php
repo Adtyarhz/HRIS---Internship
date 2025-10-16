@@ -134,13 +134,4 @@ class Employee extends Model
     {
         return $this->hasOne(CareerProjection::class, 'employee_id');
     }
-
-    public function getDivisionIdAttribute($value)
-    {
-        if ($this->relationLoaded('position') && $this->position?->division_id) {
-            return $this->position->division_id;
-        }
-
-        return $value;
-    }
 }

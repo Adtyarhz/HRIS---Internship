@@ -14,7 +14,6 @@ class Position extends Model
 
     protected $fillable = [
         'title',
-        'division_id',
         'parent_id',
         'indirect_supervisor_id',
         'depth'
@@ -69,10 +68,5 @@ class Position extends Model
             ->where('id', '<=', $this->id)
             ->count() - 1;
         return ($siblingIndex * 80) + 50;
-    }
-
-    public function division(): BelongsTo
-    {
-        return $this->belongsTo(Division::class, 'division_id');
     }
 }
