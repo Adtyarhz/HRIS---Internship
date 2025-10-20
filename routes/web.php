@@ -28,8 +28,9 @@ use App\Http\Controllers\KpiIndicatorController;
 use App\Http\Controllers\KpiTemplateController;
 use App\Http\Controllers\KpiAssessmentController;
 use App\Http\Controllers\OvertimeApplicationController;
-use App\Http\Controllers\KpiReportController; 
+use App\Http\Controllers\KpiReportController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ApprovalController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -132,19 +133,19 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/applicants/{id}/convert-to-employee', [ApplicantController::class, 'convertToEmployee'])
-    ->name('applicants.convertToEmployee');
-Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])
-    ->name('employees.convert');
+        ->name('applicants.convertToEmployee');
+    Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])
+        ->name('employees.convert');
 
     // tambahan khusus approve/reject
-Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
-Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');
+    Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
+    Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');
 
-// Overtime Application (resource)
-Route::resource('overtime-applications', OvertimeApplicationController::class);
+    // Overtime Application (resource)
+    Route::resource('overtime-applications', OvertimeApplicationController::class);
 
-Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
-    ->name('overtime-tasks.toggle');
+    Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
+        ->name('overtime-tasks.toggle');
 
     // === SUPERADMIN & DIREKSI ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
@@ -248,26 +249,32 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
 
         // Career Projection
         // Semua user bisa melihat daftar career path miliknya (atau milik karyawan lain jika diizinkan)
-        Route::get('/employees/{employee}/career-projections', 
+        Route::get(
+            '/employees/{employee}/career-projections',
             [CareerProjectionController::class, 'index']
         )->name('career-projections.index');
-        Route::get('/employees/{employee}/career-projections/create', 
+        Route::get(
+            '/employees/{employee}/career-projections/create',
             [CareerProjectionController::class, 'create']
         )->name('career-projections.create');
 
-        Route::post('/employees/{employee}/career-projections', 
+        Route::post(
+            '/employees/{employee}/career-projections',
             [CareerProjectionController::class, 'store']
         )->name('career-projections.store');
 
-        Route::get('/employees/{employee}/career-projections/{careerProjection}/edit', 
+        Route::get(
+            '/employees/{employee}/career-projections/{careerProjection}/edit',
             [CareerProjectionController::class, 'edit']
         )->name('career-projections.edit');
 
-        Route::put('/employees/{employee}/career-projections/{careerProjection}', 
+        Route::put(
+            '/employees/{employee}/career-projections/{careerProjection}',
             [CareerProjectionController::class, 'update']
         )->name('career-projections.update');
 
-        Route::delete('/employees/{employee}/career-projections/{careerProjection}', 
+        Route::delete(
+            '/employees/{employee}/career-projections/{careerProjection}',
             [CareerProjectionController::class, 'destroy']
         )->name('career-projections.destroy');
     });
@@ -295,10 +302,10 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::get('/notifications/redirect/{id}', [NotificationController::class, 'redirect'])
-    ->name('notifications.redirect');
+        ->name('notifications.redirect');
 
     Route::get('/notifications/read/{id}', [NotificationController::class, 'readAndRedirect'])
-    ->name('notifications.readAndRedirect');
+        ->name('notifications.readAndRedirect');
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
@@ -324,6 +331,18 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
         // ========================================================================
         Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
     });
+
+    // hanya hc
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc')->prefix('approvals')->name('approvals.')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('index');
+        Route::get('/{cdr}', [ApprovalController::class, 'show'])->name('show');
+
+        // Aksi
+        Route::post('/{cdr}/check', [ApprovalController::class, 'check'])->name('check');
+        Route::post('/{cdr}/approve', [ApprovalController::class, 'approve'])->name('approve');
+        Route::post('/{cdr}/reject', [ApprovalController::class, 'reject'])->name('reject');
+    });
+
 
     // Hanya superadmin, hc, manager, dan section_head yang boleh CRUD
     // Route::middleware(['auth', 'role:superadmin,hc,manager,section_head'])->group(function () {
