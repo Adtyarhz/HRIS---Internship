@@ -46,6 +46,7 @@ class ViewServiceProvider extends ServiceProvider
                             ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
                             ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
                             ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
+                            ['label' => 'Approval Management', 'route' => 'approvals.index', 'icon' => 'uil:setting'],
                             ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
                         ];
                         break;
