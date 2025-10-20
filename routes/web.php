@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
         // Employee CRUD - Hanya superadmin
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+        Route::get('/employees/{employee}/deactivate-form', [EmployeeController::class, 'showDeactivateForm'])->name('employees.deactivate.form');
 
         // Struktur Organisasi: CRUD hanya superadmin & hc
         Route::get('/organization/structure/create', [OrganizationalStructureController::class, 'create'])->name('organization.structure.create');

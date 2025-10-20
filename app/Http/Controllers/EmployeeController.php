@@ -465,17 +465,35 @@ class EmployeeController extends Controller
         }
     }
 
-    public function deactivate(Employee $employee): RedirectResponse
+    public function showDeactivateForm(Employee $employee)
     {
-        if ($employee->status !== 'Tidak Aktif') {
-            $employee->status = 'Tidak Aktif';
-            $employee->separation_date = now();
-            $employee->save();
+        return view('employees.data.deactivate', compact('employee'));
+    }
 
-            return redirect()->back()->with('success', 'Employee status changed to Inactive successfully.');
+    public function deactivate(Request $request, Employee $employee): RedirectResponse
+    {
+        // Validasi input form
+        $validated = $request->validate([
+            'deactivation_date' => 'required|date',
+            'termination_reason' => 'required|string|max:255',
+            'termination_notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($employee->status === 'Tidak Aktif') {
+            return redirect()->back()->with('info', 'Employee is already inactive.');
         }
 
-        return redirect()->back()->with('info', 'Employee is already Inactive.');
+        // Update data deactivation
+        $employee->update([
+            'status' => 'Tidak Aktif',
+            'deactivation_date' => $validated['deactivation_date'],
+            'termination_reason' => $validated['termination_reason'],
+            'termination_notes' => $validated['termination_notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('employees.show', $employee->id)
+            ->with('success', 'Employee successfully deactivated.');
     }
 
     public function editAddress(Employee $employee)
