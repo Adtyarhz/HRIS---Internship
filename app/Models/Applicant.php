@@ -21,6 +21,46 @@ class Applicant extends Model
         'gpa_score',
         'division_id',
     ];
+    public function getCurrentStageAttribute()
+{
+    $stages = [
+        'cv_screening',
+        'general_knowledge_test',
+        'user_assessment',
+        'hc_interview',
+        'bod_interview',
+        'offering_letter',
+    ];
+
+    $progresses = $this->recruitmentProgresses()->get()->keyBy('stage');
+
+    // Jika belum ada data sama sekali
+    if ($progresses->isEmpty()) {
+        return 'cv_screening';
+    }
+
+    // Jika ada yang rejected
+    $rejected = $progresses->firstWhere('offering_status', 'rejected');
+    if ($rejected) {
+        return $rejected->stage;
+    }
+
+    // Jika ada yang in_progress
+    $inProgress = $progresses->firstWhere('offering_status', 'in_progress');
+    if ($inProgress) {
+        return $inProgress->stage;
+    }
+
+    // Jika semua sebelumnya accepted tapi belum lanjut ke stage berikutnya
+    foreach ($stages as $stage) {
+        if (!$progresses->has($stage)) {
+            return $stage; // stage berikutnya yang belum diisi
+        }
+    }
+
+    // Jika semua sudah ada dan offering_letter sudah accepted
+    return 'offering_letter';
+}
 
     public function division()
     {
@@ -45,4 +85,3 @@ class Applicant extends Model
         return $this->hasMany(InterviewSchedule::class);
     }
 }
-

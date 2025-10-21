@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Applicant;
 use App\Models\Division;
+use Carbon\Carbon;
 use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,49 +14,89 @@ use App\Notifications\NewApplicantNotification;
 
 class ApplicantController extends Controller
 {
-   public function index(Request $request)
+  public function index(Request $request)
 {
     $search = $request->input('search');
-    $sortBy = $request->input('sort', 'created_at');
-    $direction = $request->input('direction', 'desc');
-
-    $allowedSorts = ['id', 'position', 'created_at'];
-    if (!in_array($sortBy, $allowedSorts)) {
-        $sortBy = 'id';
-    }
+    $filterStage = $request->input('stage');
+    $filterDivision = $request->input('division_id');
+    $sortBy = $request->input('sort', 'desc'); // default sort by newest
+    $direction = $sortBy === 'asc' ? 'asc' : 'desc'; // pastikan cuma asc/desc
 
     $user = auth()->user();
     $divisionId = optional($user->employee)->division_id;
 
-    $applicants = Applicant::with(['division', 'position'])
-        // 🔍 Pencarian nama
-        ->when($search, function ($query) use ($search) {
-            $query->where('full_name', 'like', '%' . $search . '%');
-        })
-        // 👥 Filter berdasarkan role & divisi
-        ->when(in_array($user->role, ['manager', 'section_head']), function ($query) use ($divisionId) {
-            $query->where('division_id', $divisionId);
-        })
-        // ⚙️ Sorting
-        ->when($sortBy === 'position', function ($query) use ($direction) {
-            $query->leftJoin('positions', 'positions.id', '=', 'applicants.applied_position')
-                ->orderBy('positions.title', $direction)
-                ->select('applicants.*');
-        }, function ($query) use ($sortBy, $direction) {
-            $query->orderBy("applicants.$sortBy", $direction);
-        })
-        ->paginate(10)
-        ->withQueryString();
+    $applicants = Applicant::with(['division', 'position', 'recruitmentProgresses'])
+        ->get()
+        ->filter(function ($applicant) use ($filterStage, $filterDivision, $search, $user, $divisionId) {
 
-    return view('applicants.index', compact('applicants', 'search', 'sortBy', 'direction'));
+            // 🔍 Pencarian nama
+            if ($search && stripos($applicant->full_name, $search) === false) {
+                return false;
+            }
+
+            // 👥 Filter berdasarkan role manager/section_head
+            if (in_array($user->role, ['manager', 'section_head']) && $applicant->division_id !== $divisionId) {
+                return false;
+            }
+
+            // 🏢 Filter berdasarkan dropdown division
+            if ($filterDivision && $filterDivision !== '') {
+                if ($applicant->division_id != $filterDivision) {
+                    return false;
+                }
+            }
+
+            // 🎯 Filter berdasarkan current stage
+            if ($filterStage && $applicant->current_stage !== $filterStage) {
+                return false;
+            }
+
+            return true;
+        });
+
+    // ⚙️ Urutkan berdasarkan tanggal
+    $applicants = $sortBy === 'asc'
+        ? $applicants->sortBy('created_at')
+        : $applicants->sortByDesc('created_at');
+
+    // Pagination manual
+    $perPage = 10;
+    $page = $request->get('page', 1);
+    $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $applicants->forPage($page, $perPage)->values(),
+        $applicants->count(),
+        $perPage,
+        $page,
+        ['path' => $request->url(), 'query' => $request->query()]
+    );
+
+    $divisions = Division::all();
+
+    return view('applicants.index', [
+        'applicants' => $paginated,
+        'divisions' => $divisions,
+        'search' => $search,
+        'filterStage' => $filterStage,
+        'filterDivision' => $filterDivision,
+        'sortBy' => $sortBy,
+        'direction' => $direction,
+    ]);
 }
 
     public function create()
-    {
-        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
-        $positions = Position::all();
-        return view('applicants.create', compact('divisions', 'positions'));
+{
+    $user = auth()->user();
+
+    // Batasi hanya untuk HC dan Superadmin
+    if (!in_array($user->role, ['hc', 'superadmin'])) {
+        abort(403, 'Unauthorized access.');
     }
+
+    $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
+    $positions = Position::all();
+
+    return view('applicants.create', compact('divisions', 'positions'));
+}
 
     public function store(Request $request)
     {
@@ -143,7 +184,7 @@ class ApplicantController extends Controller
     $user = auth()->user();
 
     // 🔒 Hanya role tertentu yang boleh melihat semua data
-    if (!in_array($user->role, ['superadmin', 'hc'])) {
+    if (!in_array($user->role, ['superadmin', 'hc', 'direksi'])) {
 
         // Ambil divisi dari user login
         $userDivisionId = optional($user->employee)->division_id;
@@ -214,3 +255,4 @@ class ApplicantController extends Controller
             ->with('success', 'Applicant has been successfully converted to employee.');
     }
 }
+
