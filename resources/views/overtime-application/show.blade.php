@@ -170,7 +170,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($application->status === 'Approved' && $application->employee->user_id === Auth::id())
+                                @if ($application->status === 'Approved' && Auth::id() === $application->requested_by)
                                     <form action="{{ route('overtime-tasks.toggle', $task->id) }}" method="POST">
                                         @csrf
                                         @method('PATCH')

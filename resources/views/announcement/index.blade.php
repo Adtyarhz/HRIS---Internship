@@ -255,7 +255,7 @@
             <option value="Informasi" {{ request('announcement_type') == 'Informasi' ? 'selected' : '' }}>Informasi</option>
             <option value="Polling" {{ request('announcement_type') == 'Polling' ? 'selected' : '' }}>Polling</option>
         </select>
-        <input type="text" name="label" placeholder="Search by Label (HR, IT, etc...)" value="{{ request('label') }}">
+        <input type="text" name="label" placeholder="Search by Label (Divisi, etc...)" value="{{ request('label') }}">
         <button type="submit" class="btn-filter">Filter</button>
     </form>
 

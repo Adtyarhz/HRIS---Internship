@@ -54,15 +54,24 @@ class TrainingHistoryController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
-            'certificate_number' => 'required|string|max:50',
+            'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
             'material_files' => 'nullable|array|max:10',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
         ]);
 
         $user = Auth::user();
         DB::beginTransaction();
+
         try {
             $storedFiles = [];
+
+            // Upload certificate file (if any)
+            if ($request->hasFile('certificate_file')) {
+                $certificate = $request->file('certificate_file');
+                $certificateName = time() . '_cert_' . Str::slug(pathinfo($certificate->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $certificate->getClientOriginalExtension();
+                $certificate->storeAs('training_certificates', $certificateName, 'public');
+                $validatedData['certificate_file'] = 'training_certificates/' . $certificateName;
+            }
 
             // Upload training material files (if any)
             if ($request->hasFile('material_files')) {
@@ -89,6 +98,7 @@ class TrainingHistoryController extends Controller
                     EmployeeEditRequestNotification::class,
                     ['employee_id' => $employee->id]
                 );
+
                 if (!$editRequest) {
                     DB::rollBack();
                     return back()->with('error', 'Failed to create training history request.');
@@ -111,11 +121,14 @@ class TrainingHistoryController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Hapus file yang mungkin sudah ter-upload sebagian
+            // Delete uploaded files if failed
             if (!empty($storedFiles)) {
                 foreach ($storedFiles as $file) {
                     Storage::disk('public')->delete($file);
                 }
+            }
+            if (isset($validatedData['certificate_file'])) {
+                Storage::disk('public')->delete($validatedData['certificate_file']);
             }
 
             return back()->with('error', 'Failed to save training history: ' . $e->getMessage())->withInput();
@@ -142,7 +155,7 @@ class TrainingHistoryController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
-            'certificate_number' => 'required|string|max:50',
+            'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
             'material_files' => 'nullable|array',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
             'delete_materials' => 'nullable|array',
@@ -150,8 +163,22 @@ class TrainingHistoryController extends Controller
 
         $user = Auth::user();
         DB::beginTransaction();
+
         try {
             $storedFiles = [];
+
+            // Upload new certificate file (if any)
+            if ($request->hasFile('certificate_file')) {
+                if ($trainingHistory->certificate_file) {
+                    Storage::disk('public')->delete($trainingHistory->certificate_file);
+                }
+                $certificate = $request->file('certificate_file');
+                $certificateName = time() . '_cert_' . Str::slug(pathinfo($certificate->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $certificate->getClientOriginalExtension();
+                $certificate->storeAs('training_certificates', $certificateName, 'public');
+                $validatedData['certificate_file'] = 'training_certificates/' . $certificateName;
+            }
+
+            // Upload new material files
             if ($request->hasFile('material_files')) {
                 foreach ($request->file('material_files') as $materialFile) {
                     $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
@@ -178,6 +205,7 @@ class TrainingHistoryController extends Controller
                         'method' => 'update',
                     ]
                 );
+
                 if (!$editRequest) {
                     DB::rollBack();
                     return back()->with('error', 'Failed to create training history update request.');
@@ -190,7 +218,7 @@ class TrainingHistoryController extends Controller
 
             $trainingHistory->update($validatedData);
 
-            // Delete selected files
+            // Delete selected materials
             if (!empty($validatedData['delete_materials'])) {
                 foreach ($validatedData['delete_materials'] as $materialId) {
                     $material = TrainingMaterial::where('training_history_id', $trainingHistory->id)
@@ -203,7 +231,7 @@ class TrainingHistoryController extends Controller
                 }
             }
 
-            // Upload new files
+            // Save new materials
             foreach ($storedFiles as $filename) {
                 $trainingHistory->trainingMaterials()->create(['file_path' => $filename]);
             }
@@ -225,7 +253,6 @@ class TrainingHistoryController extends Controller
         DB::beginTransaction();
 
         try {
-            // If not superadmin/hc, create a delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
 
@@ -247,9 +274,13 @@ class TrainingHistoryController extends Controller
                     ->with('info', 'Training history deletion request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly delete data and files
+            // Delete related materials and certificate
             foreach ($trainingHistory->trainingMaterials as $material) {
                 Storage::disk('public')->delete('training_materials/' . $material->file_path);
+            }
+
+            if ($trainingHistory->certificate_file) {
+                Storage::disk('public')->delete($trainingHistory->certificate_file);
             }
 
             $trainingHistory->delete();

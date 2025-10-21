@@ -132,7 +132,12 @@
     </div>
 @endsection
 
-@section('content')
+@section('content-wrapper')
+    @include('recruitment.tabs')
+
+    <section class="content">
+        <div class="container-fluid">
+            <d class="form-content-container">
 <div class="detail-wrapper">
 
    {{-- ================== TOMBOL EDIT / CONVERT ================== --}}

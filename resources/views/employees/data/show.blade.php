@@ -375,6 +375,10 @@
                                     class="data-value">{{ $insurance->insurance_number ?? '-' }}</span></div>
                             <div class="data-item"><span class="data-label">Type</span><span
                                     class="data-value">{{ $insurance->insurance_type ?? '-' }}</span></div>
+                            <div class="data-item"><span class="data-label">Faskes Name</span><span
+                                    class="data-value">{{ $insurance->faskes_name ?? '-' }}</span></div>
+                            <div class="data-item"><span class="data-label">Faskes Address</span><span
+                                    class="data-value">{{ $insurance->faskes_address ?? '-' }}</span></div>
                             <div class="data-item"><span class="data-label">Start Date</span><span
                                     class="data-value">{{ $insurance->start_date ? \Carbon\Carbon::parse($insurance->start_date)->format('d F Y') : '-' }}</span>
                             </div>
@@ -467,62 +471,93 @@
         </div>
 
         <!-- Training Records Collapsible Card -->
-        <div class="full-width-column">
-            <div class="detail-card collapsible-card">
-                <div class="card-header collapsible-header" data-bs-toggle="collapse" href="#trainingRecordsCollapse"
-                    role="button" aria-expanded="false" aria-controls="trainingRecordsCollapse">
-                    <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Training Records</h3>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </div>
-                <div class="collapse" id="trainingRecordsCollapse">
-                    <div class="card-content">
-                        @forelse ($employee->trainingHistories()->with('trainingMaterials')->latest()->get() as $training)
-                            <div class="data-item"><span class="data-label">Training Name</span><span
-                                    class="data-value">{{ $training->training_name ?? '-' }}</span></div>
-                            <div class="data-item"><span class="data-label">Provider</span><span
-                                    class="data-value">{{ $training->provider ?? '-' }}</span></div>
-                            <div class="data-item"><span class="data-label">Description</span><span
-                                    class="data-value">{{ $training->description ?? '-' }}</span></div>
-                            <div class="data-item"><span class="data-label">Start Date</span><span
-                                    class="data-value">{{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('d F Y') : '-' }}</span>
-                            </div>
-                            <div class="data-item"><span class="data-label">End Date</span><span
-                                    class="data-value">{{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('d F Y') : '-' }}</span>
-                            </div>
-                            <div class="data-item"><span class="data-label">Cost</span><span
-                                    class="data-value">{{ $training->cost ? 'Rp ' . number_format($training->cost, 0, ',', '.') : '-' }}</span>
-                            </div>
-                            <div class="data-item"><span class="data-label">Location</span><span
-                                    class="data-value">{{ $training->location ?? '-' }}</span></div>
-                            <div class="data-item"><span class="data-label">Certificate Number</span><span
-                                    class="data-value">{{ $training->certificate_number ?? '-' }}</span></div>
-
-                            <div class="data-item"><span class="data-label">Training Materials</span>
-                                <span class="data-value">
-                                    @if ($training->trainingMaterials && $training->trainingMaterials->count())
-                                        <ul class="list-unstyled mb-0">
-                                            @foreach ($training->trainingMaterials as $index => $material)
-                                                <li>
-                                                    <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
-                                                        target="_blank">
-                                                        <i class="fas fa-file-alt"></i> File {{ $index + 1 }}
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        -
-                                    @endif
-                                </span>
-                            </div>
-                            <hr>
-                        @empty
-                            <p>No training records available.</p>
-                        @endforelse
+<div class="full-width-column">
+    <div class="detail-card collapsible-card">
+        <div class="card-header collapsible-header" data-bs-toggle="collapse" href="#trainingRecordsCollapse"
+            role="button" aria-expanded="false" aria-controls="trainingRecordsCollapse">
+            <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Training Records</h3>
+            <i class="fas fa-chevron-down collapse-icon"></i>
+        </div>
+        <div class="collapse" id="trainingRecordsCollapse">
+            <div class="card-content">
+                @forelse ($employee->trainingHistories()->with('trainingMaterials')->latest()->get() as $training)
+                    <div class="data-item">
+                        <span class="data-label">Training Name</span>
+                        <span class="data-value">{{ $training->training_name ?? '-' }}</span>
                     </div>
-                </div>
+                    <div class="data-item">
+                        <span class="data-label">Provider</span>
+                        <span class="data-value">{{ $training->provider ?? '-' }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Description</span>
+                        <span class="data-value">{{ $training->description ?? '-' }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Start Date</span>
+                        <span class="data-value">
+                            {{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('d F Y') : '-' }}
+                        </span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">End Date</span>
+                        <span class="data-value">
+                            {{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('d F Y') : '-' }}
+                        </span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Cost</span>
+                        <span class="data-value">
+                            {{ $training->cost ? 'Rp ' . number_format($training->cost, 0, ',', '.') : '-' }}
+                        </span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Location</span>
+                        <span class="data-value">{{ $training->location ?? '-' }}</span>
+                    </div>
+
+                    {{-- Certificate File --}}
+                    <div class="data-item">
+                        <span class="data-label">Certificate File</span>
+                        <span class="data-value">
+                            @if (!empty($training->certificate_file))
+                                <a href="{{ asset('storage/' . $training->certificate_file) }}" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> View Certificate
+                                </a>
+                            @else
+                                -
+                            @endif
+                        </span>
+                    </div>
+
+                    {{-- Training Materials --}}
+                    <div class="data-item">
+                        <span class="data-label">Training Materials</span>
+                        <span class="data-value">
+                            @if ($training->trainingMaterials && $training->trainingMaterials->count())
+                                <ul class="list-unstyled mb-0">
+                                    @foreach ($training->trainingMaterials as $index => $material)
+                                        <li>
+                                            <a href="{{ asset('storage/' . $material->file_path) }}"
+                                                target="_blank">
+                                                <i class="fas fa-file-alt"></i> File {{ $index + 1 }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                -
+                            @endif
+                        </span>
+                    </div>
+                    <hr>
+                @empty
+                    <p>No training records available.</p>
+                @endforelse
             </div>
         </div>
+    </div>
+</div>
 
 
         {{-- Ikuti card kesehatan diatas untuk menerapkan expand card untuk menampilkan data lainnya --}}

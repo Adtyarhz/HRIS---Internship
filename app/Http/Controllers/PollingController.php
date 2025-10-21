@@ -94,4 +94,26 @@ class PollingController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+    public function endNow($id)
+{
+    $polling = Polling::findOrFail($id);
+
+    // Hanya superadmin atau HC yang bisa end polling
+    if (!in_array(Auth::user()->role, ['superadmin', 'hc'])) {
+        abort(403, 'Anda tidak memiliki izin untuk mengakhiri polling ini.');
+    }
+
+    // Jika polling sudah berakhir, kembalikan pesan
+    if ($polling->deadline && now()->gt($polling->deadline)) {
+        return back()->with('info', 'Polling sudah berakhir sebelumnya.');
+    }
+
+    // Update deadline jadi waktu sekarang
+    $polling->update([
+        'deadline' => now(),
+    ]);
+
+    return back()->with('success', 'Poll has been ended manually.');
+}
+
 }

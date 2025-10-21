@@ -33,6 +33,37 @@
     </div>
 </div>
 
+{{-- Faskes Name --}}
+<div class="form-group row align-items-center">
+    <label for="faskes_name" class="col-md-2 col-form-label">Faskes Name <span class="text-danger">*</span>:</label>
+    <div class="col-md-4">
+        <input type="text" 
+               class="form-control @error('faskes_name') is-invalid @enderror" 
+               id="faskes_name" 
+               name="faskes_name"
+               value="{{ old('faskes_name', $insurance->faskes_name ?? '') }}"
+               placeholder="Enter hospital or clinic name">
+        @error('faskes_name')
+            <span class="invalid-feedback d-block">{{ $message }}</span>
+        @enderror
+    </div>
+</div>
+
+{{-- Faskes Address --}}
+<div class="form-group row align-items-start">
+    <label for="faskes_address" class="col-md-2 col-form-label">Faskes Address <span class="text-danger">*</span>:</label>
+    <div class="col-md-6">
+        <textarea class="form-control @error('faskes_address') is-invalid @enderror"
+                  id="faskes_address" 
+                  name="faskes_address" 
+                  rows="2"
+                  placeholder="Enter hospital or clinic address">{{ old('faskes_address', $insurance->faskes_address ?? '') }}</textarea>
+        @error('faskes_address')
+            <span class="invalid-feedback d-block">{{ $message }}</span>
+        @enderror
+    </div>
+</div>
+
 {{-- Start Date --}}
 <div class="form-group row align-items-center">
     <label for="start_date" class="col-md-2 col-form-label">Start Date <span class="text-danger">*</span> :</label>

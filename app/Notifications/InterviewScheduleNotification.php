@@ -32,7 +32,7 @@ class InterviewScheduleNotification extends Notification
         return [
             'title' => "Jadwal Interview {$type} Baru",
             'message' => "The interview for <b>{{$applicant}}</b> has been scheduled for <b>{{$formattedDate}} WIB</b>.",
-            'url' => route('interview-schedule.show', [$this->schedule->applicant_id, $this->schedule->id]),
+            'url' => route('interview-schedule.show', $this->schedule->id),
         ];
     }
 }

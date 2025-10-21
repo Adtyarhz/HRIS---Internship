@@ -1,143 +1,37 @@
 @extends('layouts.admin')
 
-@section('title', 'Interview Schedule Management')
+@section('title', 'Interview Schedule')
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <style>
-    .header-with-icon {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        border-radius: 5px;
-    }
-
-    .header-with-icon .custom-hamburger {
-        margin-right: 6px;
-        width: 35px;
-        height: 35px;
-        color: #000;
-    }
-
-    .schedule-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem; /* lebih kecil */
-    }
-
-    .schedule-header h2 {
-        font-size: 22px;
-        font-weight: bold;
-        font-family: 'Noto Sans Georgian', sans-serif;
-        margin: 0;
-    }
-
+    #calendar { max-width: 100%; margin: 0 auto; background: #fffdf5; border-radius: 10px; padding: 10px; }
     .btn-add {
         background-color: #9A3B3B;
         color: white;
         border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
+        padding: 10px 20px;
+        border-radius: 8px;
         font-weight: 600;
         text-decoration: none;
         transition: background-color 0.3s;
-        display: inline-block;
     }
 
     .btn-add:hover {
         background-color: #7a2f2f;
-    }
-
-    .interview-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Manrope', sans-serif;
-        margin-bottom: 1rem;
-    }
-
-    .interview-table thead th {
-        background-color: #DFD9B6;
-        color: #000;
-        font-weight: 600;
-        padding: 10px;
-        border: 1px solid #aaa;
-        text-align: center;
-    }
-
-    .interview-table tbody td {
-        background-color: #F3F1E0;
-        padding: 10px;
-        border: 1px solid #aaa;
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    .btn-detail {
-        background-color: #b44343ff;
-        color: white;
-        border: none;
-        padding: 7px 14px;
-        border-radius: 6px;
-        font-weight: bold;
-        font-size: 14px;
-        font-family: 'Manrope', sans-serif;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-
-    .btn-detail:hover {
-        background-color: #333;
         color: white;              /* biar teks tetap putih */
         text-decoration: none;     /* hilangkan underline */
     }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        margin-top: 12px;
-    }
-
-    .pagination a,
-    .pagination span {
-        padding: 4px 8px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        text-decoration: none;
-        color: #000;
-        font-size: 14px;
-        font-family: 'Manrope', sans-serif;
-    }
-
-    .pagination a:hover {
-        background-color: #DFD9B6;
-    }
-
-    .pagination .disabled {
-        color: #999;
-        cursor: not-allowed;
-    }
-
-    .btn-back {
-        display: inline-block;
-        margin-top: 12px;
-        background-color: #3498db;
-        color: white;
-        padding: 8px 24px;
-        border-radius: 6px;
-        font-weight: 600;
-        float: right;
-        text-decoration: none;
-    }
-
-    .btn-back:hover {
-        background-color: #5a6268;
-        color: white;
-        text-decoration: none;
-    }
+    .fc-event { cursor: pointer; background-color: #b44343; border: none; color: white; }
+    .fc-toolbar-title { font-family: 'Manrope', sans-serif; font-weight: bold; color: #333; }
+    .week-list { margin-top: 30px; background-color: #faf6e9; padding: 20px; border-radius: 10px; }
+    .week-item { border-bottom: 1px solid #ddd; padding: 10px 0; }
+    .week-item:last-child { border-bottom: none; }
+    .week-item h5 { margin: 0; font-weight: bold; color: #9a3b3b; }
+    .week-item small { color: #555; }
 </style>
 @endpush
+
 @section('content_header')
     <div class="header-with-icon d-flex align-items-center">
         <!-- Ikon Recruitment -->
@@ -148,54 +42,127 @@
         <h1 class="header-title mb-0">Recruitment Applicant</h1>
     </div>
 @endsection
+@section('content-wrapper')
+    @include('recruitment.tabs')
 
-@section('content')
-<div class="schedule-header">
-    <h2>Interview Schedules of {{ $applicant->full_name }}</h2>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    {{-- Section Title --}}
+                   <div class="header-with-icon mb-4 d-flex align-items-center justify-content-between">
+    <h1 class="header-title mb-0">Interview Schedule Overview</h1>
+
+    @if ($canAddInterview ?? false)
+        <a href="{{ route('interview-schedule.create') }}" class="btn-add" style="margin-left: auto;">+ Add Interview Schedule
+        </a>
+    @endif
 </div>
 
-@php
-    $userRole = Auth::user()->role;
-@endphp
+<div id="calendar"></div>
 
-@if($canAddInterview)
-<div style="text-align: right; margin-bottom: 1rem;">
-    <a href="{{ route('interview-schedule.create', $applicant->id) }}" class="btn-add">+ Add Interview Schedule</a>
+{{-- Modal Detail Jadwal --}}
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="eventModalLabel">Interview Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Applicant:</strong> <span id="modalApplicant"></span></p>
+                <p><strong>Type:</strong> <span id="modalType"></span></p>
+                <p><strong>Date:</strong> <span id="modalDate"></span></p>
+                <p><strong>Interviewer:</strong> <span id="modalInterviewer"></span></p>
+                <p><strong>Location:</strong> <span id="modalLocation"></span></p>
+            </div>
+
+            <div class="modal-footer">
+                {{-- ✏️ Tombol Edit hanya untuk role hc & superadmin --}}
+                @if(in_array(auth()->user()->role, ['hc', 'superadmin']))
+                    <a href="#" id="editButton" class="btn btn-sm btn-warning">Edit</a>
+                @endif
+                @if(in_array(auth()->user()->role, ['hc', 'superadmin']))
+                {{-- 🗑️ Tombol Delete (jika ingin juga dibatasi, tinggal bungkus @if yang sama) --}}
+                <form id="deleteForm" action="#" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                        Delete
+                    </button>
+                </form>
+                @endif
+                {{-- ✅ Tombol Close aktif dan bisa menutup modal --}}
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
-@endif
 
-<table class="interview-table">
-    <thead>
-        <tr>
-            <th>No</th>
-            <th>Type</th>
-            <th>Date</th>
-            <th>Interviewer</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($schedules as $i => $schedule)
-            <tr>
-                <td>{{ $i + $schedules->firstItem() }}</td>
-                <td>{{ $schedule->interview_type }}</td>
-                <td>{{ $schedule->interview_date }}</td>
-                <td>{{ $schedule->interviewer?->name ?? '-' }}</td>
-                <td>
-                    <a href="{{ route('interview-schedule.show', [$applicant->id, $schedule->id]) }}" class="btn-detail">Detail</a>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="5">No interview schedules found.</td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
-
-<div class="pagination">
-    {{ $schedules->links('pagination::custom') }}
+{{-- List 7 hari ke depan --}}
+<div class="week-list mt-5">
+    <h3>Upcoming Interviews (Next 7 Days)</h3>
+    @forelse ($upcomingSchedules as $schedule)
+        <div class="week-item">
+            <h5>{{ $schedule->applicant?->full_name ?? '-' }} ({{ $schedule->interview_type ?? '-' }})</h5>
+            <small>
+                📅 {{ \Carbon\Carbon::parse($schedule->interview_date)->format('d M Y, H:i') }} — 
+                👤 {{ $schedule->interviewer?->name ?? '-' }} — 
+                📍 {{ $schedule->location ?? '-' }}
+            </small>
+        </div>
+    @empty
+        <p class="text-muted">No interviews scheduled for the next week.</p>
+    @endforelse
 </div>
-
-<a href="{{ route('applicants.index') }}" class="btn-back">Back</a>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const events = @json($events);
+
+    // Template route edit dan delete
+    const editRouteTemplate = "{{ route('interview-schedule.edit', ['schedule' => ':id']) }}";
+    const deleteRouteTemplate = "{{ route('interview-schedule.destroy', ['schedule' => ':id']) }}";
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        events: events,
+        eventClick: function(info) {
+            const e = info.event;
+
+            // Isi detail ke modal
+            document.getElementById('modalApplicant').textContent = e.title;
+            document.getElementById('modalType').textContent = e.extendedProps.type ?? '-';
+            document.getElementById('modalDate').textContent = e.start.toLocaleString();
+            document.getElementById('modalInterviewer').textContent = e.extendedProps.interviewer ?? '-';
+            document.getElementById('modalLocation').textContent = e.extendedProps.location ?? '-';
+
+            // Pasang route Edit/Delete hanya jika tombol ada
+            const editButton = document.getElementById('editButton');
+            const deleteForm = document.getElementById('deleteForm');
+
+            if (editButton) {
+                editButton.href = editRouteTemplate.replace(':id', e.id);
+            }
+
+            if (deleteForm) {
+                deleteForm.action = deleteRouteTemplate.replace(':id', e.id);
+            }
+
+            // Tampilkan modal
+            new bootstrap.Modal(document.getElementById('eventModal')).show();
+        }
+    });
+
+    calendar.render();
+});
+</script>
+@endpush

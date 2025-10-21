@@ -228,6 +228,8 @@
                                         <th>No.</th>
                                         <th>Insurance Number</th>
                                         <th>Type</th>
+                                        <th>Faskes Name</th>
+                                        <th>Faskes Address</th>
                                         <th>Period</th>
                                         <th>Status</th>
                                         <th>File</th>
@@ -240,6 +242,8 @@
                                             <td data-label="No.">{{ $loop->iteration }}</td>
                                             <td data-label="Insurance Number">{{ $insurance->insurance_number }}</td>
                                             <td data-label="Type">{{ $insurance->insurance_type }}</td>
+                                            <td data-label="Faskes Name">{{ $insurance->faskes_name }}</td>
+                                            <td data-label="Faskes Address">{{ $insurance->faskes_address }}</td>
                                             <td data-label="Period">
                                                 {{ \Carbon\Carbon::parse($insurance->start_date)->format('d/m/Y') }}
                                                 -

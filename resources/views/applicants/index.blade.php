@@ -169,12 +169,16 @@
     </div>
 @endsection
 
-@section('content')
-
-    <div class="announcement-header">
-        <h2>Applicants</h2>
-    </div>
-
+@section('content-wrapper')
+    @include('recruitment.tabs')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    {{-- Section Title --}}
+                    <div class="announcement-header d-flex justify-content-between align-items-center">
+                        <h2>Applicants</h2>
+                    </div>
     <form method="GET" action="{{ route('applicants.index') }}" class="filter-form">
         <input type="text" name="search" placeholder="Search Applicant Fullname" value="{{ request('search') }}">
         <button type="submit" class="btn-filter">Search</button>
@@ -209,7 +213,7 @@
     </div>
 </th>
                 <th>Recruitment Progress</th>
-                <th>Interview Schedule</th>
+                <!--<th>Interview Schedule</th>-->
             </tr>
         </thead>
         <tbody>
@@ -225,7 +229,7 @@
                     <td>
                         <a href="{{ route('recruitment-progress.show', $applicant) }}" class="link-applicant">See Recruitment Progress</a>
                     </td>
-                    <td><a href="{{ route('interview-schedule.index', $applicant) }}">See Interview Schedule</a></td>
+                    <!-- <td><a href="{{ route('interview-schedule.index', $applicant) }}">See Interview Schedule</a></td> -->
                 </tr>
             @empty
                 <tr>

@@ -147,10 +147,10 @@
                 @if ($stage === 'cv_screening')
                     <select name="contract_type" class="form-control">
                         <option value="">-- Select Contract Type --</option>
-                        <option value="Contract" {{ old('contract_type', $progress->contract_type) === 'Contract' ? 'selected' : '' }}>Contract</option>
-                        <option value="Internship" {{ old('contract_type', $progress->contract_type) === 'Internship' ? 'selected' : '' }}>Internship</option>
+                        <option value="PKWT" {{ old('contract_type', $progress->contract_type) === 'PKWT' ? 'selected' : '' }}>PKWT</option>
+                        <option value="PKWTT" {{ old('contract_type', $progress->contract_type) === 'PKWTT' ? 'selected' : '' }}>PKWTT</option>
                         <option value="Probation" {{ old('contract_type', $progress->contract_type) === 'Probation' ? 'selected' : '' }}>Probation</option>
-                        <option value="Full-time" {{ old('contract_type', $progress->contract_type) === 'Full-time' ? 'selected' : '' }}>Full-time</option>
+                        <option value="Intern" {{ old('contract_type', $progress->contract_type) === 'Intern' ? 'selected' : '' }}>Intern</option>
                     </select>
                 @else
                     <input type="text" class="form-control" value="{{ $contractType ?? '-' }}" disabled>
@@ -165,6 +165,8 @@
             </div>
         </div>
 
+        {{-- Hide Result File for offering_letter --}}
+        @if ($stage !== 'offering_letter')
         <div class="detail-row">
             <div class="detail-label">Result File</div>
             <div class="input-wrapper">
@@ -176,6 +178,7 @@
                 @endif
             </div>
         </div>
+        @endif
 
         <div class="detail-row">
             <div class="detail-label">Score</div>

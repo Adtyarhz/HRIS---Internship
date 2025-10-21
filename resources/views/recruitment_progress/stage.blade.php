@@ -215,9 +215,15 @@
         <h1 class="header-title mb-0">Recruitment Applicant</h1>
     </div>
 @endsection
-@section('content')
-<div class="schedule-header">
-    <h2>Recruitment Progress of {{ $applicant->full_name }}</h2>
+@section('content-wrapper')
+   @include('recruitment.tabs', ['applicant' => $applicant])
+<section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    {{-- Section Title --}}
+                   <div class="header-with-icon mb-4 d-flex align-items-center justify-content-between">
+                    <h1 class="header-title mb-0">Recruitment Progress of {{ $applicant->full_name }}</h1>
 </div>
 <div class="container">
     <!-- Stepper -->
@@ -265,57 +271,73 @@
         @endforeach
     </div>
 
-    @php
-        $permissions = [
-            'cv_screening' => ['superadmin', 'hc'],
-            'general_knowledge_test' => ['superadmin', 'hc'],
-            'user_assessment' => ['superadmin', 'manager', 'section_head', 'hc'],
-            'hc_interview' => ['superadmin', 'hc'],
-            'bod_interview' => ['superadmin','direksi', 'hc'],
-            'offering_letter' => ['superadmin', 'hc'],
-        ];
+@php
+    use Illuminate\Support\Facades\Auth;
 
-        $canEdit = isset($permissions[$stage]) && in_array(Auth::user()->role, $permissions[$stage]);
-    @endphp
+    $permissions = [
+        'cv_screening' => ['superadmin', 'hc'],
+        'general_knowledge_test' => ['superadmin', 'hc'],
+        'user_assessment' => ['superadmin', 'manager', 'section_head', 'hc'],
+        'hc_interview' => ['superadmin', 'hc'],
+        'bod_interview' => ['superadmin','direksi', 'hc'],
+        'offering_letter' => ['superadmin', 'hc'],
+    ];
 
-    <!-- Stage Detail -->
-    <div class="stage-content">
-        {{-- Tombol Action --}}
-        @if ($canEdit)
-            @if ($progress)
-                @if ($stage === 'offering_letter')
-                    @if ($progress->offering_status === 'accepted')
-                        <div class="edit-button-wrapper">
-                            <a href="{{ route('applicants.show', $applicant->id) }}" class="edit-btn">
-                                <i class="fas fa-id-card"></i> Go to Applicant Data
-                            </a>
-                        </div>
-                    @elseif ($progress->offering_status === 'in_progress')
-                        <div class="edit-button-wrapper">
-                            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                                <i class="fas fa-id-card"></i> Edit Recruitment Data
-                            </a>
-                        </div>
-                    @endif
-                    {{-- rejected => tidak ada tombol --}}
-                @else
-                    @if ($progress->offering_status !== 'rejected')
-                        <div class="edit-button-wrapper">
-                            <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                                <i class="fas fa-id-card"></i> Edit Recruitment Data
-                            </a>
-                        </div>
-                    @endif
+    $user = Auth::user();
+    $canEdit = false;
+
+    if (isset($permissions[$stage]) && in_array($user->role, $permissions[$stage])) {
+        // Khusus untuk tahap user_assessment
+        if ($stage === 'user_assessment' && in_array($user->role, ['manager', 'section_head'])) {
+            $isInterviewer = $applicant->interviewSchedules()
+                ->where('interviewer_id', $user->id)
+                ->exists();
+
+            $canEdit = $isInterviewer;
+        } else {
+            // Tahap selain user_assessment, izinkan langsung
+            $canEdit = true;
+        }
+    }
+@endphp
+
+<!-- Stage Detail -->
+<div class="stage-content">
+    {{-- Tombol Action --}}
+    @if ($canEdit)
+        @if ($progress)
+            @if ($stage === 'offering_letter')
+                @if ($progress->offering_status === 'accepted')
+                    <div class="edit-button-wrapper">
+                        <a href="{{ route('applicants.show', $applicant->id) }}" class="edit-btn">
+                            <i class="fas fa-id-card"></i> Go to Applicant Data
+                        </a>
+                    </div>
+                @elseif ($progress->offering_status === 'in_progress')
+                    <div class="edit-button-wrapper">
+                        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                            <i class="fas fa-id-card"></i> Edit Recruitment Data
+                        </a>
+                    </div>
                 @endif
             @else
-                {{-- Belum ada progress --}}
-                <div class="edit-button-wrapper">
-                    <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
-                        <i class="fas fa-id-card"></i> Fill Recruitment Data
-                    </a>
-                </div>
+                @if ($progress->offering_status !== 'rejected')
+                    <div class="edit-button-wrapper">
+                        <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                            <i class="fas fa-id-card"></i> Edit Recruitment Data
+                        </a>
+                    </div>
+                @endif
             @endif
+        @else
+            {{-- Belum ada progress --}}
+            <div class="edit-button-wrapper">
+                <a href="{{ route('recruitment.stage.edit', [$applicant->id, $stage]) }}" class="edit-btn">
+                    <i class="fas fa-id-card"></i> Fill Recruitment Data
+                </a>
+            </div>
         @endif
+    @endif
 
         {{-- Detail Stage --}}
         @if ($progress)
@@ -359,15 +381,17 @@
                     <div class="value">{{ $progress->slik_recap ?? '-' }}</div>
                 @endif
 
-                @if ($progress->result_file)
-                    <div class="label">Result File:</div>
-                    <div class="value">
-                        <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
-                            <i class="fas fa-file-alt"></i>
-                            {{ basename($progress->result_file) }}
-                        </a>
-                    </div>
-                @endif
+                {{-- Hide Result File for offering_letter --}}
+@if ($progress->result_file && $stage !== 'offering_letter')
+    <div class="label">Result File:</div>
+    <div class="value">
+        <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
+            <i class="fas fa-file-alt"></i>
+            {{ basename($progress->result_file) }}
+        </a>
+    </div>
+@endif
+
             </div>
         @else
             <p class="text-center text-muted">No data available for this stage.</p>
