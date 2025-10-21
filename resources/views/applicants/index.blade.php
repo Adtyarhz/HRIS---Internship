@@ -101,7 +101,7 @@
         }
 
         .btn-filter {
-            background-color: #9A3B3B;
+            background-color: #7d7b7bff;
             color: #fff;
             border: none;
             padding: 8px 16px;
@@ -110,8 +110,8 @@
         }
 
         .btn-reset {
-            background-color: #DFD9B6;
-            color: #000;
+            background-color: #f4f4f4a0;
+            color: #343030ff;
             padding: 8px 16px;
             border-radius: 6px;
             text-decoration: none;
