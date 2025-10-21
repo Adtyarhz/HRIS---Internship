@@ -269,23 +269,48 @@
             </div>
 
             <div class="form-group-flex form-small">
-    <label for="attachment_file" class="fw-semibold">Attachment</label>
-    <div class="custom-upload-wrapper">
-        <span class="iconify file-icon" data-icon="famicons:document-outline" data-width="20" data-height="20"></span>
-        <span class="file-label">Choose file</span>
-        <input type="file" name="attachment_file" id="attachment_file" accept=".pdf,image/*" onchange="updateFileName(this)">
-    </div>
-</div>
+            <label for="attachment_file" class="fw-semibold">Attachment</label>
+            <div class="custom-upload-wrapper">
+                <span class="iconify file-icon" data-icon="famicons:document-outline" data-width="20" data-height="20"></span>
+                <span class="file-label">Choose file</span>
+                <input type="file" name="attachment_file" id="attachment_file" accept=".pdf,image/*" onchange="updateFileName(this)">
+            </div>
+        </div>
 
             <div class="form-group-flex form-small">
             <label for="label" class="fw-semibold">Label <span style="color: red">*</span></label>
                 <input type="text" name="label" id="label" class="form-control" value="{{ old('label') }}" placeholder="Example: HR, IT, Marketing">
             </div>
+            <div class="form-group-flex">
+            <label for="target_divisions" class="fw-semibold">Tujuan Divisi </label>
+            <div style="flex: 1;">
+                <select name="target_divisions[]" id="target_divisions" class="form-control" multiple>
+                    @foreach($divisions as $division)
+                        <option value="{{ $division->id }}"
+                            {{ (collect(old('target_divisions'))->contains($division->id)) ? 'selected' : '' }}>
+                            {{ $division->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <small style="color: #555;">(Tekan Ctrl / Cmd untuk memilih lebih dari satu divisi)</small>
+            </div>
+        </div>
 
             <div class="form-group-flex">
-                <label for="external_link" class="fw-semibold">External Link</label>
-                <input type="url" name="external_link" id="external_link" class="form-control" value="{{ old('external_link') }}" placeholder="https://contoh.com">
-            </div>
+    <label for="external_link" class="fw-semibold">External Link</label>
+
+    <div id="external-links-container" style="flex: 1;">
+        {{-- Input pertama --}}
+        <div class="d-flex mb-2 external-link-item">
+            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com" required>
+            <button type="button" class="btn btn-danger btn-sm ms-2 remove-link" style="display:none;">Hapus</button>
+        </div>
+    </div>
+
+    <button type="button" id="add-link" class="btn btn-primary btn-sm mt-2">+ Tambah Link</button>
+
+    <small class="text-muted d-block mt-1">Kamu dapat menambahkan lebih dari satu link eksternal.</small>
+</div>
 
             <div id="polling-section" style="display: none;">
     <div class="form-group-flex">
@@ -352,6 +377,37 @@ document.getElementById('add-option')?.addEventListener('click', function () {
         <button type="button" onclick="removeOption(this)">×</button>
     `;
     document.getElementById('polling-options').appendChild(wrapper);
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#target_divisions').select2({
+            placeholder: "Pilih satu atau lebih divisi",
+            allowClear: true,
+        });
+    });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('external-links-container');
+    const addBtn = document.getElementById('add-link');
+
+    addBtn.addEventListener('click', function() {
+        const newInput = document.createElement('div');
+        newInput.classList.add('d-flex', 'mb-2', 'external-link-item');
+        newInput.innerHTML = `
+            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com" required>
+            <button type="button" class="btn btn-danger btn-sm ms-2 remove-link">Hapus</button>
+        `;
+        container.appendChild(newInput);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-link')) {
+            e.target.closest('.external-link-item').remove();
+        }
+    });
 });
 </script>
 @endsection

@@ -1,8 +1,8 @@
 @push('styles')
 <style>
-    /* Reuse styling from KPI tab-menu with slight adjustments */
+    /* Container styling */
     .tabs-container {
-        margin: 0px 0px 0px 0px;
+        margin: 0;
         width: 100%;
         overflow: hidden;
     }
@@ -60,22 +60,58 @@
         color: black;
     }
 
-    /* Responsive adjustments (same as KPI) */
+    .tabs-nav__item--inactive {
+        cursor: not-allowed;
+        background-color: #f7f7da !important;
+        opacity: 0.6;
+    }
+
+    .tabs-nav__item--inactive .tabs-nav__item-text {
+        color: #777;
+    }
+
+    /* Responsive */
     @media (max-width: 1024px) {
-        .tabs-nav__item { min-width: 80px; padding: 6px 10px; }
-        .tabs-nav__item-text { font-size: 13px; }
+        .tabs-nav__item {
+            min-width: 80px;
+            padding: 6px 10px;
+        }
+        .tabs-nav__item-text {
+            font-size: 13px;
+        }
     }
+
     @media (max-width: 768px) {
-        .tabs-container { margin: -15px -15px 15px -15px; }
-        .tabs-nav { height: 48px; }
-        .tabs-nav__item { min-width: 70px; padding: 5px 8px; }
-        .tabs-nav__item-text { font-size: 12px; }
+        .tabs-container {
+            margin: -15px -15px 15px -15px;
+        }
+        .tabs-nav {
+            height: 48px;
+        }
+        .tabs-nav__item {
+            min-width: 70px;
+            padding: 5px 8px;
+        }
+        .tabs-nav__item-text {
+            font-size: 12px;
+        }
     }
+
     @media (max-width: 480px) {
-        .tabs-container { margin: -10px -10px 10px -10px; }
-        .tabs-nav { height: 40px; }
-        .tabs-nav__item { min-width: 60px; padding: 4px 6px; }
-        .tabs-nav__item-text { font-size: 11px; line-height: 1.2; }
+        .tabs-container {
+            margin: -10px -10px 10px -10px;
+        }
+        .tabs-nav {
+            height: 40px;
+        }
+        .tabs-nav__item {
+            min-width: 60px;
+            padding: 4px 6px;
+        }
+        .tabs-nav__item-text {
+            font-size: 11px;
+            line-height: 1.2;
+        }
     }
 </style>
 @endpush
@@ -83,15 +119,15 @@
 @php
     $role = auth()->user()->role ?? null;
 
-    // Definisi tab untuk Recruitment Applicant
-    $recruitmentTabs = [
-        ['label' => 'Manage Applicants', 'route' => 'applicants.index'],
+    // Dua tab saja
+    $tabs = [
+        ['label' => 'Applicant', 'route' => 'applicants.index'],
         ['label' => 'Interview Schedule', 'route' => 'interview-schedule.index'],
     ];
 
-    // Tentukan tab berdasarkan role (misalnya, semua role bisa lihat kedua tab)
-    if ($role === 'superadmin' || $role === 'hc' || $role === 'manager') {
-        $visibleTabs = $recruitmentTabs;
+    // Filter tab berdasarkan role (opsional)
+    if (in_array($role, ['superadmin', 'hc', 'manager', 'section_head', 'direksi'])) {
+        $visibleTabs = $tabs;
     } else {
         $visibleTabs = [];
     }
@@ -102,9 +138,10 @@
         <nav class="tabs-nav">
             @foreach ($visibleTabs as $tab)
                 @php
-                    $isActivePage = request()->routeIs($tab['route'] . '*');
-                    $classes = 'tabs-nav__item' . ($isActivePage ? ' tabs-nav__item--active' : '');
+                    $isActive = request()->routeIs($tab['route'] . '*');
+                    $classes = 'tabs-nav__item' . ($isActive ? ' tabs-nav__item--active' : '');
                 @endphp
+
                 <a href="{{ route($tab['route']) }}" class="{{ $classes }}">
                     <span class="tabs-nav__item-text">{{ $tab['label'] }}</span>
                 </a>

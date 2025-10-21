@@ -164,22 +164,24 @@
                                     </div>
                                 </div>
 
-                                {{-- Certificate Number --}}
-                                <div class="form-group row align-items-center">
-                                    <label for="certificate_number" class="col-md-2 col-form-label">
-                                        Certificate Number <span class="text-danger">*</span> :
-                                    </label>
-                                    <div class="col-md-3">
-                                        <input type="text"
-                                            class="form-control @error('certificate_number') is-invalid @enderror"
-                                            id="certificate_number" name="certificate_number"
-                                            value="{{ old('certificate_number') }}" placeholder="e.g., TR-2025-001"
-                                            required>
-                                        @error('certificate_number')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+                                {{-- Certificate File --}}
+<div class="form-group row align-items-center">
+    <label for="certificate_file" class="col-md-2 col-form-label">
+        Certificate File :
+    </label>
+    <div class="col-md-4">
+        <input type="file"
+            class="form-control @error('certificate_file') is-invalid @enderror"
+            id="certificate_file" name="certificate_file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.zip">
+        <small class="form-text text-muted">
+            Upload certificate file (PDF, JPG, PNG, DOC, DOCX, ZIP, max 10MB).
+        </small>
+        @error('certificate_file')
+            <span class="text-danger small mt-1">{{ $message }}</span>
+        @enderror
+    </div>
+</div>
 
                                 <div class="form-group row align-items-center">
                                     <label for="material_files" class="col-md-2 col-form-label">Training Record Files :</label>

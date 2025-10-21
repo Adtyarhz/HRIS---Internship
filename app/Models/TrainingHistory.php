@@ -22,7 +22,7 @@ class TrainingHistory extends Model
         'end_date',
         'cost',
         'location',
-        'certificate_number',
+        'certificate_file',
     ];
 
     protected $casts = [

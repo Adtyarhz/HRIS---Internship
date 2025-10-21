@@ -156,7 +156,7 @@ class EmployeeController extends Controller
             'phone_number' => ['required', 'string', 'max:20', 'unique:employees,phone_number', 'regex:/^\+?[0-9]{8,20}$/'],
             'email' => 'required|email|max:100|unique:employees,email',
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
-            'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
+            'employee_type' => ['required', Rule::in(['PKWT', 'PKWTT', 'Probation', 'Intern'])],
             'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
             'hire_date' => 'required|date',
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
@@ -310,7 +310,7 @@ class EmployeeController extends Controller
             'phone_number' => ['required', 'string', 'max:20', Rule::unique('employees')->ignore($employee->id), 'regex:/^\+?[0-9]{8,20}$/'],
             'email' => ['required', 'email', 'max:100', Rule::unique('employees')->ignore($employee->id)],
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
-            'employee_type' => ['required', Rule::in(['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'])],
+            'employee_type' => ['required', Rule::in(['PKWT', 'PKWTT', 'Probation', 'Intern'])],
             'office' => ['nullable', Rule::in(['Kantor Pusat', 'Kantor Cabang'])],
             'hire_date' => 'required|date',
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
@@ -515,10 +515,10 @@ class EmployeeController extends Controller
 
         // Mapping contract_type (English → Indonesian)
         $contractMap = [
-            'Contract' => 'Kontrak',
-            'Internship' => 'Magang',
-            'Probation' => 'Masa Percobaan',
-            'Full-time' => 'Fulltime',
+            'Contract' => 'PKWT',
+            'Internship' => 'Intern',
+            'Probation' => 'Probation',
+            'Full-time' => 'PKWTT',
         ];
 
         $mappedContractType = $contractMap[$offeringLetter->contract_type] ?? null;

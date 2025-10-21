@@ -42,10 +42,10 @@
         <h4>Add Interview Schedule</h4>
         <div class="detail-wrapper">
             @include('interview_schedule._form', [
-                'route' => route('interview-schedule.store', $applicant->id),
+                'route' => route('interview-schedule.store'),
                 'method' => 'POST',
                 'schedule' => null,
-                'applicant' => $applicant
+                'applicants' => $applicants
             ])
         </div>
     </div>

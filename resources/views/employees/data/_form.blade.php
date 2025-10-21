@@ -212,18 +212,18 @@
                     <label for="employee_type">Employee Type <span class="text-danger">*</span></label>
                     <select class="form-control @error('employee_type') is-invalid @enderror" name="employee_type"
                         required>
-                        <option value="Kontrak"
-                            {{ old('employee_type', $employee->employee_type) == 'Kontrak' ? 'selected' : '' }}>Kontrak
+                        <option value="PKWT"
+                            {{ old('employee_type', $employee->employee_type) == 'PKWT' ? 'selected' : '' }}>PKWT
                         </option>
-                        <option value="Magang"
-                            {{ old('employee_type', $employee->employee_type) == 'Magang' ? 'selected' : '' }}>Magang
+                        <option value="PKWTT"
+                            {{ old('employee_type', $employee->employee_type) == 'PKWTT' ? 'selected' : '' }}>PKWTT
                         </option>
-                        <option value="Masa Percobaan"
-                            {{ old('employee_type', $employee->employee_type) == 'Masa Percobaan' ? 'selected' : '' }}>
-                            Masa Percobaan</option>
-                        <option value="Fulltime"
-                            {{ old('employee_type', $employee->employee_type) == 'Fulltime' ? 'selected' : '' }}>
-                            Fulltime</option>
+                        <option value="Probation"
+                            {{ old('employee_type', $employee->employee_type) == 'Probation' ? 'selected' : '' }}>Probation
+                        </option>
+                        <option value="Intern"
+                            {{ old('employee_type', $employee->employee_type) == 'Intern' ? 'selected' : '' }}>Intern
+                        </option>
                     </select>
                     @error('employee_type')
                         <span class="invalid-feedback">{{ $message }}</span>

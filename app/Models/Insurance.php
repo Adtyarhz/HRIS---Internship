@@ -16,6 +16,8 @@ class Insurance extends Model
         'employee_id',
         'insurance_number',
         'insurance_type',
+        'faskes_name',
+        'faskes_address',
         'start_date',
         'expiry_date',
         'status',
