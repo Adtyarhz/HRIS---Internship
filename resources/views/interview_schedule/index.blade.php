@@ -132,35 +132,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteRouteTemplate = "{{ route('interview-schedule.destroy', ['schedule' => ':id']) }}";
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        height: 'auto',
-        events: events,
-        eventClick: function(info) {
-            const e = info.event;
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    locale: 'id', // gunakan lokal bahasa Indonesia
+    events: events,
+    eventTimeFormat: { // ubah format jam menjadi 24 jam
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    },
+    eventClick: function(info) {
+        const e = info.event;
 
-            // Isi detail ke modal
-            document.getElementById('modalApplicant').textContent = e.title;
-            document.getElementById('modalType').textContent = e.extendedProps.type ?? '-';
-            document.getElementById('modalDate').textContent = e.start.toLocaleString();
-            document.getElementById('modalInterviewer').textContent = e.extendedProps.interviewer ?? '-';
-            document.getElementById('modalLocation').textContent = e.extendedProps.location ?? '-';
+        // Format waktu dalam 24 jam
+        const date = new Date(e.start);
+        const formattedDate = date.toLocaleString('id-ID', {
+            dateStyle: 'full',
+            timeStyle: 'short',
+            hour12: false
+        });
 
-            // Pasang route Edit/Delete hanya jika tombol ada
-            const editButton = document.getElementById('editButton');
-            const deleteForm = document.getElementById('deleteForm');
+        document.getElementById('modalApplicant').textContent = e.title;
+        document.getElementById('modalType').textContent = e.extendedProps.type ?? '-';
+        document.getElementById('modalDate').textContent = formattedDate;
+        document.getElementById('modalInterviewer').textContent = e.extendedProps.interviewer ?? '-';
+        document.getElementById('modalLocation').textContent = e.extendedProps.location ?? '-';
 
-            if (editButton) {
-                editButton.href = editRouteTemplate.replace(':id', e.id);
-            }
+        const editButton = document.getElementById('editButton');
+        const deleteForm = document.getElementById('deleteForm');
 
-            if (deleteForm) {
-                deleteForm.action = deleteRouteTemplate.replace(':id', e.id);
-            }
+        if (editButton) editButton.href = editRouteTemplate.replace(':id', e.id);
+        if (deleteForm) deleteForm.action = deleteRouteTemplate.replace(':id', e.id);
 
-            // Tampilkan modal
-            new bootstrap.Modal(document.getElementById('eventModal')).show();
-        }
-    });
+        new bootstrap.Modal(document.getElementById('eventModal')).show();
+    }
+});
 
     calendar.render();
 });
