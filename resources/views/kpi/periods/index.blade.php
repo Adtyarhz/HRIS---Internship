@@ -169,8 +169,8 @@
                                 @forelse ($kpiPeriods as $period)
                                     <tr>
                                         <td>{{ $period->period_name }}</td>
-                                        <td>{{ $period->start_date->format('d M Y') }}</td>
-                                        <td>{{ $period->end_date->format('d M Y') }}</td>
+                                        <td>{{ $period->start_date }}</td>
+                                        <td>{{ $period->end_date }}</td>
                                         <td>
                                             <div class="action-buttons">
                                                 <a href="{{ route('kpi-periods.edit', $period->id) }}" class="btn-info"

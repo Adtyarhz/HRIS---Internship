@@ -18,12 +18,25 @@ class ApprovalWorkflowService
      */
     public static function captureModelChange($user, $model, string $action, array $extraData = []): ?ChangeDataRequest
     {
-        // pastikan relasi utama dimuat sebelum clone
+        // Pastikan relasi utama dimuat sebelum clone
         if (method_exists($model, 'load')) {
             try {
-                $model->loadMissing(['certificationMaterials']);
+                $relationsToLoad = [];
+                if (method_exists($model, 'certificationMaterials')) {
+                    $relationsToLoad[] = 'certificationMaterials';
+                }
+                if (method_exists($model, 'trainingMaterials')) {
+                    $relationsToLoad[] = 'trainingMaterials';
+                }
+                if (method_exists($model, 'templateItems')) {
+                    $relationsToLoad[] = 'templateItems.scoringRules';
+                }
+                if (method_exists($model, 'scoringRules')) {
+                    $relationsToLoad[] = 'scoringRules';
+                }
+                $model->loadMissing($relationsToLoad);
             } catch (\Throwable $e) {
-                Log::warning("Relasi certificationMaterials tidak ditemukan pada " . get_class($model));
+                Log::warning("Gagal memuat relasi pada " . get_class($model) . ": " . $e->getMessage());
             }
         }
 
@@ -38,7 +51,7 @@ class ApprovalWorkflowService
             default => ['data' => $model->getAttributes()],
         };
 
-        // 🔹 Tambahkan snapshot relasi (misal certificationMaterials)
+        // 🔹 Tambahkan snapshot relasi
         $relations = [];
         if (method_exists($model, 'certificationMaterials')) {
             try {
@@ -49,12 +62,59 @@ class ApprovalWorkflowService
                 Log::warning("Gagal mengambil relasi certificationMaterials: " . $e->getMessage());
             }
         }
+        if (method_exists($model, 'trainingMaterials')) {
+            try {
+                $relations['training_materials'] = $model->trainingMaterials()
+                    ->get(['id', 'file_path', 'description'])
+                    ->toArray();
+            } catch (\Throwable $e) {
+                Log::warning("Gagal mengambil relasi trainingMaterials: " . $e->getMessage());
+            }
+        }
+        if (method_exists($model, 'templateItems')) {
+            try {
+                $relations['template_items'] = $model->templateItems()
+                    ->with('scoringRules')
+                    ->get(['id', 'kpi_template_id', 'kpi_indicator_id', 'type', 'weight', 'default_target'])
+                    ->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'kpi_template_id' => $item->kpi_template_id,
+                            'kpi_indicator_id' => $item->kpi_indicator_id,
+                            'type' => $item->type,
+                            'weight' => $item->weight,
+                            'default_target' => $item->default_target,
+                            'scoring_rules' => $item->scoringRules->map(function ($rule) {
+                                return [
+                                    'id' => $rule->id,
+                                    'kpi_template_item_id' => $rule->kpi_template_item_id,
+                                    'operator' => $rule->operator,
+                                    'value1' => $rule->value1,
+                                    'value2' => $rule->value2,
+                                    'score' => $rule->score,
+                                ];
+                            })->toArray(),
+                        ];
+                    })->toArray();
+            } catch (\Throwable $e) {
+                Log::warning("Gagal mengambil relasi templateItems: " . $e->getMessage());
+            }
+        }
+        if (method_exists($model, 'scoringRules')) {
+            try {
+                $relations['scoring_rules'] = $model->scoringRules()
+                    ->get(['id', 'kpi_template_item_id', 'operator', 'value1', 'value2', 'score'])
+                    ->toArray();
+            } catch (\Throwable $e) {
+                Log::warning("Gagal mengambil relasi scoringRules: " . $e->getMessage());
+            }
+        }
 
         if (!empty($relations)) {
             $changes['relations'] = $relations;
         }
 
-        // 🔹 Tambahkan extra data (misal new_materials & delete_materials)
+        // 🔹 Tambahkan extra data (misal new_materials, delete_materials, atau relasi baru)
         if (!empty($extraData)) {
             $changes['extra'] = $extraData;
         }
@@ -124,6 +184,9 @@ class ApprovalWorkflowService
                 case 'create':
                     // 🔹 Buat model baru
                     $model = $modelClass::create($changes['data']);
+                    if (!$model) {
+                        throw new Exception("Gagal membuat model {$modelClass} dengan data: " . json_encode($changes['data']));
+                    }
                     $cdr->model_id = $model->getKey();
 
                     // 🔹 Jika ada file tambahan (materials), pindahkan dari temp ke folder final
@@ -131,7 +194,15 @@ class ApprovalWorkflowService
                         self::applyRelatedFiles($model, $changes['extra']['related_files']);
                     }
 
-                    // 🔹 Jika ada sertifikat (certificate_file) di temp, pindahkan juga
+                    // 🔹 Jika ada relasi templateItems atau scoringRules di extra
+                    if (!empty($changes['extra']['template_items'])) {
+                        self::applyTemplateItems($model, $changes['extra']['template_items']);
+                    }
+                    if (!empty($changes['extra']['scoring_rules'])) {
+                        self::applyScoringRules($model, $changes['extra']['scoring_rules']);
+                    }
+
+                    // 🔹 Tangani certificate_file jika ada
                     self::handleCertificateFile($model);
 
                     Log::info("Request #{$cdr->id} applied: CREATED {$modelClass} #{$cdr->model_id}");
@@ -139,8 +210,9 @@ class ApprovalWorkflowService
 
                 case 'update':
                     $model = $modelClass::find($cdr->model_id);
-                    if (!$model)
+                    if (!$model) {
                         throw new Exception("Model {$modelClass} #{$cdr->model_id} tidak ditemukan.");
+                    }
 
                     // Update field utama
                     $model->update($changes['new']);
@@ -148,6 +220,14 @@ class ApprovalWorkflowService
                     // 🔹 Tangani relasi file jika ada
                     if (!empty($changes['extra']['related_files'])) {
                         self::applyRelatedFiles($model, $changes['extra']['related_files']);
+                    }
+
+                    // 🔹 Tangani relasi templateItems atau scoringRules jika ada
+                    if (!empty($changes['extra']['template_items'])) {
+                        self::applyTemplateItems($model, $changes['extra']['template_items']);
+                    }
+                    if (!empty($changes['extra']['scoring_rules'])) {
+                        self::applyScoringRules($model, $changes['extra']['scoring_rules']);
                     }
 
                     // 🔹 Tangani certificate_file jika path mengandung 'temp/'
@@ -168,8 +248,25 @@ class ApprovalWorkflowService
                                     Storage::disk('public')->delete($filePath);
                                 }
                             }
-                            // Hapus record relasinya di DB
                             $model->certificationMaterials()->delete();
+                        }
+                        if (method_exists($model, 'trainingMaterials')) {
+                            foreach ($model->trainingMaterials as $material) {
+                                $filePath = 'training_materials/' . $material->file_path;
+                                if (Storage::disk('public')->exists($filePath)) {
+                                    Storage::disk('public')->delete($filePath);
+                                }
+                            }
+                            $model->trainingMaterials()->delete();
+                        }
+                        if (method_exists($model, 'templateItems')) {
+                            foreach ($model->templateItems as $item) {
+                                $item->scoringRules()->delete();
+                                $item->delete();
+                            }
+                        }
+                        if (method_exists($model, 'scoringRules')) {
+                            $model->scoringRules()->delete();
                         }
 
                         // 🔹 Hapus juga file certificate jika ada
@@ -217,11 +314,10 @@ class ApprovalWorkflowService
             return;
         }
 
-        $tempPath = $model->certificate_file; // Misal: 'certifications/temp/123_cert.pdf'
-        $finalPath = str_replace('/temp/', '/', $tempPath); // Menjadi: 'certifications/123_cert.pdf'
-        $fileName = basename($finalPath); // Hanya nama file: '123_cert.pdf'
+        $tempPath = $model->certificate_file;
+        $finalPath = str_replace('/temp/', '/', $tempPath);
+        $fileName = basename($finalPath);
 
-        // Pindahkan file fisik menggunakan Storage facade untuk keamanan
         if (Storage::disk('public')->exists($tempPath)) {
             if (!Storage::disk('public')->move($tempPath, $finalPath)) {
                 throw new Exception("Gagal memindahkan certificate_file dari {$tempPath} ke {$finalPath}");
@@ -230,21 +326,21 @@ class ApprovalWorkflowService
             throw new Exception("File certificate temp tidak ditemukan: {$tempPath}");
         }
 
-        // Update path di model/DB hanya nama file
         $model->certificate_file = 'certifications/' . $fileName;
         $model->save();
     }
 
+    /**
+     * Menangani relasi file (certificationMaterials atau trainingMaterials).
+     */
     protected static function applyRelatedFiles($model, array $relatedFiles): void
     {
         // 🔹 1. Pindahkan file baru dari temp ke folder final
         if (!empty($relatedFiles['new_materials'])) {
             foreach ($relatedFiles['new_materials'] as $tempFile) {
-                // Asumsi $tempFile adalah string path relatif seperti 'certifications/materials/temp/xxxx.jpg'
                 $filename = basename(is_array($tempFile) ? ($tempFile['file_path'] ?? $tempFile) : $tempFile);
-                $finalFile = str_replace('/temp/', '/', $tempFile); // Menjadi 'certifications/materials/xxxx.jpg'
+                $finalFile = str_replace('/temp/', '/', $tempFile);
 
-                // Pindahkan file fisik
                 if (Storage::disk('public')->exists($tempFile)) {
                     if (!Storage::disk('public')->move($tempFile, $finalFile)) {
                         throw new Exception("Gagal memindahkan material file dari {$tempFile} ke {$finalFile}");
@@ -253,10 +349,13 @@ class ApprovalWorkflowService
                     throw new Exception("File material temp tidak ditemukan: {$tempFile}");
                 }
 
-                // Simpan ke tabel certification_materials
                 if (method_exists($model, 'certificationMaterials')) {
                     $model->certificationMaterials()->create([
-                        // disimpan RELATIF agar cocok dengan Blade index
+                        'file_path' => self::normalizeFilePath($filename),
+                        'description' => null,
+                    ]);
+                } elseif (method_exists($model, 'trainingMaterials')) {
+                    $model->trainingMaterials()->create([
                         'file_path' => self::normalizeFilePath($filename),
                         'description' => null,
                     ]);
@@ -267,7 +366,6 @@ class ApprovalWorkflowService
         // 🔹 2. Hapus file yang dihapus (delete_materials)
         if (!empty($relatedFiles['delete_materials'])) {
             foreach ($relatedFiles['delete_materials'] as $oldPath) {
-                // Asumsi $oldPath adalah string path relatif seperti 'certifications/materials/xxxx.jpg'
                 if (Storage::disk('public')->exists($oldPath)) {
                     Storage::disk('public')->delete($oldPath);
                 }
@@ -276,8 +374,78 @@ class ApprovalWorkflowService
                     $model->certificationMaterials()
                         ->where('file_path', self::normalizeFilePath($oldPath))
                         ->delete();
+                } elseif (method_exists($model, 'trainingMaterials')) {
+                    $model->trainingMaterials()
+                        ->where('file_path', self::normalizeFilePath($oldPath))
+                        ->delete();
                 }
             }
+        }
+    }
+
+    /**
+     * Menangani relasi templateItems.
+     */
+    protected static function applyTemplateItems($model, array $templateItems): void
+    {
+        if (!method_exists($model, 'templateItems')) {
+            return;
+        }
+
+        // 🔹 Buat atau update templateItems
+        foreach ($templateItems as $item) {
+            $itemData = [
+                'kpi_template_id' => $model->id,
+                'kpi_indicator_id' => $item['kpi_indicator_id'],
+                'type' => $item['type'],
+                'weight' => $item['weight'],
+                'default_target' => $item['default_target'],
+            ];
+
+            $templateItem = $model->templateItems()->updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                $itemData
+            );
+
+            // 🔹 Tangani scoringRules jika ada
+            if (!empty($item['scoring_rules'])) {
+                foreach ($item['scoring_rules'] as $rule) {
+                    $templateItem->scoringRules()->updateOrCreate(
+                        ['id' => $rule['id'] ?? null],
+                        [
+                            'kpi_template_item_id' => $templateItem->id,
+                            'operator' => $rule['operator'],
+                            'value1' => $rule['value1'],
+                            'value2' => $rule['value2'] ?? null,
+                            'score' => $rule['score'],
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Menangani relasi scoringRules.
+     */
+    protected static function applyScoringRules($model, array $scoringRules): void
+    {
+        if (!method_exists($model, 'scoringRules')) {
+            return;
+        }
+
+        // 🔹 Buat atau update scoringRules
+        foreach ($scoringRules as $rule) {
+            $model->scoringRules()->updateOrCreate(
+                ['id' => $rule['id'] ?? null],
+                [
+                    'kpi_template_item_id' => $model->id,
+                    'operator' => $rule['operator'],
+                    'value1' => $rule['value1'],
+                    'value2' => $rule['value2'] ?? null,
+                    'score' => $rule['score'],
+                ]
+            );
         }
     }
 

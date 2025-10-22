@@ -43,7 +43,7 @@
                                         <div class="input-group date-input-group">
                                             <input type="date" name="start_date" id="start_date"
                                                 class="form-control @error('start_date') is-invalid @enderror"
-                                                value="{{ old('start_date', $kpiPeriod->start_date->format('Y-m-d')) }}"
+                                                value="{{ old('start_date', $kpiPeriod->start_date) }}"
                                                 required>
                                             <label for="start_date" class="input-group-append">
                                                 <span class="input-group-text">
@@ -65,7 +65,7 @@
                                         <div class="input-group date-input-group">
                                             <input type="date" name="end_date" id="end_date"
                                                 class="form-control @error('end_date') is-invalid @enderror"
-                                                value="{{ old('end_date', $kpiPeriod->end_date->format('Y-m-d')) }}" required>
+                                                value="{{ old('end_date', $kpiPeriod->end_date) }}" required>
                                             <label for="end_date" class="input-group-append">
                                                 <span class="input-group-text">
                                                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">

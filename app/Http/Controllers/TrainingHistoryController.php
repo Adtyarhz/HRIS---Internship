@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\TrainingHistory;
 use App\Models\TrainingMaterial;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,7 @@ class TrainingHistoryController extends Controller
             'location' => 'required|string|max:255',
             'certificate_number' => 'required|string|max:50',
             'material_files' => 'nullable|array|max:10',
-            'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240'
+            'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
         ]);
 
         $user = Auth::user();
@@ -94,12 +95,86 @@ class TrainingHistoryController extends Controller
                     return back()->with('error', 'Failed to create training history request.');
                 }
 
+                // Buat model sementara untuk approval
+                $tempModel = new TrainingHistory([
+                    'employee_id' => $employee->id,
+                    'training_name' => $validatedData['training_name'],
+                    'provider' => $validatedData['provider'],
+                    'description' => $validatedData['description'],
+                    'start_date' => $validatedData['start_date'],
+                    'end_date' => $validatedData['end_date'],
+                    'cost' => $validatedData['cost'],
+                    'location' => $validatedData['location'],
+                    'certificate_number' => $validatedData['certificate_number'],
+                ]);
+
+                // Capture untuk approval
+                $cdr = ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create', [
+                    'related_files' => [
+                        'new_materials' => $storedFiles,
+                        'delete_materials' => [],
+                    ],
+                ]);
+
+                if (!$cdr) {
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create training history request.');
+                }
+
                 DB::commit();
                 return redirect()->route('employees.training-histories.index', $employee->id)
                     ->with('info', 'Training history addition request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC directly save
+            /**
+             * 2️⃣ HC → KIRIM REQUEST APPROVAL
+             */
+            if ($user->role === 'hc') {
+                // Upload material files ke folder temporer
+                $materials = [];
+                if ($request->hasFile('material_files')) {
+                    foreach ($request->file('material_files') as $materialFile) {
+                        $materialName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                            . '.' . $materialFile->getClientOriginalExtension();
+                        $materialFile->storeAs('training_materials/temp', $materialName, 'public');
+                        $materials[] = 'training_materials/temp/' . $materialName;
+                    }
+                }
+
+                // Buat model sementara untuk approval
+                $tempModel = new TrainingHistory([
+                    'employee_id' => $employee->id,
+                    'training_name' => $validatedData['training_name'],
+                    'provider' => $validatedData['provider'],
+                    'description' => $validatedData['description'],
+                    'start_date' => $validatedData['start_date'],
+                    'end_date' => $validatedData['end_date'],
+                    'cost' => $validatedData['cost'],
+                    'location' => $validatedData['location'],
+                    'certificate_number' => $validatedData['certificate_number'],
+                ]);
+
+                // Capture untuk approval
+                $cdr = ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create', [
+                    'related_files' => [
+                        'new_materials' => $materials,
+                        'delete_materials' => [],
+                    ],
+                ]);
+
+                if (!$cdr) {
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create training history request.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.training-histories.index', $employee->id)
+                    ->with('success', 'Training history creation request has been sent for approval.');
+            }
+
+            /**
+             * 3️⃣ SUPERADMIN → LANGSUNG SIMPAN
+             */
             $trainingHistory = $employee->trainingHistories()->create($validatedData);
             foreach ($storedFiles as $filename) {
                 $trainingHistory->trainingMaterials()->create(['file_path' => $filename]);
@@ -143,13 +218,15 @@ class TrainingHistoryController extends Controller
             'cost' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
             'certificate_number' => 'required|string|max:50',
-            'material_files' => 'nullable|array',
+            'material_files' => 'nullable|array|max:10',
             'material_files.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx,zip|max:10240',
             'delete_materials' => 'nullable|array',
+            'delete_materials.*' => 'exists:training_materials,id',
         ]);
 
         $user = Auth::user();
         DB::beginTransaction();
+
         try {
             $storedFiles = [];
             if ($request->hasFile('material_files')) {
@@ -183,11 +260,86 @@ class TrainingHistoryController extends Controller
                     return back()->with('error', 'Failed to create training history update request.');
                 }
 
+                // Clone model dan isi dengan data baru
+                $tempModel = clone $trainingHistory;
+                $tempModel->fill([
+                    'training_name' => $validatedData['training_name'],
+                    'provider' => $validatedData['provider'],
+                    'description' => $validatedData['description'],
+                    'start_date' => $validatedData['start_date'],
+                    'end_date' => $validatedData['end_date'],
+                    'cost' => $validatedData['cost'],
+                    'location' => $validatedData['location'],
+                    'certificate_number' => $validatedData['certificate_number'],
+                ]);
+
+                // Capture untuk approval
+                $cdr = ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update', [
+                    'related_files' => [
+                        'new_materials' => $storedFiles,
+                        'delete_materials' => $validatedData['delete_materials'] ?? [],
+                    ],
+                ]);
+
+                if (!$cdr) {
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create training history update request.');
+                }
+
                 DB::commit();
                 return redirect()->route('employees.training-histories.index', $employee->id)
                     ->with('info', 'Training history update request has been sent and is awaiting approval.');
             }
 
+            /**
+             * 2️⃣ HC → KIRIM REQUEST APPROVAL
+             */
+            if ($user->role === 'hc') {
+                // Upload material files ke folder temporer
+                $materials = [];
+                if ($request->hasFile('material_files')) {
+                    foreach ($request->file('material_files') as $materialFile) {
+                        $materialName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
+                            . '.' . $materialFile->getClientOriginalExtension();
+                        $materialFile->storeAs('training_materials/temp', $materialName, 'public');
+                        $materials[] = 'training_materials/temp/' . $materialName;
+                    }
+                }
+
+                // Clone model dan isi dengan data baru
+                $tempModel = clone $trainingHistory;
+                $tempModel->fill([
+                    'training_name' => $validatedData['training_name'],
+                    'provider' => $validatedData['provider'],
+                    'description' => $validatedData['description'],
+                    'start_date' => $validatedData['start_date'],
+                    'end_date' => $validatedData['end_date'],
+                    'cost' => $validatedData['cost'],
+                    'location' => $validatedData['location'],
+                    'certificate_number' => $validatedData['certificate_number'],
+                ]);
+
+                // Capture untuk approval
+                $cdr = ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update', [
+                    'related_files' => [
+                        'new_materials' => $materials,
+                        'delete_materials' => $validatedData['delete_materials'] ?? [],
+                    ],
+                ]);
+
+                if (!$cdr) {
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create training history update request.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.training-histories.index', $employee->id)
+                    ->with('success', 'Training history update request has been sent for approval.');
+            }
+
+            /**
+             * 3️⃣ SUPERADMIN → LANGSUNG UPDATE
+             */
             $trainingHistory->update($validatedData);
 
             // Delete selected files
@@ -221,6 +373,10 @@ class TrainingHistoryController extends Controller
     {
         $this->authorizeEmployeeAccess($employee);
 
+        if ($trainingHistory->employee_id !== $employee->id) {
+            abort(403, 'Training history is not associated with this employee.');
+        }
+
         $user = Auth::user();
         DB::beginTransaction();
 
@@ -247,9 +403,37 @@ class TrainingHistoryController extends Controller
                     ->with('info', 'Training history deletion request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly delete data and files
-            foreach ($trainingHistory->trainingMaterials as $material) {
-                Storage::disk('public')->delete('training_materials/' . $material->file_path);
+            /**
+             * 2️⃣ HC → KIRIM REQUEST APPROVAL
+             */
+            if ($user->role === 'hc') {
+                // Capture untuk approval
+                $cdr = ApprovalWorkflowService::captureModelChange($user, $trainingHistory, 'delete', [
+                    'related_files' => [
+                        'new_materials' => [],
+                        'delete_materials' => $trainingHistory->trainingMaterials->pluck('file_path')->toArray(),
+                    ],
+                ]);
+
+                if (!$cdr) {
+                    DB::rollBack();
+                    return back()->with('error', 'Failed to create training history deletion request.');
+                }
+
+                DB::commit();
+                return redirect()->route('employees.training-histories.index', $employee->id)
+                    ->with('success', 'Training history deletion request has been sent for approval.');
+            }
+
+            /**
+             * 3️⃣ SUPERADMIN → LANGSUNG HAPUS
+             */
+            // Hapus file materials dan record relasi
+            if (method_exists($trainingHistory, 'trainingMaterials')) {
+                foreach ($trainingHistory->trainingMaterials as $material) {
+                    Storage::disk('public')->delete('training_materials/' . $material->file_path);
+                    $material->delete();
+                }
             }
 
             $trainingHistory->delete();

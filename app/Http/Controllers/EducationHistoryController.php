@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ApprovalWorkflowService;
 
 class EducationHistoryController extends Controller
 {
@@ -54,8 +55,19 @@ class EducationHistoryController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            $payload = array_merge($validated, ['employee_id' => $employee->id]);
+            $tempModel = new EducationHistory($payload);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('employees.educationhistory.index', $employee)
+                ->with('success', 'Permintaan penambahan riwayat pendidikan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+        
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
@@ -72,15 +84,15 @@ class EducationHistoryController extends Controller
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Education history addition request has been sent and is awaiting approval.');
+                                        ->with('info', 'Education history addition request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC directly save
+            // Superadmin directly save
             $employee->educationHistory()->create($validated);
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Education history added successfully.');
+                                        ->with('success', 'Education history added successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to save data: '.$e->getMessage())->withInput();
@@ -109,8 +121,24 @@ class EducationHistoryController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
+        if ($user && $user->role === 'hc') {
+            // Buat clone dari model asli untuk menjaga data original
+            $tempModel = clone $educationHistory;
+            // Isi clone dengan data baru dari validasi
+            $tempModel->fill($validated);
+
+            // Panggil metode public `captureModelChange`
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
+            
+            return redirect()->route('employees.educationhistory.index', $employee)
+                ->with('success', 'Permintaan perubahan riwayat pendidikan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
@@ -127,15 +155,15 @@ class EducationHistoryController extends Controller
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Education history update request has been sent and is awaiting approval.');
+                                        ->with('info', 'Education history update request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC directly update
+            // Superadmin directly update
             $educationHistory->update($validated);
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Education history updated successfully.');
+                                        ->with('success', 'Education history updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to update data: '.$e->getMessage())->withInput();
@@ -147,12 +175,20 @@ class EducationHistoryController extends Controller
         $this->authorizeEmployeeAccess($employee);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $educationHistory, 'delete');
+            return redirect()->route('employees.educationhistory.index', $employee)
+                ->with('success', 'Permintaan penghapusan riwayat pendidikan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+        
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
-
                 $editRequest = $notifier->createEditRequest(
                     $educationHistory,
                     [],
@@ -167,18 +203,19 @@ class EducationHistoryController extends Controller
                 }
                 DB::commit();
                 return redirect()->route('employees.educationhistory.index', $employee)
-                                 ->with('info', 'Education history deletion request has been sent and is awaiting approval.');
+                                        ->with('info', 'Education history deletion request has been sent and is awaiting approval.');
             }
 
-            // Superadmin/HC directly delete
+            // Superadmin directly delete
             $educationHistory->delete();
             DB::commit();
 
             return redirect()->route('employees.educationhistory.index', $employee)
-                             ->with('success', 'Education history deleted successfully.');
+                                        ->with('success', 'Education history deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to delete data: '.$e->getMessage());
         }
     }
 }
+

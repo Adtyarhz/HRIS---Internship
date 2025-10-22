@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\ApprovalWorkflowService;
 
 class OrganizationalStructureController extends Controller
 {
@@ -63,6 +64,25 @@ class OrganizationalStructureController extends Controller
             'depth' => 'nullable|integer|min:0',
         ]);
 
+        //-- APPROVAL LOGIC START --//
+        $user = Auth::user();
+        if ($user && $user->role === 'hc') {
+            $payload = $validatedData;
+            $depth = $request->filled('depth') ? $validatedData['depth'] : 0;
+            if ($request->filled('parent_id')) {
+                $parentPosition = Position::find($request->parent_id);
+                $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+            }
+            $payload['depth'] = $depth;
+
+            $tempModel = new Position($payload);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('organization.structure.index')
+                ->with('success', 'Permintaan penambahan jabatan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
         $depth = $request->filled('depth') ? $validatedData['depth'] : 0;
         if ($request->filled('parent_id')) {
             $parentPosition = Position::find($request->parent_id);
@@ -117,6 +137,31 @@ class OrganizationalStructureController extends Controller
             'depth' => 'nullable|integer|min:0',
         ]);
 
+        //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
+        $user = Auth::user();
+        if ($user && $user->role === 'hc') {
+            $payload = $validatedData;
+            $depth = $request->filled('depth') ? $validatedData['depth'] : 0;
+            if ($request->filled('parent_id')) {
+                $parentPosition = Position::find($request->parent_id);
+                $depth = $parentPosition ? $parentPosition->depth + 1 : 0;
+            }
+            $payload['depth'] = $depth;
+
+            // Gunakan 'clone' untuk menjaga data original
+            $tempModel = clone $position;
+            // Isi clone dengan data baru dari validasi
+            $tempModel->fill($payload);
+            
+            // Panggil metode public `captureModelChange`
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
+            
+            return redirect()->route('organization.structure.index')
+                ->with('success', 'Permintaan perubahan jabatan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
         $depth = $request->filled('depth') ? $validatedData['depth'] : 0;
         if ($request->filled('parent_id')) {
             $parentPosition = Position::find($request->parent_id);
@@ -152,6 +197,16 @@ class OrganizationalStructureController extends Controller
             return back()->with('error', 'Jabatan tidak dapat dihapus karena masih ditempati karyawan.');
         }
 
+        //-- APPROVAL LOGIC START --//
+        $user = Auth::user();
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $position, 'delete');
+            return redirect()->route('organization.structure.index')
+                ->with('success', 'Permintaan penghapusan jabatan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+        
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
         DB::beginTransaction();
         try {
             foreach ($position->children as $child) {
@@ -246,3 +301,4 @@ class OrganizationalStructureController extends Controller
         }
     }
 }
+

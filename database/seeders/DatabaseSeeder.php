@@ -14,22 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'id' => 1,
-            'name' => 'Dummy Admin',
-            'email' => 'dummy@admin.com',
-            'password' => bcrypt('password'),
-        ]);
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         $this->call([
-            UserSeeder::class,
             PositionSeeder::class,
             DivisionSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }
