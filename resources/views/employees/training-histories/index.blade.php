@@ -86,16 +86,6 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M3 21v-4.25L16.2 3.575q.3-.275.663-.425t.762-.15t.775.15t.65.45L20.425 5q.3.275.438.65T21 6.4q0 .4-.137.763t-.438.662L7.25 21zM17.6 7.8L19 6.4L17.6 5l-1.4 1.4z'/%3E%3C/svg%3E");
         }
 
-        .file-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .file-list li+li {
-            margin-top: 5px;
-        }
-
         .file-link {
             background-color: #FEFEF9;
             color: #000000;
@@ -230,8 +220,8 @@
                                         <th>Provider</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
-                                        <th>Certificate Number</th>
-                                        <th>File</th>
+                                        <th>Certificate File</th>
+                                        <th>Training Files</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -243,26 +233,37 @@
                                             <td data-label="Provider">{{ $trainingHistory->provider }}</td>
                                             <td data-label="Start Date">{{ $trainingHistory->start_date }}</td>
                                             <td data-label="End Date">{{ $trainingHistory->end_date }}</td>
-                                            <td data-label="Certificate Number">
-                                                {{ $trainingHistory->certificate_number ?? '-' }}
-                                            </td>
-                                            <td data-label="File">
-                                                @if ($trainingHistory->trainingMaterials->isNotEmpty())
-                                                    <ul class="file-list">
-                                                        @foreach ($trainingHistory->trainingMaterials as $index => $material)
-                                                            <li>
-                                                                <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
-                                                                    target="_blank" class="file-link">
-                                                                    <i class="fa-regular fa-file"></i>
-                                                                    Training File {{ $index + 1 }}
-                                                                </a>
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
+
+                                            {{-- ✅ Certificate File --}}
+                                            <td data-label="Certificate File">
+                                                @if ($trainingHistory->certificate_file)
+                                                    <a href="{{ asset('storage/' . $trainingHistory->certificate_file) }}"
+                                                        target="_blank" class="file-link">
+                                                        <i class="fa-regular fa-file"></i>
+                                                        {{ Str::afterLast($trainingHistory->certificate_file, '_') }}
+                                                    </a>
                                                 @else
-                                                    No file
+                                                    <span class="text-muted">No certificate file</span>
                                                 @endif
                                             </td>
+
+                                            {{-- ✅ Training Materials --}}
+                                            <td data-label="Training Files">
+                                                @if ($trainingHistory->trainingMaterials->isNotEmpty())
+                                                    @foreach ($trainingHistory->trainingMaterials as $index => $material)
+                                                        <div class="mb-1">
+                                                            <a href="{{ asset('storage/' . $material->file_path) }}"
+                                                                target="_blank" class="file-link">
+                                                                <i class="fa-regular fa-file"></i>
+                                                                File {{ $index + 1 }}
+                                                            </a>
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">No files</span>
+                                                @endif
+                                            </td>
+
                                             <td data-label="Actions">
                                                 <div class="action-buttons">
                                                     <a href="{{ route('employees.training-histories.edit', [$employee->id, $trainingHistory->id]) }}"

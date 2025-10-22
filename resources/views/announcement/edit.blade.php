@@ -346,11 +346,81 @@
                     <input type="text" name="label" id="label" class="form-control" value="{{ old('label', $announcement->label) }}">
                 </div>
             </div>
+            <div class="form-group-flex">
+    <label for="target_divisions" class="fw-semibold">Target Division:</label>
+    <div class="type-select" style="width: 100%;">
+        <select name="target_divisions[]" id="target_divisions" class="form-control" multiple>
+            @foreach($divisions as $division)
+                <option value="{{ $division->id }}"
+                    {{ in_array($division->id, old('target_divisions', $announcement->targetDivisions->pluck('id')->toArray())) ? 'selected' : '' }}>
+                    {{ $division->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <small style="color: #555; font-size: 13px;">*Tekan Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu divisi.</small>
+</div>
 
             <div class="form-group-flex">
-                <label for="external_link" class="fw-semibold">External Link:</label>
-                <input type="url" name="external_link" id="external_link" class="form-control" value="{{ old('external_link', $announcement->external_link) }}">
+    <label for="external_link" class="fw-semibold">External Link:</label>
+
+    <div id="external-links-container" style="flex: 1;">
+        @php
+            // Decode JSON ke array
+            $links = is_array($announcement->external_link)
+                ? $announcement->external_link
+                : (json_decode($announcement->external_link, true) ?? []);
+        @endphp
+
+        {{-- Jika ada link lama --}}
+        @if(!empty($links))
+            @foreach($links as $link)
+                <div class="d-flex mb-2 external-link-item">
+                    <input type="url" name="external_link[]" class="form-control" 
+                           value="{{ $link }}" placeholder="https://contoh.com">
+                    <button type="button" class="btn btn-danger btn-sm ms-2 remove-link">Hapus</button>
+                </div>
+            @endforeach
+        @else
+            {{-- Jika belum ada link sama sekali --}}
+            <div class="d-flex mb-2 external-link-item">
+                <input type="url" name="external_link[]" class="form-control" 
+                       placeholder="https://contoh.com">
+                <button type="button" class="btn btn-danger btn-sm ms-2 remove-link" style="display:none;">Hapus</button>
             </div>
+        @endif
+    </div>
+
+    <button type="button" id="add-link" class="btn btn-primary btn-sm mt-2">+ Tambah Link</button>
+    <small class="text-muted d-block mt-1">Kamu dapat menambahkan lebih dari satu link eksternal.</small>
+</div>
+
+{{-- Script dinamis --}}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('external-links-container');
+    const addBtn = document.getElementById('add-link');
+
+    addBtn.addEventListener('click', function() {
+        const newInput = document.createElement('div');
+        newInput.classList.add('d-flex', 'mb-2', 'external-link-item');
+        newInput.innerHTML = `
+            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com" required>
+            <button type="button" class="btn btn-danger btn-sm ms-2 remove-link">Hapus</button>
+        `;
+        container.appendChild(newInput);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-link')) {
+            e.target.closest('.external-link-item').remove();
+        }
+    });
+});
+</script>
+@endpush
+
 
             @if($announcement->announcement_type === 'Polling' && $polling)
             <div class="form-group-flex">

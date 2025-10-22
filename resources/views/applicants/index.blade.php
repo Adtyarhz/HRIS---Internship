@@ -1,164 +1,181 @@
-@extends('layouts.admin')
+ @extends('layouts.admin')
 
-@section('title', 'Applicant Management')
+    @section('title', 'Applicant Management')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-@push('styles')
-<style>
-    .header-with-icon {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        border-radius: 5px;
-    }
 
-    .header-with-icon .custom-hamburger {
-        margin-right: 6px;
-        width: 35px;
-        height: 35px;
-        color: #000;
-    }
+    @push('styles')
+    <style>
+        .header-with-icon {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+        }
 
-    .announcement-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
 
-    .announcement-header h2 {
-        font-size: 24px;
-        font-weight: bold;
-        font-family: 'Noto Sans Georgian', sans-serif;
-    }
+        .btn-add {
+            background-color: #9A3B3B;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
 
-    .btn-add {
-        background-color: #9A3B3B;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: background-color 0.3s;
-    }
+        .btn-add:hover {
+            background-color: #7a2f2f;
+            color: white;
+            text-decoration: none;
+        }
 
-    .btn-add:hover {
-        background-color: #7a2f2f;
-        color: white;              /* biar teks tetap putih */
-        text-decoration: none;     /* hilangkan underline */
-    }
+        .search-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 10px;
+        }
 
-    .filter-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
+        .search-input {
+            width: 25%;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+        }
 
-    .filter-form input[type="text"] {
-    width: 25%;
-    padding: 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: 'Manrope', sans-serif;
-}
+        .search-button {
+            background-color: #9A3B3B;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-    .btn-filter {
-        background-color: #9A3B3B;
-        color: white;
-        border: none;
-        padding: 10px 18px;
-        border-radius: 6px;
-        font-weight: bold;
-        cursor: pointer;
-    }
+        .search-button:hover {
+            background-color: #7a2f2f;
+        }
 
-    .btn-filter:hover {
-        background-color: #7a2f2f;
-    }
+        .filter-section {
+            background-color: #F3F1E0;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 10px;
+            display: none;
+        }
 
-    .link-applicant {
-        color: #007bff;
-        text-decoration: none;
-        font-weight: 500;
-        font-family: 'Manrope', sans-serif;
-    }
+        .filter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-    .link-applicant:hover {
-        text-decoration: underline;
-    }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+        }
 
-    .applicant-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Manrope', sans-serif;
-    }
+        .filter-item label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
 
-    .applicant-table thead th {
-        background-color: #DFD9B6;
-        color: #000;
-        font-weight: 600;
-        padding: 12px 10px;
-        border: 1px solid #aaa;
-        text-align: center;
-    }
+        .filter-item select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
 
-    .applicant-table tbody td {
-        background-color: #F3F1E0;
-        padding: 12px 10px;
-        border: 1px solid #aaa;
-        vertical-align: middle;
-        text-align: center;
-    }
+        .btn-filter {
+            background-color: #7d7b7bff;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
 
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin-top: 20px;
-    }
+        .btn-reset {
+            background-color: #f4f4f4a0;
+            color: #343030ff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+        }
 
-    .pagination a,
-    .pagination span {
-        padding: 4px 8px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        text-decoration: none;
-        color: #000;
-        font-size: 14px;
-        font-family: 'Manrope', sans-serif;
-    }
+        .applicant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Manrope', sans-serif;
+        }
 
-    .pagination a:hover {
-        background-color: #DFD9B6;
-    }
+        .applicant-table thead th {
+            background-color: #DFD9B6;
+            color: #000;
+            font-weight: 600;
+            padding: 12px 10px;
+            border: 1px solid #aaa;
+            text-align: center;
+        }
 
-    .pagination .disabled {
-        color: #999;
-        cursor: not-allowed;
-    }
-    .filter-btn {
-        background-color: #DFD9B6;
-        transition: background-color 0.2s ease;
-        border-radius: 6px;
-    }
+        .applicant-table tbody td {
+            background-color: #F3F1E0;
+            padding: 12px 10px;
+            border: 1px solid #aaa;
+            text-align: center;
+        }
 
-    .filter-btn:hover,
-    .filter-btn:focus {
-        background-color: #fff;
-    }
+        .link-applicant {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
 
-    .filter-btn.show {
-        background-color: #fff !important;
-    }
-</style>
-@endpush
+        .link-applicant:hover {
+            text-decoration: underline;
+        }
 
-@section('content_header')
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .pagination a:hover {
+            background-color: #DFD9B6;
+        }
+    </style>
+    @endpush
+
+    @section('content_header')
     <div class="header-with-icon d-flex align-items-center">
         <!-- Ikon Recruitment -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 2048 2048" class="mr-2">
@@ -168,74 +185,139 @@
         <h1 class="header-title mb-0">Recruitment Applicant</h1>
     </div>
 @endsection
+    @section('content-wrapper')
+    @include('recruitment.tabs')
 
-@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-content-container">
+                <div class="card-body">
+                    <div class="announcement-header d-flex justify-content-between align-items-center">
+                        <h2>Applicants</h2>
+                    </div>
 
-    <div class="announcement-header">
-        <h2>Applicants</h2>
-    </div>
+                    {{-- 🔍 Search & Filter --}}
+                    <form action="{{ route('applicants.index') }}" method="GET">
+                        <div class="search-container">
+                            <input type="text" name="search" placeholder="Search Applicant Fullname" class="search-input" value="{{ request('search') }}">
+                            <button type="submit" class="search-button">Search</button>
 
-    <form method="GET" action="{{ route('applicants.index') }}" class="filter-form">
-        <input type="text" name="search" placeholder="Search Applicant Fullname" value="{{ request('search') }}">
-        <button type="submit" class="btn-filter">Search</button>
-        @if(auth()->user()->role === 'superadmin')
-        <a href="{{ route('applicants.create') }}" class="btn-add" style="margin-left: auto;">+ Add New Applicant</a>
-        @endif
-    </form>
+                            <button type="button" class="btn-filter" id="filter-toggle-btn">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
 
-    <table class="applicant-table">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Applicant Fullname</th>
-                <th>
-    <div class="dropdown d-inline-block">
-        <span>Applied Position</span>
-        <button class="btn btn-sm border-0 dropdown-toggle filter-btn" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-filter" style="font-size: 1rem; color: #000;"></i>
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-            <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'position', 'direction' => 'asc'])) }}">
-                    <i class="bi bi-sort-alpha-down"></i> A to Z
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="{{ route('applicants.index', array_merge(request()->all(), ['sort' => 'position', 'direction' => 'desc'])) }}">
-                    <i class="bi bi-sort-alpha-up"></i> Z to A
-                </a>
-            </li>
-        </ul>
-    </div>
-</th>
-                <th>Recruitment Progress</th>
-                <th>Interview Schedule</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($applicants as $index => $applicant)
-                <tr>
-                    <td>{{ $loop->iteration + ($applicants->currentPage() - 1) * $applicants->perPage() }}</td>
-                    <td>
-                        <a href="{{ route('applicants.show', $applicant->id) }}" class="link-applicant">
-                            {{ $applicant->full_name }}
-                        </a>
-                    </td>
-                    <td>{{ $applicant->position?->title }}</td>
-                    <td>
-                        <a href="{{ route('recruitment-progress.show', $applicant) }}" class="link-applicant">See Recruitment Progress</a>
-                    </td>
-                    <td><a href="{{ route('interview-schedule.index', $applicant) }}">See Interview Schedule</a></td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5">No applicants found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                            <a href="{{ route('applicants.index') }}" class="btn-reset" id="filter-reset">Reset</a>
 
-    <div class="pagination">
-        {{ $applicants->links('pagination::custom') }}
-    </div>
-@endsection
+                            @if(auth()->user()->role === 'superadmin')
+                                <a href="{{ route('applicants.create') }}" class="btn-add" style="margin-left:auto;">+ Add New Applicant</a>
+                            @endif
+                        </div>
+
+                        {{-- Collapsible Filter --}}
+                        <div class="filter-section" id="filter-container">
+                            <div class="filter-grid">
+                            <div class="filter-item">
+                                    <label for="division_id">Division</label>
+                                    <select name="division_id" id="division_id" onchange="this.form.submit()">
+                                        <option value="">All Divisions</option>
+                                        @foreach ($divisions as $division)
+                                            <option value="{{ $division->id }}" {{ request('division_id') == $division->id ? 'selected' : '' }}>
+                                                {{ $division->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="filter-item">
+                                    <label for="stage">Recruitment Stage</label>
+                                    <select name="stage" id="stage" onchange="this.form.submit()">
+                                        <option value="">-- Filter by Current Stage --</option>
+                                        <option value="cv_screening" {{ request('stage') == 'cv_screening' ? 'selected' : '' }}>CV Screening</option>
+                                        <option value="general_knowledge_test" {{ request('stage') == 'general_knowledge_test' ? 'selected' : '' }}>General Knowledge Test</option>
+                                        <option value="user_assessment" {{ request('stage') == 'user_assessment' ? 'selected' : '' }}>User Assessment</option>
+                                        <option value="hc_interview" {{ request('stage') == 'hc_interview' ? 'selected' : '' }}>HC Interview</option>
+                                        <option value="bod_interview" {{ request('stage') == 'bod_interview' ? 'selected' : '' }}>BOD Interview</option>
+                                        <option value="offering_letter" {{ request('stage') == 'offering_letter' ? 'selected' : '' }}>Offering Letter</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-item">
+                                    <label for="sort">Sort by Date</label>
+                                    <select name="sort" id="sort" onchange="this.form.submit()">
+                                        <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>Newest First</option>
+                                        <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>Oldest First</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    {{-- Table --}}
+                    <table class="applicant-table mt-3">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Applicant Fullname</th>
+                                <th>Applied Position</th>
+                                <th>Division</th>
+                                <th>Recruitment Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($applicants as $index => $applicant)
+                                <tr>
+                                    <td>{{ $loop->iteration + ($applicants->currentPage() - 1) * $applicants->perPage() }}</td>
+                                    <td><a href="{{ route('applicants.show', $applicant->id) }}" class="link-applicant">{{ $applicant->full_name }}</a></td>
+                                    <td>{{ $applicant->position?->title ?? '-' }}</td>
+                                    <td>{{ $applicant->division?->name ?? '-' }}</td>
+                                    <td><a href="{{ route('recruitment-progress.show', $applicant) }}" class="link-applicant">See Recruitment Progress</a></td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5">No applicants found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    {{-- Pagination --}}
+                    <div class="pagination">
+                        {{ $applicants->withQueryString()->links('pagination::custom') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @endsection
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterToggleBtn = document.getElementById('filter-toggle-btn');
+            const filterContainer = document.getElementById('filter-container');
+            const resetButton = document.getElementById('filter-reset');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasFilters = ['division_id', 'stage', 'sort'].some(param =>
+                urlParams.has(param) && urlParams.get(param) !== ''
+            );
+
+            if (hasFilters) {
+                filterContainer.style.display = 'block';
+                resetButton.style.display = 'flex';
+            }
+
+            filterToggleBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                if (filterContainer.style.display === 'none' || filterContainer.style.display === '') {
+                    filterContainer.style.display = 'block';
+                    resetButton.style.display = 'flex';
+                } else {
+                    filterContainer.style.display = 'none';
+                    resetButton.style.display = 'none';
+                }
+            });
+        });
+    </script>
+    @endpush

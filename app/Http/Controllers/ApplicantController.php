@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Applicant;
 use App\Models\Division;
+use Carbon\Carbon;
 use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,60 +14,89 @@ use App\Notifications\NewApplicantNotification;
 
 class ApplicantController extends Controller
 {
-   public function index(Request $request)
+  public function index(Request $request)
 {
     $search = $request->input('search');
-    $sortBy = $request->input('sort', 'created_at');
-    $direction = $request->input('direction', 'desc');
-
-    $allowedSorts = ['id', 'position', 'created_at'];
-    if (!in_array($sortBy, $allowedSorts)) {
-        $sortBy = 'id';
-    }
+    $filterStage = $request->input('stage');
+    $filterDivision = $request->input('division_id');
+    $sortBy = $request->input('sort', 'desc'); // default sort by newest
+    $direction = $sortBy === 'asc' ? 'asc' : 'desc'; // pastikan cuma asc/desc
 
     $user = auth()->user();
     $divisionId = optional($user->employee)->division_id;
 
-    $applicants = Applicant::with(['division', 'position'])
-        ->when($search, function ($query) use ($search) {
-            $query->where('full_name', 'like', '%' . $search . '%');
-        })
-        ->when(in_array($user->role, ['manager', 'section_head']), function ($query) use ($user, $divisionId) {
-            // Cek apakah di divisi ini ada manager
-            $hasManager = \App\Models\User::whereHas('employee', function($q) use ($divisionId) {
-                $q->where('division_id', $divisionId);
-            })->where('role', 'manager')->exists();
+    $applicants = Applicant::with(['division', 'position', 'recruitmentProgresses'])
+        ->get()
+        ->filter(function ($applicant) use ($filterStage, $filterDivision, $search, $user, $divisionId) {
 
-            if ($user->role === 'manager') {
-                // Manager melihat semua applicant dari divisinya
-                $query->where('division_id', $divisionId);
-            } elseif ($user->role === 'section_head' && !$hasManager) {
-                // Section head hanya melihat applicant jika tidak ada manager
-                $query->where('division_id', $divisionId);
-            } else {
-                // Jika ada manager, section head tidak melihat apapun
-                $query->whereNull('id'); // buat kosong hasilnya
+            // 🔍 Pencarian nama
+            if ($search && stripos($applicant->full_name, $search) === false) {
+                return false;
             }
-        })
-        ->when($sortBy === 'position', function ($query) use ($direction) {
-            $query->leftJoin('positions', 'positions.id', '=', 'applicants.applied_position')
-                  ->orderBy('positions.title', $direction)
-                  ->select('applicants.*');
-        }, function ($query) use ($sortBy, $direction) {
-            $query->orderBy("applicants.$sortBy", $direction);
-        })
-        ->paginate(10)
-        ->withQueryString();
 
-    return view('applicants.index', compact('applicants', 'search', 'sortBy', 'direction'));
+            // 👥 Filter berdasarkan role manager/section_head
+            if (in_array($user->role, ['manager', 'section_head']) && $applicant->division_id !== $divisionId) {
+                return false;
+            }
+
+            // 🏢 Filter berdasarkan dropdown division
+            if ($filterDivision && $filterDivision !== '') {
+                if ($applicant->division_id != $filterDivision) {
+                    return false;
+                }
+            }
+
+            // 🎯 Filter berdasarkan current stage
+            if ($filterStage && $applicant->current_stage !== $filterStage) {
+                return false;
+            }
+
+            return true;
+        });
+
+    // ⚙️ Urutkan berdasarkan tanggal
+    $applicants = $sortBy === 'asc'
+        ? $applicants->sortBy('created_at')
+        : $applicants->sortByDesc('created_at');
+
+    // Pagination manual
+    $perPage = 10;
+    $page = $request->get('page', 1);
+    $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $applicants->forPage($page, $perPage)->values(),
+        $applicants->count(),
+        $perPage,
+        $page,
+        ['path' => $request->url(), 'query' => $request->query()]
+    );
+
+    $divisions = Division::all();
+
+    return view('applicants.index', [
+        'applicants' => $paginated,
+        'divisions' => $divisions,
+        'search' => $search,
+        'filterStage' => $filterStage,
+        'filterDivision' => $filterDivision,
+        'sortBy' => $sortBy,
+        'direction' => $direction,
+    ]);
 }
 
     public function create()
-    {
-        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
-        $positions = Position::all();
-        return view('applicants.create', compact('divisions', 'positions'));
+{
+    $user = auth()->user();
+
+    // Batasi hanya untuk HC dan Superadmin
+    if (!in_array($user->role, ['hc', 'superadmin'])) {
+        abort(403, 'Unauthorized access.');
     }
+
+    $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
+    $positions = Position::all();
+
+    return view('applicants.create', compact('divisions', 'positions'));
+}
 
     public function store(Request $request)
     {
@@ -89,15 +119,12 @@ class ApplicantController extends Controller
             $validated['resume_file'] = $file->storeAs('resumes', $filename, 'public');
         }
 
-        // Applicant::create($validated);
         $applicant = Applicant::create($validated);
-        // Kirim notifikasi ke HC dan Section Head divisi terkait
-        // Ambil manager dulu
+
         $managers = User::whereHas('employee', function($q) use ($applicant) {
             $q->where('division_id', $applicant->division_id);
         })->where('role', 'manager')->get();
 
-        // Jika tidak ada manager, ambil section head
         if ($managers->isEmpty()) {
             $divisionHeads = User::whereHas('employee', function($q) use ($applicant) {
                 $q->where('division_id', $applicant->division_id);
@@ -106,7 +133,6 @@ class ApplicantController extends Controller
             $divisionHeads = $managers;
         }
 
-        // Gabungkan dengan HC
         $hcUsers = User::admins()->get();
         foreach ($hcUsers->merge($divisionHeads) as $user) {
             $user->notify(new NewApplicantNotification($applicant));
@@ -117,8 +143,8 @@ class ApplicantController extends Controller
 
     public function edit(Applicant $applicant)
     {
-         $user = auth()->user();
-    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
+        $user = auth()->user();
+        if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
         $positions = Position::all();
         return view('applicants.edit', compact('applicant', 'divisions', 'positions'));
@@ -150,31 +176,35 @@ class ApplicantController extends Controller
         return redirect()->route('applicants.index')->with('success', 'Applicant updated successfully!');
     }
 
-    public function show($id)
+   public function show($id)
 {
-    $applicant = Applicant::with('position')->findOrFail($id);
+    // Ambil applicant + relasi division (jika ada)
+    $applicant = Applicant::with('division')->findOrFail($id);
     $offeringLetter = $applicant->offeringLetter;
     $user = auth()->user();
-     // 🔒 Pembatasan akses berdasarkan role
-    if (!in_array($user->role, ['superadmin', 'hc'])) {
-        $divisionId = optional($user->employee)->division_id;
-        $applicantDivision = $applicant->division_id;
 
-        if ($user->role === 'manager') {
-            if ($divisionId !== $applicantDivision) abort(403);
-        } elseif ($user->role === 'section_head') {
-            $hasManager = User::whereHas('employee', function ($q) use ($divisionId) {
-                $q->where('division_id', $divisionId);
-            })->where('role', 'manager')->exists();
+    // 🔒 Hanya role tertentu yang boleh melihat semua data
+    if (!in_array($user->role, ['superadmin', 'hc', 'direksi'])) {
 
-            if ($hasManager || $divisionId !== $applicantDivision) abort(403);
+        // Ambil divisi dari user login
+        $userDivisionId = optional($user->employee)->division_id;
+
+        // Ambil divisi dari applicant
+        $applicantDivisionId = $applicant->division_id;
+
+        // Manager & section head hanya bisa lihat applicant di divisinya
+        if (in_array($user->role, ['manager', 'section_head'])) {
+            if ($userDivisionId !== $applicantDivisionId) {
+                abort(403, 'Anda tidak memiliki izin untuk melihat pelamar dari divisi lain.');
+            }
         } else {
+            // Role lain tidak boleh sama sekali
             abort(403);
         }
     }
 
-    // cek apakah sudah jadi employee
-    $isConverted = Employee::where('full_name', $applicant->full_name)
+    // 🔍 Cek apakah applicant sudah jadi employee
+    $isConverted = \App\Models\Employee::where('full_name', $applicant->full_name)
         ->where('email', $applicant->email)
         ->where('phone_number', $applicant->phone)
         ->exists();
@@ -182,19 +212,18 @@ class ApplicantController extends Controller
     return view('applicants.show', compact('applicant', 'offeringLetter', 'isConverted'));
 }
 
-
     public function destroy(Applicant $applicant)
     {   
         $user = auth()->user();
-    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
+        if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $applicant->delete();
         return redirect()->route('applicants.index')->with('success', 'Applicant deleted successfully!');
     }
 
     public function convertToEmployee($id)
     {   
-         $user = auth()->user();
-    if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
+        $user = auth()->user();
+        if (!in_array($user->role, ['superadmin', 'hc'])) abort(403);
         $applicant = Applicant::with('position')->findOrFail($id);
 
         $offeringLetter = $applicant->recruitmentProgresses()
@@ -209,7 +238,6 @@ class ApplicantController extends Controller
             return redirect()->back()->with('info', 'This applicant is already registered as an employee.');
         }
 
-        // Generate NIK unik
         $nik = 'EMP' . date('Y') . str_pad($applicant->id, 4, '0', STR_PAD_LEFT);
 
         $employee = Employee::create([
@@ -217,7 +245,7 @@ class ApplicantController extends Controller
             'nik'           => $nik,
             'full_name'     => $applicant->full_name,
             'email'         => $applicant->email,
-            'position_id'   => $applicant->applied_position, // simpan position_id
+            'position_id'   => $applicant->applied_position,
             'contract_type' => $offeringLetter->contract_type ?? null,
             'start_date'    => now(),
         ]);
@@ -227,3 +255,4 @@ class ApplicantController extends Controller
             ->with('success', 'Applicant has been successfully converted to employee.');
     }
 }
+

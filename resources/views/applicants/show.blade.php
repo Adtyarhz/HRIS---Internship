@@ -132,7 +132,12 @@
     </div>
 @endsection
 
-@section('content')
+@section('content-wrapper')
+    @include('recruitment.tabs')
+
+    <section class="content">
+        <div class="container-fluid">
+            <d class="form-content-container">
 <div class="detail-wrapper">
 
    {{-- ================== TOMBOL EDIT / CONVERT ================== --}}
@@ -157,11 +162,12 @@
     @endif
 @else
     {{-- Kalau belum ada offering accepted --}}
-    <a href="{{ route('applicants.edit', $applicant) }}" class="btn-edit">
-        <i class="fa-solid fa-id-card"></i> Edit Applicant Data
-    </a>
+    @if($role === 'superadmin' || $role === 'hc')
+        <a href="{{ route('applicants.edit', $applicant) }}" class="btn-edit">
+            <i class="fa-solid fa-id-card"></i> Edit Applicant Data
+        </a>
+    @endif
 @endif
-
 
     {{-- ================== DETAIL APPLICANT ================== --}}
     @foreach ([
@@ -194,9 +200,12 @@
 
     {{-- ================== ACTION BUTTONS ================== --}}
     <div class="action-buttons">
-        <a href="{{ route('applicants.index') }}" class="btn-back">Back</a>
+    <a href="{{ route('applicants.index') }}" class="btn-back">Back</a>
+
+    @if($role === 'superadmin' || $role === 'hc')
         <button type="button" class="btn-delete" onclick="showDeleteModal()">Delete</button>
-    </div>
+    @endif
+</div>
 
     {{-- ================== MODAL DELETE ================== --}}
     <div id="deleteModal" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:100%;">

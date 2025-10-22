@@ -41,6 +41,8 @@ class InsuranceController extends Controller
         $validated = $request->validate([
             'insurance_number' => 'required|string|max:30|unique:insurances,insurance_number',
             'insurance_type' => 'required|in:KES,TK,N-BPJS',
+            'faskes_name' => 'required|string|max:255',
+            'faskes_address' => 'required|string|max:500',
             'start_date' => 'required|date',
             'expiry_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:AKTIF,NONAKTIF',
@@ -136,6 +138,8 @@ class InsuranceController extends Controller
         $validated = $request->validate([
             'insurance_number' => 'required|string|max:30|unique:insurances,insurance_number,' . $insurance->id,
             'insurance_type' => 'required|in:KES,TK,N-BPJS',
+            'faskes_name' => 'required|string|max:255',
+            'faskes_address' => 'required|string|max:500',
             'start_date' => 'required|date',
             'expiry_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:AKTIF,NONAKTIF',

@@ -25,6 +25,9 @@
 
     {{-- Link to your custom CSS file --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    {{-- sweetalert --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Iconify CDN -->
     <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
     @stack('styles')

@@ -412,10 +412,11 @@ if ($requester) {
    public function toggleTask(Request $request, OvertimeApplicationTask $task)
 {
     $application = $task->overtimeApplication;
+    $user = Auth::user();
 
-    // pastikan hanya karyawan pemilik task yg bisa update
-    if ($application->employee->user_id !== Auth::id()) {
-        abort(403, 'Unauthorized action.');
+     // ✅ Pastikan hanya atasan (yang membuat pengajuan lembur) yang boleh ubah task
+    if ($application->requested_by !== $user->id) {
+        abort(403, 'Only the requester (supervisor) can update the task status.');
     }
 
     // 🚫 Jika lemburnya sudah ditolak → tidak boleh update task

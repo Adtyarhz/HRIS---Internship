@@ -21,9 +21,22 @@ class AnnouncementController extends Controller
     try {
         $user = auth()->user();
         $role = $user->role;
+        $divisionId = $user->employee->division_id ?? null;
 
-        // Ambil data pengumuman (semua role bisa lihat)
-        $announcements = Announcement::latest()->paginate(20);
+        if (in_array($role, ['hc', 'superadmin'])) {
+    // Tampilkan semua pengumuman
+    $announcements = Announcement::latest()->paginate(20);
+} else {
+    // Tampilkan hanya pengumuman divisi user atau umum
+    $announcements = Announcement::where(function ($q) use ($divisionId) {
+        $q->whereHas('targetDivisions', function ($q2) use ($divisionId) {
+            $q2->where('divisions.id', $divisionId);
+        })
+        ->orDoesntHave('targetDivisions');
+    })
+    ->latest()
+    ->paginate(20);
+}
 
         // Default kosong
         $genderStats = collect();
@@ -107,6 +120,18 @@ class AnnouncementController extends Controller
     {
         try {
             $query = Announcement::query();
+            $user = auth()->user();
+            $role = $user->role;
+            $divisionId = $user->employee->division_id ?? null;
+
+            if (!in_array( $role,  ['hc', 'superadmin'])) {
+            $query->where(function ($q) use ($divisionId) {
+                $q->whereHas('targetDivisions', function ($q2) use ($divisionId) {
+                    $q2->where('divisions.id', $divisionId);
+                })
+                ->orDoesntHave('targetDivisions');
+            });
+        }
 
             if ($request->filled('search')) {
                 $query->where('title', 'like', '%' . $request->search . '%');
@@ -131,7 +156,8 @@ class AnnouncementController extends Controller
 
     public function create()
     {
-        return view('announcement.create');
+        $divisions = Division::orderBy('name')->get();
+        return view('announcement.create', compact('divisions'));
     }
 
     public function store(Request $request)
@@ -142,8 +168,11 @@ class AnnouncementController extends Controller
             'content' => 'required|string',
             'announcement_type' => 'required|in:Umum,Urgent,Informasi,Polling',
             'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'external_link' => 'nullable|url',
+            'external_link' => 'nullable|array',
+            'external_link.*' => 'nullable|url',
             'label' => 'required|string|max:50',
+            'target_divisions' => 'nullable|array',
+            'target_divisions.*' => 'exists:divisions,id',
             'deadline' => 'required_if:announcement_type,Polling|nullable|date|after:now',
             'options' => [
     'nullable',
@@ -181,6 +210,10 @@ class AnnouncementController extends Controller
             'label' => $request->label,
             'external_link' => $request->external_link,
         ]);
+        // Simpan relasi ke divisi tujuan (jika ada)
+        if ($request->filled('target_divisions')) {
+            $announcement->targetDivisions()->sync($request->target_divisions);
+        }
 
         if ($request->announcement_type === 'Polling') {
             $polling = $announcement->polling()->create([
@@ -202,7 +235,7 @@ class AnnouncementController extends Controller
 
    public function show($id, Request $request)
 {
-    $announcement = Announcement::with('polling.options.votes')->findOrFail($id);
+    $announcement = Announcement::with('polling.options.votes', 'targetDivisions')->findOrFail($id);
     $now = now();
     $deadline = optional($announcement->polling)->deadline;
     $isExpired = $deadline && $now->greaterThan($deadline);
@@ -228,8 +261,9 @@ class AnnouncementController extends Controller
 
     public function edit($id)
     {
-        $announcement = Announcement::with('polling.options')->findOrFail($id);
-        return view('announcement.edit', compact('announcement'));
+        $announcement = Announcement::with(['polling.options', 'targetDivisions'])->findOrFail($id);
+        $divisions = Division::all();
+        return view('announcement.edit', compact('announcement', 'divisions'));
     }
 
     public function update(Request $request, $id)
@@ -246,8 +280,11 @@ class AnnouncementController extends Controller
         'content' => 'required|string',
         'announcement_type' => 'required|in:Umum,Urgent,Informasi,Polling',
         'attachment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        'external_link' => 'nullable|url',
+        'external_link' => 'nullable|array',
+        'external_link.*' => 'nullable|url',
         'label' => 'required|string|max:50',
+        'target_divisions' => 'nullable|array',
+        'target_divisions.*' => 'exists:divisions,id',
         'existing_options.*' => 'nullable|string',
         'options' => 'nullable|array',
         'options.*' => 'nullable|string|min:1',
@@ -281,6 +318,14 @@ class AnnouncementController extends Controller
     }
 
     $announcement->save();
+
+    // 🔹 Sinkronkan tujuan divisi (jika ada)
+    if ($request->filled('target_divisions')) {
+        $announcement->targetDivisions()->sync($request->target_divisions);
+    } else {
+        // Kalau dikosongkan → berarti umum (hapus semua relasi divisi)
+        $announcement->targetDivisions()->detach();
+    }
 
     // ✅ Hanya proses polling jika belum expired atau belum terkunci
     if ($announcement->announcement_type === 'Polling' && $polling) {

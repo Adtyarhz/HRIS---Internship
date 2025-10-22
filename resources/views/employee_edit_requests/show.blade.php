@@ -10,6 +10,8 @@
 @endsection
 
 @section('content')
+<a href="{{ route('employee-edit-requests.index') }}" class="action-button btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to List</a>
 <div class="container">
     <h1>Detail of Employee Data Change Request</h1>
 
@@ -186,12 +188,18 @@
                     </thead>
                     <tbody>
                         @foreach($flattened as $row)
-                            <tr>
                                 @php
                                     $label = $row['field'];
                                     if ($label === 'division_id') $label = 'Division';
                                     elseif ($label === 'position_id') $label = 'Position';
+                                    $old = $row['old'];
+                                    $new = $row['new'];
+
+                                    $normalize = fn($v) => ($v === null || $v === '' || $v === '-' ? null : trim((string) $v));
+
+                                    $isChanged = $normalize($old) !== $normalize($new);
                                 @endphp
+                                <tr class="{{ $isChanged ? 'changed-row' : '' }}">
                                 <td>{{ ucfirst(str_replace('_', ' ', $label)) }}</td>
                                 <td>{!! formatValue($row['field'], $row['old']) !!}</td>
                                 <td>{!! formatValue($row['field'], $row['new']) !!}</td>
@@ -206,19 +214,17 @@
     @endif
 
     {{-- Buttons --}}
-    <div class="d-flex justify-content-end fixed-bottom mb-3 me-3">
-
+   <div class="d-flex justify-content-end gap-3 fixed-bottom mb-4 me-4 button-group">
     @if($editRequest->status === 'waiting')
-        <form action="{{ route('employee-edit-requests.approve', $editRequest->id) }}" method="POST" class="d-inline me-2">
+        <form action="{{ route('employee-edit-requests.approve', $editRequest->id) }}" method="POST" class="d-inline">
             @csrf
-            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+            <button type="submit" class="btn btn-success btn-sm px-4">Approve</button>
         </form>
-        <form action="{{ route('employee-edit-requests.reject', $editRequest->id) }}" method="POST" class="d-inline me-2">
+        <form action="{{ route('employee-edit-requests.reject', $editRequest->id) }}" method="POST" class="d-inline">
             @csrf
-            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+            <button type="submit" class="btn btn-danger btn-sm px-4">Reject</button>
         </form>
     @endif
-    <a href="{{ route('employee-edit-requests.index') }}" class="btn btn-secondary btn-sm">Back</a>
 </div>
 
 </div>
@@ -231,6 +237,45 @@
     }
     .custom-table tbody tr:nth-child(even) {
         background-color: #f1f1f1;
+    }
+    .changed-row td {
+        font-weight: bold;
+        background-color: #fff8c6 !important; /* kuning lembut */
+        border-color: #e0c000;
+    }
+    .button-group {
+        bottom: 20px; /* beri jarak dari bawah */
+        right: 30px; /* beri jarak dari sisi kanan */
+    }
+
+    .button-group .btn {
+        min-width: 90px;
+        border-radius: 6px;
+    }
+
+    .button-group .btn + .btn,
+    .button-group form + form,
+    .button-group form + a {
+        margin-left: 10px;
+    }
+    .btn-back { 
+    background-color: #383535ff; 
+    padding: 5px 17px;
+    border-radius: 6px;
+    font-size: 14px;        /* ✅ Tambahkan baris ini */
+    font-weight: 400;       /* ubah 10 jadi 400 (karena 10 tidak valid untuk font-weight) */
+    font-family: 'Manrope', sans-serif;
+    text-decoration: none;
+    color: white;
+    display: inline-block;
+    margin-bottom: 5px;
+    margin-left: 115px;
+}
+
+    .btn-back:hover { 
+        background-color: #555; 
+        color: white;              /* biar teks tetap putih */
+        text-decoration: none;     /* hilangkan underline */
     }
 </style>
 @endpush

@@ -83,6 +83,35 @@ if ($isPolling && $polling) {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
             <h3 style="font-weight: 700; font-size: 25px">{{ $announcement->title }}</h3>
             @if ($isPolling && $polling && $polling->deadline)
+            @if (in_array(Auth::user()->role, ['superadmin', 'hc']) && !$isExpired)
+    <button type="button" class="btn btn-danger btn-sm" id="endNowButton">
+        End Now
+    </button>
+
+    <form id="endNowForm" action="{{ route('polling.endNow', $polling->id) }}" method="POST" style="display:none;">
+        @csrf
+    </form>
+
+    <script>
+        document.getElementById('endNowButton').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Akhiri Polling Sekarang?',
+                text: "Setelah polling diakhiri, user tidak dapat melakukan voting lagi.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Akhiri Sekarang',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('endNowForm').submit();
+                }
+            })
+        });
+    </script>
+@endif
+
                 <div style="text-align: right; font-size: 14px">
                     <div>Voting Deadline:</div>
                     <div><strong>{{ Carbon::parse($polling->deadline)->format('d-m-Y H:i') }}</strong></div>
@@ -151,22 +180,48 @@ if ($isPolling && $polling) {
                 <div style=" font-family: 'Noto Sans Georgian', sans-serif;
                             color: red">{{ $announcement->label }}</div>
             </div>
-
-            <div style="display: flex; margin-bottom: 12px">
-                <div style="min-width: 130px; font-weight: 600">External Link</div>
-                <div>
-                    @if ($announcement->external_link)
-                        <a href="{{ $announcement->external_link }}" 
-                        target="_blank"
-                        title="Click here to open the link">
-                        {{ $announcement->external_link }}
-                        </a>
-                    @else
-                        -
-                    @endif
-                </div>
-            </div>
+            @auth
+@if (in_array(Auth::user()->role, ['superadmin', 'hc']))
+    <div style="display: flex; margin-bottom: 12px">
+        <div style="min-width: 130px; font-weight: 600">Target Division</div>
+        <div style="font-family: 'Noto Sans Georgian', sans-serif; color: black">
+            @if ($announcement->targetDivisions->isNotEmpty())
+                {{ $announcement->targetDivisions->pluck('name')->join(', ') }}
+            @else
+                <em>- No division specified -</em>
+            @endif
         </div>
+    </div>
+@endif
+@endauth
+
+            <div style="display: flex; margin-bottom: 12px;">
+    <div style="min-width: 130px; font-weight: 600;">External Link</div>
+    <div>
+        @php
+            $links = is_array($announcement->external_link)
+                ? $announcement->external_link
+                : (json_decode($announcement->external_link, true) ?? []);
+        @endphp
+
+        @if (!empty($links))
+            @foreach ($links as $index => $link)
+                @php
+                    // Membuat short link tampilan (maksimal 40 karakter)
+                    $short = strlen($link) > 40 ? substr($link, 0, 37) . '...' : $link;
+                @endphp
+                <div style="margin-bottom: 6px;">
+                    <span class="badge bg-primary me-1">Link {{ $index + 1 }}</span>
+                    <a href="{{ $link }}" target="_blank" title="Click to open link">
+                        {{ $short }}
+                    </a>
+                </div>
+            @endforeach
+        @else
+            <span>-</span>
+        @endif
+    </div>
+</div>
 
         {{-- Polling aktif atau sudah expired --}}
         @if ($isPolling && $polling)

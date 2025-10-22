@@ -17,7 +17,7 @@
                 <div class="search-and-filter-container">
                     <div class="search-container">
                         <h2 class="search-title">Search Employee</h2>
-                        <input type="text" name="search" placeholder="Input Employee’s Name or NIP" class="search-input"
+                        <input type="text" name="search" placeholder="Input Employee’s Name or NIK" class="search-input"
                             value="{{ request('search') }}">
                     </div>
                     <div class="main-actions">
@@ -125,7 +125,7 @@
                                     alt="Avatar Karyawan" class="employee-avatar">
                                 <div class="employee-info">
                                     <div class="employee-name">{{ $employee->full_name }}</div>
-                                    <div class="employee-id">NIP: {{ $employee->nip }}</div>
+                                    <div class="employee-id">NIK: {{ $employee->nik }}</div>
                                 </div>
                             </div>
                         </td>
