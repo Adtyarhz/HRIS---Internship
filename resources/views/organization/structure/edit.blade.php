@@ -108,14 +108,38 @@
                         </div>
 
                         {{-- Kedalaman --}}
+                        @php
+                            $depthLevels = [
+                                0 => 'RUPS',
+                                1 => 'President Director & Commissioner',
+                                2 => 'Business Director',
+                                3 => 'Manager',
+                                4 => 'Section Head',
+                                5 => 'Officer',
+                                6 => 'OB / Driver / Security',
+                            ];
+                        @endphp
+
                         <div class="form-group row align-items-center">
                             <label for="depth" class="col-md-2 col-form-label">Depth Position :</label>
                             <div class="col-md-4">
-                                <input type="number" class="form-control @error('depth') is-invalid @enderror"
-                                    id="depth" name="depth" value="{{ old('depth', $position->depth) }}"
-                                    placeholder="Input Your Depth Position" min="0">
-                                <small class="form-text text-muted">Leave blank to automatically calculate based on
-                                    Superior Position.</small>
+
+                                <select class="form-control @error('depth') is-invalid @enderror"
+                                        id="depth" name="depth">
+                                    <option value="">-- Choose Depth Position (Auto by Superior) --</option>
+
+                                    @foreach ($depthLevels as $num => $label)
+                                        <option value="{{ $num }}"
+                                            {{ (string) old('depth', $position->depth) === (string) $num ? 'selected' : '' }}>
+                                            {{ $num }} — {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <small class="form-text text-muted">
+                                    Leave empty to automatically calculate based on Superior Position.
+                                </small>
+
                                 @error('depth')
                                     <span class="invalid-feedback d-block">{{ $message }}</span>
                                 @enderror

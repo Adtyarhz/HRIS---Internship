@@ -44,7 +44,7 @@
 <input type="hidden" name="phone_number" value="{{ $employee->phone_number ?? '0000000000' }}">
 <input type="hidden" name="email" value="{{ $employee->email ?? 'default@email.com' }}">
 <input type="hidden" name="status" value="{{ $employee->status ?? 'Aktif' }}">
-<input type="hidden" name="employee_type" value="{{ $employee->employee_type ?? 'Kontrak' }}">
+<input type="hidden" name="employee_type" value="{{ $employee->employee_type ?? 'PKWT' }}">
 <input type="hidden" name="division_id" value="{{ $employee->division_id ?? '' }}">
 <input type="hidden" name="position_id" value="{{ $employee->position_id ?? '' }}">
 <input type="hidden" name="hire_date" value="{{ $employee->hire_date ?? '' }}">

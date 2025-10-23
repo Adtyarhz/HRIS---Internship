@@ -117,7 +117,6 @@ class EmployeeController extends Controller
         $validatedData = $request->validate([
             'nik' => 'required|string|size:16|unique:employees,nik|regex:/^[0-9]+$/',
             'full_name' => 'required|string|max:100',
-            // ... (validasi lainnya tetap sama)
             'nip' => 'nullable|string|max:20|unique:employees,nip|regex:/^[0-9]+$/',
             'npwp' => 'nullable|string|max:20|unique:employees,npwp|regex:/^[0-9]+$/',
             'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
@@ -137,7 +136,6 @@ class EmployeeController extends Controller
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'division_id' => 'nullable|exists:divisions,id',
             'position_id' => 'nullable|exists:positions,id',
             'user_id' => 'nullable|unique:employees,user_id|exists:users,id',
         ]);
@@ -164,14 +162,12 @@ class EmployeeController extends Controller
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
                 $validatedData['photo'] = $file->storeAs('photo', $filename, 'public');
             }
-            if (empty($validatedData['division_id'])) {
-                $defaultDivision = Division::firstOrCreate(
-                    ['name' => 'N/A'],
-                    ['description' => 'Default division for undefined employees']
-                );
-                $validatedData['division_id'] = $defaultDivision->id;
+            if (empty($validatedData['position_id'])) {
+                $position = Position::find($validatedData['position_id']);
+                $validatedData['division_id'] = $position?->division_id;
             }
             $employee = Employee::create($validatedData);
+
             if ($validatedData['position_id']) {
                 CareerHistory::create([
                     'employee_id' => $employee->id,
@@ -271,23 +267,27 @@ class EmployeeController extends Controller
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'division_id' => 'nullable|exists:divisions,id',
             'position_id' => 'nullable|exists:positions,id',
         ]);
 
-        //-- APPROVAL LOGIC START --//
-        if (Auth::user()->role === 'hc') {
-            // Buat clone dari model asli dan isi dengan data baru untuk dikirim ke service.
+        //-- AUTO DIVISION FOLLOW POSITION --//
+        if (!empty($validatedData['position_id'])) {
+            $position = Position::find($validatedData['position_id']);
+            $validatedData['division_id'] = $position?->division_id;
+        }
+
+        //-- APPROVAL (HC) --//
+        if ($user->role === 'hc') {
             $tempEmployee = clone $employee;
             $tempEmployee->fill($validatedData);
-            ApprovalWorkflowService::captureModelChange(Auth::user(), $tempEmployee, 'update');
+            ApprovalWorkflowService::captureModelChange($user, $tempEmployee, 'update');
             return redirect()->route('employees.show', $employee->id)->with('success', 'Permintaan perubahan data telah dikirim untuk approval.');
         }
-        //-- APPROVAL LOGIC END --//
 
-        // Alur asli untuk superadmin dan user biasa
         try {
             DB::beginTransaction();
+
+            // Upload file jika ada
             if ($request->hasFile('cv_file')) {
                 $file = $request->file('cv_file');
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
@@ -310,25 +310,25 @@ class EmployeeController extends Controller
                 return redirect()->route('employees.show', $employee->id)->with('info', 'Data update request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc → directly update the database
+            // SUPERADMIN → APPLY CHANGES
             if ($request->hasFile('cv_file') && $employee->cv_file) {
                 Storage::disk('public')->delete($employee->cv_file);
             }
             if ($request->hasFile('photo') && $employee->photo) {
                 Storage::disk('public')->delete($employee->photo);
             }
+
             $oldPosition = $employee->position;
             $oldDivision = $employee->division_id;
             $oldType = $employee->employee_type;
+
             $employee->update($validatedData);
-            if (empty($validatedData['division_id'])) {
-                $defaultDivision = Division::firstOrCreate(['name' => 'N/A'], ['description' => 'Default division for undefined employees']);
-                $validatedData['division_id'] = $defaultDivision->id;
-            }
+
             $newPosition = Position::find($validatedData['position_id'] ?? $employee->position_id);
             $newDivision = $validatedData['division_id'] ?? $employee->division_id;
             $newType = $validatedData['employee_type'] ?? $employee->employee_type;
             $careerType = null;
+
             if (!$oldPosition && $newPosition) {
                 $careerType = 'Awal Masuk';
             } elseif ($oldPosition && $newPosition && $oldPosition->id !== $newPosition->id) {
@@ -339,11 +339,10 @@ class EmployeeController extends Controller
                 } else {
                     $careerType = 'Mutasi';
                 }
-            } elseif ($oldDivision != $newDivision) {
-                $careerType = 'Mutasi';
-            } elseif ($oldType != $newType) {
+            } elseif ($oldDivision != $newDivision || $oldType != $newType) {
                 $careerType = 'Mutasi';
             }
+
             if ($careerType) {
                 $activeCareer = CareerHistory::where('employee_id', $employee->id)->whereNull('end_date')->first();
                 if ($activeCareer) {
@@ -351,7 +350,7 @@ class EmployeeController extends Controller
                 }
                 CareerHistory::create([
                     'employee_id' => $employee->id,
-                    'position_id' => $newPosition ? $newPosition->id : null,
+                    'position_id' => $newPosition?->id,
                     'division_id' => $newDivision,
                     'employee_type' => $newType,
                     'start_date' => Carbon::today(),
@@ -360,6 +359,7 @@ class EmployeeController extends Controller
                     'notes' => '',
                 ]);
             }
+
             DB::commit();
             return redirect()->route('employees.show', $employee->id)->with('success', 'Employee data updated successfully.');
         } catch (\Exception $e) {

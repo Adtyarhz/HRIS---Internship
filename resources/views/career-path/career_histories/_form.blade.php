@@ -4,41 +4,35 @@
     <div class="col-12">
         {{-- Position --}}
         <div class="form-group row align-items-center">
-            <label for="position_id" class="col-md-2 col-form-label">Position <span class="text-danger">*</span> :</label>
+            <label for="position_id" class="col-md-2 col-form-label">Position <span class="text-danger">*</span> :
+            </label>
             <div class="col-md-3">
-                <select name="position_id" id="position_id" class="form-control @error('position_id') is-invalid @enderror"
-                    required>
+                <select name="position_id" id="position_id"
+                    class="form-control @error('position_id') is-invalid @enderror" required>
                     <option value="">Select Position</option>
-                    @foreach ($positions as $id => $title)
-                        <option value="{{ $id }}"
-                            {{ old('position_id', $careerHistory->position_id ?? '') == $id ? 'selected' : '' }}>
-                            {{ $title }}</option>
+                    @foreach ($positions as $pos)
+                        <option value="{{ $pos->id }}" data-division="{{ $pos->division->name ?? '-' }}"
+                            data-division-id="{{ $pos->division_id }}" {{ old('position_id', $careerHistory->position_id ?? '') == $pos->id ? 'selected' : '' }}>
+                            {{ $pos->title }}
+                        </option>
                     @endforeach
+
                 </select>
-                @error('position_id')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
             </div>
+            @error('position_id')
+                <span class="invalid-feedback">{{ $message }}</span>
+            @enderror
         </div>
 
-        {{-- Division --}}
+        {{-- Division (readonly & auto from Position) --}}
         <div class="form-group row align-items-center">
-            <label for="division_id" class="col-md-2 col-form-label">Division <span class="text-danger">*</span>
-                :</label>
+            <label class="col-md-2 col-form-label">Division :</label>
             <div class="col-md-3">
-                <select name="division_id" id="division_id"
-                    class="form-control @error('division_id') is-invalid @enderror" required>
-                    <option value="">Select Division</option>
-                    @foreach ($divisions as $id => $name)
-                        <option value="{{ $id }}"
-                            {{ old('division_id', $careerHistory->division_id ?? '') == $id ? 'selected' : '' }}>
-                            {{ $name }}</option>
-                    @endforeach
-                </select>
-                @error('division_id')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+                <input type="text" id="division_name" class="form-control"
+                    value="{{ $careerHistory->position->division->name ?? '-' }}" readonly>
             </div>
+            <input type="hidden" name="division_id" id="division_id"
+                value="{{ $careerHistory->position->division_id ?? '' }}">
         </div>
 
         {{-- Employee Type --}}
@@ -54,7 +48,8 @@
                     @endphp
                     @foreach (['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'] as $type)
                         <option value="{{ $type }}" {{ $selectedType == $type ? 'selected' : '' }}>
-                            {{ $type }}</option>
+                            {{ $type }}
+                        </option>
                     @endforeach
                 </select>
                 @error('employee_type')
@@ -104,7 +99,8 @@
                     <span class="invalid-feedback d-block">{{ $message }}</span>
                 @enderror
                 @if (isset($careerHistory) && is_null($careerHistory->end_date))
-                    <small class="form-text text-muted">End date untuk entri aktif akan diatur otomatis saat membuat entri baru.</small>
+                    <small class="form-text text-muted">End date untuk entri aktif akan diatur otomatis saat membuat entri
+                        baru.</small>
                 @endif
             </div>
         </div>
@@ -116,9 +112,9 @@
                 <select name="type" id="type" class="form-control @error('type') is-invalid @enderror" required>
                     <option value="">Select Type</option>
                     @foreach (['Promosi', 'Mutasi', 'Demosi', 'Awal Masuk'] as $moveType)
-                        <option value="{{ $moveType }}"
-                            {{ old('type', $careerHistory->type ?? '') == $moveType ? 'selected' : '' }}>
-                            {{ $moveType }}</option>
+                        <option value="{{ $moveType }}" {{ old('type', $careerHistory->type ?? '') == $moveType ? 'selected' : '' }}>
+                            {{ $moveType }}
+                        </option>
                     @endforeach
                 </select>
                 @error('type')
@@ -140,3 +136,13 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        document.getElementById('position_id').addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById('division_name').value = selected.getAttribute('data-division') || '-';
+            document.getElementById('division_id').value = selected.getAttribute('data-division-id') || '';
+        });
+    </script>
+@endpush
