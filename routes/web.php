@@ -65,6 +65,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/organization/structure/{position}', [OrganizationalStructureController::class, 'update'])->name('organization.structure.update');
         Route::delete('/organization/structure/{position}', [OrganizationalStructureController::class, 'destroy'])->name('organization.structure.destroy');
 
+        Route::prefix('organization/division')->name('organization.division.')->group(function () {
+            Route::get('/create', [DivisionController::class, 'create'])->name('create');
+            Route::post('/', [DivisionController::class, 'store'])->name('store');
+            Route::get('/{division}/edit', [DivisionController::class, 'edit'])->name('edit');
+            Route::put('/{division}', [DivisionController::class, 'update'])->name('update');
+            Route::delete('/{division}', [DivisionController::class, 'destroy'])->name('destroy');
+        });
+
         // ========================================================================
         // KPI MANAGEMENT (SETUP)
         // ========================================================================
@@ -102,40 +110,25 @@ Route::middleware('auth')->group(function () {
             Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
         });
 
-    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')
-    ->prefix('interview-schedule')
-    ->group(function () {
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
+            Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
 
-        // Semua role terkait bisa lihat daftar jadwal interview (view only)
-        Route::get('/', [InterviewScheduleController::class, 'index'])
-            ->name('interview-schedule.index');
+                // Yang bisa diakses semua role terkait (view only)
+                Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
 
-        // Hanya superadmin & hc yang bisa create, edit, delete
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::get('/create', [InterviewScheduleController::class, 'create'])
-                ->name('interview-schedule.create');
+                // Yang hanya boleh superadmin
+                Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+                    Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
+                    Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
+                    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
+                    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
+                    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+                });
 
-            Route::post('/', [InterviewScheduleController::class, 'store'])
-                ->name('interview-schedule.store');
-
-            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])
-                ->name('interview-schedule.edit');
-
-            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])
-                ->name('interview-schedule.update');
-
-            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])
-                ->name('interview-schedule.destroy');
-
-            Route::get('/interview-schedule/get-interviewers', [InterviewScheduleController::class, 'getInterviewersByApplicant'])
-    ->name('interview-schedule.get-interviewers');
-
+                // Route ini harus diletakkan paling akhir
+                Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
+            });
         });
-
-        // Detail satu jadwal (bisa dilihat oleh semua role terkait)
-        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])
-            ->name('interview-schedule.show');
-    });
 
     });
 
@@ -154,8 +147,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
         ->name('overtime-tasks.toggle');
 
-    // === SUPERADMIN ROUTES ===
+    // === SUPERADMIN & DIREKSI ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+        // Announcement - Superadmin dan direksi
         Route::resource('announcement', AnnouncementController::class);
         Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
     });
@@ -315,6 +309,7 @@ Route::middleware('auth')->group(function () {
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
+    Route::get('/organization/division', [DivisionController::class, 'index'])->name('organization.division.index');
     Route::get('/test-notif', function () {
         $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 
