@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ApprovalWorkflowService
 {
@@ -33,6 +34,12 @@ class ApprovalWorkflowService
                 }
                 if (method_exists($model, 'scoringRules')) {
                     $relationsToLoad[] = 'scoringRules';
+                }
+                if (method_exists($model, 'polling')) {
+                    $relationsToLoad[] = 'polling.options';
+                }
+                if (method_exists($model, 'targetDivisions')) {
+                    $relationsToLoad[] = 'targetDivisions';
                 }
                 $model->loadMissing($relationsToLoad);
             } catch (\Throwable $e) {
@@ -107,6 +114,44 @@ class ApprovalWorkflowService
                     ->toArray();
             } catch (\Throwable $e) {
                 Log::warning("Gagal mengambil relasi scoringRules: " . $e->getMessage());
+            }
+        }
+        if (method_exists($model, 'polling')) {
+            try {
+                $relations['polling'] = $model->polling
+                    ? $model->polling()->with('options')->get(['id', 'announcement_id', 'deadline', 'created_by'])
+                        ->map(function ($poll) {
+                            return [
+                                'id' => $poll->id,
+                                'announcement_id' => $poll->announcement_id,
+                                'deadline' => $poll->deadline,
+                                'created_by' => $poll->created_by,
+                                'options' => $poll->options->map(function ($option) {
+                                    return [
+                                        'id' => $option->id,
+                                        'polling_id' => $option->polling_id,
+                                        'option_text' => $option->option_text,
+                                    ];
+                                })->toArray(),
+                            ];
+                        })->toArray()
+                    : [];
+            } catch (\Throwable $e) {
+                Log::warning("Gagal mengambil relasi polling: " . $e->getMessage());
+            }
+        }
+        if (method_exists($model, 'targetDivisions')) {
+            try {
+                $relations['target_divisions'] = $model->targetDivisions()
+                    ->get(['divisions.id', 'divisions.name'])
+                    ->map(function ($division) {
+                        return [
+                            'id' => $division->id,
+                            'name' => $division->name,
+                        ];
+                    })->toArray();
+            } catch (\Throwable $e) {
+                Log::warning("Gagal mengambil relasi targetDivisions: " . $e->getMessage());
             }
         }
 
@@ -189,7 +234,7 @@ class ApprovalWorkflowService
                     }
                     $cdr->model_id = $model->getKey();
 
-                    // 🔹 Jika ada file tambahan (materials), pindahkan dari temp ke folder final
+                    // 🔹 Jika ada file tambahan (materials atau attachment_file)
                     if (!empty($changes['extra']['related_files'])) {
                         self::applyRelatedFiles($model, $changes['extra']['related_files']);
                     }
@@ -200,6 +245,21 @@ class ApprovalWorkflowService
                     }
                     if (!empty($changes['extra']['scoring_rules'])) {
                         self::applyScoringRules($model, $changes['extra']['scoring_rules']);
+                    }
+
+                    // 🔹 Jika ada relasi polling di extra
+                    if (!empty($changes['extra']['polling'])) {
+                        self::applyPolling($model, $changes['extra']['polling']);
+                    }
+
+                    // 🔹 Jika ada relasi targetDivisions di extra
+                    if (!empty($changes['extra']['target_divisions'])) {
+                        self::applyTargetDivisions($model, $changes['extra']['target_divisions']);
+                    }
+
+                    // 🔹 Tangani attachment_file jika ada
+                    if (!empty($changes['extra']['attachment_file'])) {
+                        self::handleAttachmentFile($model, $changes['extra']['attachment_file']);
                     }
 
                     // 🔹 Tangani certificate_file jika ada
@@ -228,6 +288,21 @@ class ApprovalWorkflowService
                     }
                     if (!empty($changes['extra']['scoring_rules'])) {
                         self::applyScoringRules($model, $changes['extra']['scoring_rules']);
+                    }
+
+                    // 🔹 Tangani relasi polling jika ada
+                    if (!empty($changes['extra']['polling'])) {
+                        self::applyPolling($model, $changes['extra']['polling']);
+                    }
+
+                    // 🔹 Tangani relasi targetDivisions jika ada
+                    if (!empty($changes['extra']['target_divisions'])) {
+                        self::applyTargetDivisions($model, $changes['extra']['target_divisions']);
+                    }
+
+                    // 🔹 Tangani attachment_file jika ada
+                    if (!empty($changes['extra']['attachment_file'])) {
+                        self::handleAttachmentFile($model, $changes['extra']['attachment_file']);
                     }
 
                     // 🔹 Tangani certificate_file jika path mengandung 'temp/'
@@ -267,6 +342,22 @@ class ApprovalWorkflowService
                         }
                         if (method_exists($model, 'scoringRules')) {
                             $model->scoringRules()->delete();
+                        }
+                        if (method_exists($model, 'polling')) {
+                            if ($model->polling) {
+                                $model->polling->options()->delete();
+                                $model->polling->delete();
+                            }
+                        }
+                        if (method_exists($model, 'targetDivisions')) {
+                            $model->targetDivisions()->detach();
+                        }
+
+                        // 🔹 Hapus attachment_file jika ada
+                        if (!empty($model->attachment_file)) {
+                            if (Storage::disk('public')->exists($model->attachment_file)) {
+                                Storage::disk('public')->delete($model->attachment_file);
+                            }
                         }
 
                         // 🔹 Hapus juga file certificate jika ada
@@ -327,6 +418,30 @@ class ApprovalWorkflowService
         }
 
         $model->certificate_file = 'certifications/' . $fileName;
+        $model->save();
+    }
+
+    /**
+     * Menangani pemindahan file attachment untuk Announcement.
+     */
+    protected static function handleAttachmentFile($model, string $tempPath): void
+    {
+        if (empty($tempPath) || !str_contains($tempPath, 'temp/announcement/')) {
+            return;
+        }
+
+        $finalPath = str_replace('temp/announcement/', 'announcement/', $tempPath);
+        $fileName = basename($finalPath);
+
+        if (Storage::disk('public')->exists($tempPath)) {
+            if (!Storage::disk('public')->move($tempPath, $finalPath)) {
+                throw new Exception("Gagal memindahkan attachment_file dari {$tempPath} ke {$finalPath}");
+            }
+        } else {
+            throw new Exception("File attachment temp tidak ditemukan: {$tempPath}");
+        }
+
+        $model->attachment_file = 'announcement/' . $fileName;
         $model->save();
     }
 
@@ -392,7 +507,6 @@ class ApprovalWorkflowService
             return;
         }
 
-        // 🔹 Buat atau update templateItems
         foreach ($templateItems as $item) {
             $itemData = [
                 'kpi_template_id' => $model->id,
@@ -407,7 +521,6 @@ class ApprovalWorkflowService
                 $itemData
             );
 
-            // 🔹 Tangani scoringRules jika ada
             if (!empty($item['scoring_rules'])) {
                 foreach ($item['scoring_rules'] as $rule) {
                     $templateItem->scoringRules()->updateOrCreate(
@@ -434,7 +547,6 @@ class ApprovalWorkflowService
             return;
         }
 
-        // 🔹 Buat atau update scoringRules
         foreach ($scoringRules as $rule) {
             $model->scoringRules()->updateOrCreate(
                 ['id' => $rule['id'] ?? null],
@@ -447,6 +559,62 @@ class ApprovalWorkflowService
                 ]
             );
         }
+    }
+
+    /**
+     * Menangani relasi polling.
+     */
+    protected static function applyPolling($model, array $pollingData): void
+    {
+        if (!method_exists($model, 'polling')) {
+            return;
+        }
+
+        if (!empty($pollingData)) {
+            $pollData = [
+                'announcement_id' => $model->id,
+                'deadline' => $pollingData['deadline'],
+                'created_by' => $pollingData['created_by'] ?? Auth::id(),
+            ];
+
+            $poll = $model->polling()->updateOrCreate(
+                ['id' => $pollingData['id'] ?? null],
+                $pollData
+            );
+
+            if (!empty($pollingData['options'])) {
+                // Hapus opsi lama yang tidak ada di daftar baru
+                $newOptionIds = array_filter(array_column($pollingData['options'], 'id'));
+                $poll->options()->whereNotIn('id', $newOptionIds)->delete();
+
+                foreach ($pollingData['options'] as $option) {
+                    $poll->options()->updateOrCreate(
+                        ['id' => $option['id'] ?? null],
+                        ['option_text' => $option['option_text']]
+                    );
+                }
+            } else {
+                $poll->options()->delete();
+            }
+        } else {
+            if ($model->polling) {
+                $model->polling->options()->delete();
+                $model->polling->delete();
+            }
+        }
+    }
+
+    /**
+     * Menangani relasi targetDivisions.
+     */
+    protected static function applyTargetDivisions($model, array $targetDivisions): void
+    {
+        if (!method_exists($model, 'targetDivisions')) {
+            return;
+        }
+
+        $divisionIds = array_column($targetDivisions, 'id');
+        $model->targetDivisions()->sync($divisionIds);
     }
 
     protected static function normalizeFilePath($path): string
