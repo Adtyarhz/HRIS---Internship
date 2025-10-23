@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Notifications\EmployeeEditRequestNotification;
 use App\Services\RequestNotifierService;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ApprovalWorkflowService;
 
 class HealthRecordController extends Controller
 {
@@ -27,15 +28,11 @@ class HealthRecordController extends Controller
 
     /**
      * Display the form for creating or editing an employee's health record.
-     * Since the relationship is HasOne, the create and edit form is the same.
      */
     public function edit(Employee $employee)
     {
         $this->authorizeEmployeeAccess($employee);
-
-        // Retrieve existing health record, or null if none exists
         $healthRecord = $employee->healthRecord;
-
         return view('employees.health-records.form', compact('employee', 'healthRecord'));
     }
 
@@ -59,22 +56,41 @@ class HealthRecordController extends Controller
         ]);
 
         $user = Auth::user();
+        $healthRecord = $employee->healthRecord;
+        $action = $healthRecord ? 'update' : 'create';
+
+        //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
+        if ($user && $user->role === 'hc') {
+            $payload = array_merge($validated, ['employee_id' => $employee->id]);
+
+            // Gunakan 'clone' untuk update agar data original terbawa,
+            // dan 'new' untuk create.
+            $tempModel = $healthRecord ? clone $healthRecord : new HealthRecord();
+            $tempModel->fill($payload);
+            
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, $action);
+            
+            $message = $action === 'create'
+                ? 'Permintaan pembuatan rekam medis telah dikirim untuk approval.'
+                : 'Permintaan perubahan rekam medis telah dikirim untuk approval.';
+            
+            return redirect()->back()->with('success', $message);
+        }
+        //-- APPROVAL LOGIC END --//
+        
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
         DB::beginTransaction();
-
         try {
-            $healthRecord = $employee->healthRecord;
-
             // If not superadmin/hc, create an edit request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
-
                 $editRequest = $notifier->createEditRequest(
                     $healthRecord ?? new HealthRecord(),
                     $validated,
                     EmployeeEditRequestNotification::class,
                     [
                         'employee_id' => $employee->id,
-                        'method' => $healthRecord ? 'update' : 'create',
+                        'method' => $action,
                     ]
                 );
 
@@ -83,14 +99,14 @@ class HealthRecordController extends Controller
                     return back()->with('error', 'Failed to create health record request.');
                 }
                 DB::commit();
-                $message = $healthRecord
+                $message = $action === 'create'
                 ? 'Health record creation request has been sent and is awaiting approval.'
                 : 'Health record update request has been sent and is awaiting approval.';
                 
                 return redirect()->back()->with('info', $message);
             }
 
-            // If superadmin/hc, directly update or create
+            // If superadmin, directly update or create
             $employee->healthRecord()->updateOrCreate(
                 ['employee_id' => $employee->id],
                 $validated
@@ -113,20 +129,27 @@ class HealthRecordController extends Controller
         $this->authorizeEmployeeAccess($employee);
 
         $user = Auth::user();
+        $healthRecord = $employee->healthRecord;
+
+        if (!$healthRecord) {
+            return redirect()->route('employees.show', $employee->id)
+                ->with('info', 'This employee has no health record to delete.');
+        }
+
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $healthRecord, 'delete');
+            return redirect()->route('employees.show', $employee->id)
+                ->with('success', 'Permintaan penghapusan rekam medis telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
         DB::beginTransaction();
-
         try {
-            $healthRecord = $employee->healthRecord;
-
-            if (!$healthRecord) {
-                return redirect()->route('employees.show', $employee->id)
-                    ->with('info', 'This employee has no health record to delete.');
-            }
-
             // If not superadmin/hc, create a delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
-
                 $editRequest = $notifier->createEditRequest(
                     $healthRecord,
                     [],
@@ -145,7 +168,7 @@ class HealthRecordController extends Controller
                     ->with('info', 'Health record deletion request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly delete
+            // If superadmin, directly delete
             $healthRecord->delete();
             DB::commit();
 
@@ -158,3 +181,4 @@ class HealthRecordController extends Controller
         }
     }
 }
+

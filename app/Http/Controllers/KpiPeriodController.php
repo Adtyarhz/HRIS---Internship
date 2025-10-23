@@ -6,9 +6,21 @@ use App\Models\KpiPeriod;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use App\Services\ApprovalWorkflowService;
 
 class KpiPeriodController extends Controller
 {
+    /**
+     * Memastikan hanya role tertentu yang bisa mengakses fungsi CUD.
+     */
+    private function authorizeAccess()
+    {
+        if (!in_array(Auth::user()->role, ['superadmin', 'hc'])) {
+            abort(403, 'Anda tidak memiliki akses untuk melakukan aksi ini.');
+        }
+    }
+
     /**
      * Display a listing of KPI periods and check/create automatic periods.
      */
@@ -24,6 +36,7 @@ class KpiPeriodController extends Controller
         $kpiPeriods = KpiPeriod::where('status', 'Aktif')
             ->orderByDesc('start_date')
             ->paginate(10);
+
         return view('kpi.periods.index', compact('kpiPeriods'));
     }
 
@@ -32,6 +45,7 @@ class KpiPeriodController extends Controller
      */
     public function create()
     {
+        $this->authorizeAccess();
         return view('kpi.periods.create');
     }
 
@@ -40,25 +54,37 @@ class KpiPeriodController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeAccess();
+
         $validatedData = $request->validate([
             'period_name' => 'required|string|max:255|unique:kpi_periods,period_name',
             'start_date' => [
                 'required',
                 'date',
-                // Ensure no other period has the same start_date and end_date
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
-                        ->where('end_date', $request->end_date);
+                                 ->where('end_date', $request->end_date);
                 }),
             ],
             'end_date' => 'required|date|after_or_equal:start_date',
             'status' => ['required', Rule::in(['Aktif', 'Ditutup'])],
         ], [
-            'start_date.unique' => 'A period with the same start and end dates already exists. Please use a different period name or change the dates.',
+            'start_date.unique' => 'A period with the same start and end dates already exists.',
         ]);
 
+        $user = Auth::user();
+        if ($user && $user->role === 'hc') {
+            $tempModel = new KpiPeriod($validatedData);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('kpi-periods.index')
+                ->with('success', 'Permintaan pembuatan Periode KPI telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        //-- Untuk superadmin langsung eksekusi
         KpiPeriod::create($validatedData);
-        return redirect()->route('kpi-periods.index')->with('success', 'KPI period created successfully.');
+        return redirect()->route('kpi-periods.index')
+            ->with('success', 'KPI period created successfully.');
     }
 
     /**
@@ -66,6 +92,7 @@ class KpiPeriodController extends Controller
      */
     public function edit(KpiPeriod $kpiPeriod)
     {
+        $this->authorizeAccess();
         return view('kpi.periods.edit', compact('kpiPeriod'));
     }
 
@@ -74,15 +101,16 @@ class KpiPeriodController extends Controller
      */
     public function update(Request $request, KpiPeriod $kpiPeriod)
     {
+        $this->authorizeAccess();
+
         $validatedData = $request->validate([
             'period_name' => ['required', 'string', 'max:255', Rule::unique('kpi_periods')->ignore($kpiPeriod->id)],
             'start_date' => [
                 'required',
                 'date',
-                // Ensure no other period has the same start_date and end_date
                 Rule::unique('kpi_periods')->where(function ($query) use ($request) {
                     return $query->where('start_date', $request->start_date)
-                        ->where('end_date', $request->end_date);
+                                 ->where('end_date', $request->end_date);
                 })->ignore($kpiPeriod->id),
             ],
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -91,8 +119,24 @@ class KpiPeriodController extends Controller
             'start_date.unique' => 'A period with the same start and end dates already exists. Please use a different period name or change the dates.',
         ]);
 
+        $user = Auth::user();
+
+        //-- ✅ Approval logic untuk HC (dengan data lama & baru)
+        if ($user && $user->role === 'hc') {
+            $oldData = $kpiPeriod->toArray(); // snapshot sebelum perubahan
+            $tempModel = clone $kpiPeriod;
+            $tempModel->fill($validatedData);
+
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update', $oldData);
+            return redirect()->route('kpi-periods.index')
+                ->with('success', 'Permintaan perubahan Periode KPI telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
         $kpiPeriod->update($validatedData);
-        return redirect()->route('kpi-periods.index')->with('success', 'KPI period updated successfully.');
+        return redirect()->route('kpi-periods.index')
+            ->with('success', 'KPI period updated successfully.');
     }
 
     /**
@@ -100,11 +144,27 @@ class KpiPeriodController extends Controller
      */
     public function destroy(KpiPeriod $kpiPeriod)
     {
+        $this->authorizeAccess();
+
         if ($kpiPeriod->assessments()->exists()) {
-            return redirect()->route('kpi-periods.index')->with('error', 'Failed! This period is used in assessments and cannot be deleted.');
+            return redirect()->route('kpi-periods.index')
+                ->with('error', 'Failed! This period is used in assessments and cannot be deleted.');
         }
+
+        //-- APPROVAL LOGIC START --//
+        $user = Auth::user();
+        if ($user && $user->role === 'hc') {
+            $oldData = $kpiPeriod->toArray();
+            ApprovalWorkflowService::captureModelChange($user, $kpiPeriod, 'delete', $oldData);
+            return redirect()->route('kpi-periods.index')
+                ->with('success', 'Permintaan penghapusan Periode KPI telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
         $kpiPeriod->delete();
-        return redirect()->route('kpi-periods.index')->with('success', 'KPI period deleted successfully.');
+        return redirect()->route('kpi-periods.index')
+            ->with('success', 'KPI period deleted successfully.');
     }
 
     /**
@@ -153,11 +213,8 @@ class KpiPeriodController extends Controller
                 $endDate = $now->copy()->endOfWeek(Carbon::SUNDAY);
             }
 
-            if (!$startDate || !$endDate) {
-                continue;
-            }
+            if (!$startDate || !$endDate) continue;
 
-            // Display label
             $periodName = $baseName . ' (' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . ')';
 
             // Check for existing period with same start_date and end_date

@@ -50,34 +50,33 @@
             display: flex;
             gap: 10px;
         }
+
+        .page-header-actions {
+            padding-bottom: 20px;
+        }
+
+        .status-badge {
+            font-weight: 600;
+        }
+
+        .status-active { background-color: #d1e7dd; color: #0f5132; }
+        .status-pending { background-color: #fff3cd; color: #664d03; }
+        .status-success { background-color: #cfe2ff; color: #084298; }
+        .status-inactive { background-color: #f8d7da; color: #842029; }
     </style>
 @endpush
 
 @section('content')
     <div class="employee-detail-page">
-        <!-- Custom Page Header -->
-        <div class="page-header-container">
-            <h1 class="page-title">
-                Employee Career
-            </h1>
-            @php
-    $role = auth()->user()->role;
-@endphp
 
-@if (in_array($role, ['superadmin', 'direksi','hc']))
-    <div class="page-header-actions">
-        <a href="{{ route('career.index') }}" class="action-button btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Career Path
-        </a>
-    </div>
-@endif
-        </div>
+        @php $role = auth()->user()->role; @endphp
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-         @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+        @if (in_array($role, ['superadmin', 'direksi', 'hc']))
+            <div class="page-header-actions">
+                <a href="{{ route('career.index') }}" class="action-button btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to Career Path
+                </a>
+            </div>
         @endif
 
         <div class="detail-container">
@@ -106,64 +105,77 @@
                 <!-- Career Projection Card -->
                 <div class="detail-card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Career Projection</h3>
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Career Projections</h3>
                         @php $role = auth()->user()->role; @endphp
-@if (
-    !in_array($role, ['direksi']) ||
-    (in_array($role, ['direksi']) && auth()->user()->employee && auth()->user()->employee->id === $employee->id)
-)
-    <div class="card-actions">
-        <a href="{{ route('employees.career_projection.form', $employee) }}"
-            class="action-button-career btn-career-projection">
-            <span class="material-symbols--work-outline"></span>
-            {{ $careerProjection ? 'Edit Career Projection' : 'Add Career Projection' }}
-        </a>
-    </div>
-@endif
-
+                        @if (
+                            in_array($role, ['superadmin', 'hc']) ||
+                            (auth()->user()->employee && auth()->user()->employee->id === $employee->id)
+                        )
+                            <div class="card-actions">
+                                <a href="{{ route('career-projections.index', $employee) }}"
+                                    class="action-button-career btn-career-projection">
+                                    <span class="material-symbols--work-outline"></span>
+                                    See Career Projections
+                                </a>
+                            </div>
+                        @endif
                     </div>
+
                     <div class="card-content">
-                        @if (!$careerProjection)
+                        @if ($careerProjections->isEmpty())
                             <p>No career projection available for this employee.</p>
                         @else
-                            <div class="data-item">
-                                <span class="data-label">Projected Position</span>
-                                <span class="data-value">{{ $careerProjection->projectedPosition->title ?? 'N/A' }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Timeline</span>
-                                <span class="data-value">{{ $careerProjection->timeline }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Status</span>
-                                <span class="data-value">
-                                    @if ($careerProjection->status == 'Approved')
-                                        <span class="status-badge status-active">Approved</span>
-                                    @else
-                                        @if ($careerProjection->status)
-                                            {{ $careerProjection->status }}
-                                        @else
-                                            -
-                                        @endif
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Readiness Notes</span>
-                                <span class="data-value">{{ $careerProjection->readiness_notes ?? '-' }}</span>
-                            </div>
+                            @foreach ($careerProjections as $projection)
+                                <div class="career-item">
+                                    <div class="data-item">
+                                        <span class="data-label">Projected Position</span>
+                                        <span class="data-value">{{ $projection->projectedPosition->title ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Timeline</span>
+                                        <span class="data-value">{{ $projection->timeline ?? '-' }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Status</span>
+                                        <span class="data-value">
+                                            @switch($projection->status)
+                                                @case('Direncanakan')
+                                                    <span class="status-badge status-pending">Direncanakan</span>
+                                                    @break
+                                                @case('Disetujui')
+                                                    <span class="status-badge status-active">Disetujui</span>
+                                                    @break
+                                                @case('Tercapai')
+                                                    <span class="status-badge status-success">Tercapai</span>
+                                                    @break
+                                                @case('Dibatalkan')
+                                                    <span class="status-badge status-inactive">Dibatalkan</span>
+                                                    @break
+                                                @default
+                                                    <span class="status-badge status-inactive">-</span>
+                                            @endswitch
+                                        </span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Readiness Notes</span>
+                                        <span class="data-value">{{ $projection->readiness_notes ?? '-' }}</span>
+                                    </div>
+                                    <hr>
+                                </div>
+                            @endforeach
                         @endif
                     </div>
                 </div>
 
-                <!-- Career Histories Card -->
+                <!-- Career Histories Card (diseragamkan) -->
                 <div class="detail-card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-history"></i> Career Histories</h3>
                         <div class="card-actions">
                             <a href="{{ route('employees.career_histories.index', $employee) }}"
                                 class="action-button-career btn-career-history">
-                                <span class="material-symbols--work-history-outline-sharp"></span> See Career History
+                                <span class="material-symbols--work-history-outline-sharp"></span>
+                                See Career Histories
                             </a>
                         </div>
                     </div>
@@ -172,36 +184,37 @@
                             <p>No career history available.</p>
                         @else
                             @foreach ($careerHistories as $careerHistory)
-                                <div class="data-item">
-                                    <span class="data-label">Position</span>
-                                    <span class="data-value">{{ $careerHistory->position->title ?? 'N/A' }}</span>
+                                <div class="career-item">
+                                    <div class="data-item">
+                                        <span class="data-label">Position</span>
+                                        <span class="data-value">{{ $careerHistory->position->title ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Division</span>
+                                        <span class="data-value">{{ $careerHistory->division->name ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Employee Type</span>
+                                        <span class="data-value">{{ $careerHistory->employee_type }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Start Date</span>
+                                        <span class="data-value">{{ $careerHistory->start_date }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">End Date</span>
+                                        <span class="data-value">{{ $careerHistory->end_date ? $careerHistory->end_date : '-' }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Type</span>
+                                        <span class="data-value">{{ $careerHistory->type }}</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Notes</span>
+                                        <span class="data-value">{{ $careerHistory->notes ?? '-' }}</span>
+                                    </div>
+                                    <hr>
                                 </div>
-                                <div class="data-item">
-                                    <span class="data-label">Division</span>
-                                    <span class="data-value">{{ $careerHistory->division->name ?? 'N/A' }}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">Employee Type</span>
-                                    <span class="data-value">{{ $careerHistory->employee_type }}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">Start Date</span>
-                                    <span class="data-value">{{ $careerHistory->start_date }}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">End Date</span>
-                                    <span
-                                        class="data-value">{{ $careerHistory->end_date ? $careerHistory->end_date : '-' }}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">Type</span>
-                                    <span class="data-value">{{ $careerHistory->type }}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">Notes</span>
-                                    <span class="data-value">{{ $careerHistory->notes ?? '-' }}</span>
-                                </div>
-                                <hr>
                             @endforeach
                         @endif
                     </div>

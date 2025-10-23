@@ -25,8 +25,9 @@ class Division extends Model
     {
         return $this->hasMany(CareerHistory::class, 'division_id');
     }
-    public function announcements()
+
+    public function positions(): HasMany
     {
-        return $this->belongsToMany(Announcement::class, 'announcement_division');
+        return $this->hasMany(Position::class, 'division_id');
     }
 }

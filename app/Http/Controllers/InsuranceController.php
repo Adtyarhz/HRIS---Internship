@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
+use App\Services\ApprovalWorkflowService;
 
 class InsuranceController extends Controller
 {
@@ -49,8 +50,26 @@ class InsuranceController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            $payload = $validated;
+            $payload['employee_id'] = $employee->id;
+
+            if ($request->hasFile('insurance_file')) {
+                $file = $request->file('insurance_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['insurance_file'] = $file->storeAs('insurance_files', $filename, 'public');
+            }
+
+            $tempModel = new Insurance($payload);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('employees.insurance.index', $employee)->with('success', 'Permintaan penambahan data asuransi telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if ($request->hasFile('insurance_file')) {
                 $file = $request->file('insurance_file');
@@ -60,7 +79,6 @@ class InsuranceController extends Controller
 
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
-
                 $editRequest = $notifier->createEditRequest(
                     new Insurance(),
                     $validated,
@@ -129,8 +147,30 @@ class InsuranceController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
+        
+        //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
+        if ($user && $user->role === 'hc') {
+            $payload = $validated;
+            if ($request->hasFile('insurance_file')) {
+                $file = $request->file('insurance_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['insurance_file'] = $file->storeAs('insurance_files', $filename, 'public');
+            }
+            
+            // Gunakan 'clone' untuk menjaga data original
+            $tempModel = clone $insurance;
+            // Isi clone dengan data baru dari validasi
+            $tempModel->fill($payload);
+            
+            // Panggil metode public `captureModelChange`
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
+            
+            return redirect()->route('employees.insurance.index', $employee)->with('success', 'Permintaan perubahan data asuransi telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
 
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             // Upload new file (if any)
             if ($request->hasFile('insurance_file')) {
@@ -195,8 +235,16 @@ class InsuranceController extends Controller
         }
 
         $user = Auth::user();
-        DB::beginTransaction();
+        
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $insurance, 'delete');
+            return redirect()->route('employees.insurance.index', $employee)->with('success', 'Permintaan penghapusan data asuransi telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
 
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             // Approval flow for non-HC/non-superadmin
             if (!in_array($user->role, ['superadmin', 'hc'])) {
@@ -224,7 +272,6 @@ class InsuranceController extends Controller
             if ($insurance->insurance_file) {
                 Storage::disk('public')->delete($insurance->insurance_file);
             }
-
             $insurance->delete();
 
             DB::commit();
@@ -251,3 +298,4 @@ class InsuranceController extends Controller
         abort(403, 'Unauthorized action.');
     }
 }
+

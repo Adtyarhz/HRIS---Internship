@@ -130,8 +130,17 @@ class Employee extends Model
         return $this->hasMany(CareerHistory::class, 'employee_id');
     }
 
-    public function careerProjection(): HasOne
+    public function careerProjections(): HasMany
     {
-        return $this->hasOne(CareerProjection::class, 'employee_id');
+        return $this->hasMany(CareerProjection::class, 'employee_id');
+    }
+
+    public function getDivisionIdAttribute($value)
+    {
+        if ($this->relationLoaded('position') && $this->position?->division_id) {
+            return $this->position->division_id;
+        }
+
+        return $value;
     }
 }

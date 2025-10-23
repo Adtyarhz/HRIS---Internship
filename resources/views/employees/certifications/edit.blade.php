@@ -198,7 +198,7 @@
                                             Leave empty if you don’t want to replace.</small>
                                         @if ($certification->certificate_file)
                                             <p class="mt-2">Current file:
-                                                <a href="{{ asset('storage/certifications/main/' . $certification->certificate_file) }}"
+                                                <a href="{{ asset('storage/' . $certification->certificate_file) }}"
                                                     target="_blank">{{ Str::afterLast($certification->certificate_file, '_') }}</a>
                                             </p>
                                             <input type="hidden" name="existing_certificate_file"

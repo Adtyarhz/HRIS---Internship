@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
+use App\Services\ApprovalWorkflowService;
 
 class FamilyDependentController extends Controller
 {
@@ -57,8 +58,19 @@ class FamilyDependentController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
+        
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            $payload = array_merge($validatedData, ['employee_id' => $employee->id]);
+            $tempModel = new FamilyDependent($payload);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('employees.family-dependents.index', $employee->id)
+                ->with('success', 'Permintaan penambahan data tanggungan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
 
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             // If not superadmin/hc, create an edit request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
@@ -79,7 +91,7 @@ class FamilyDependentController extends Controller
                     ->with('info', 'Family dependent addition request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly save
+            // If superadmin, directly save
             $employee->familyDependents()->create($validatedData);
             DB::commit();
 
@@ -112,8 +124,24 @@ class FamilyDependentController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START (PERBAIKAN FINAL) --//
+        if ($user && $user->role === 'hc') {
+            // Buat clone dari model asli untuk menjaga data original
+            $tempModel = clone $familyDependent;
+            // Isi clone dengan data baru dari validasi
+            $tempModel->fill($validatedData);
+            
+            // Panggil metode public `captureModelChange`
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
+            
+            return redirect()->route('employees.family-dependents.index', $employee->id)
+                ->with('success', 'Permintaan perubahan data tanggungan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
@@ -133,7 +161,7 @@ class FamilyDependentController extends Controller
                     ->with('info', 'Family dependent update request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly update
+            // If superadmin, directly update
             $familyDependent->update($validatedData);
             DB::commit();
 
@@ -150,8 +178,17 @@ class FamilyDependentController extends Controller
         $this->authorizeEmployeeAccess($employee);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $familyDependent, 'delete');
+            return redirect()->route('employees.family-dependents.index', $employee->id)
+                ->with('success', 'Permintaan penghapusan data tanggungan telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             // If not superadmin/hc, create a delete approval request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
@@ -175,7 +212,7 @@ class FamilyDependentController extends Controller
                     ->with('info', 'Family dependent deletion request has been sent and is awaiting approval.');
             }
 
-            // If superadmin/hc, directly delete data
+            // If superadmin, directly delete data
             $familyDependent->delete();
 
             DB::commit();
@@ -187,3 +224,4 @@ class FamilyDependentController extends Controller
         }
     }
 }
+

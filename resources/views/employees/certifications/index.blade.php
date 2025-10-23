@@ -258,7 +258,7 @@
                                                     <ul class="file-list">
                                                         @foreach ($certification->certificationMaterials as $index => $material)
                                                             <li>
-                                                                <a href="{{ asset('storage/' . $material->file_path) }}" target="_blank" class="file-link">
+                                                                <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}" target="_blank" class="file-link">
                                                                     <i class="fa-regular fa-file"></i>
                                                                     Certification Files {{ $index + 1 }}
                                                                 </a>

@@ -161,56 +161,61 @@
     </style>
 @endpush
 
-@section('content')
-    <div class="organization-structure">
-        <div class="card-body">
-            <div class="card-tools">
-                @php $role = auth()->user()->role; @endphp
-                @if (in_array($role, ['superadmin', 'hc']))
-                    <a href="{{ route('organization.structure.create') }}" class="btn-add">
-                        <i class="fas fa-plus" style="padding-right: 10px"></i>Add Position
-                    </a>
-                @endif
-            </div>
-
-            <div class="org-title">
-                ORGANIZATIONAL STRUCTURE OF BPR PERDANA DAYA NUSANTARA
-            </div>
-
-            @if (!empty($chartData) && !empty($chartData['nodes']))
-                <div id="chart_div">
-                    <svg></svg>
-                    <!-- Zoom control buttons -->
-                    <div class="zoom-controls">
-                        <button id="zoom-in" class="zoom-btn">+</button>
-                        <button id="zoom-reset" class="zoom-btn">⟳</button> <!-- NEW: Reset Button -->
-                        <button id="zoom-out" class="zoom-btn">-</button>
+@section('content-wrapper')
+    @include('organization.partials.tab-menu')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="organization-structure">
+                <div class="card-body">
+                    <div class="card-tools">
+                        @php $role = auth()->user()->role; @endphp
+                        @if (in_array($role, ['superadmin', 'hc']))
+                            <a href="{{ route('organization.structure.create') }}" class="btn-add">
+                                <i class="fas fa-plus" style="padding-right: 10px"></i>Add Position
+                            </a>
+                        @endif
                     </div>
-                </div>
-            @else
-                <div class="text-center p-4">
-                    <p>Belum ada data jabatan untuk ditampilkan. Silakan tambahkan jabatan pertama.</p>
-                </div>
-            @endif
 
-            {{-- Modal Detail for Organizational Node --}}
-            @foreach ($chartData['nodes'] as $node)
-                @include('organization.components.detail-modal', [
-                    'modalId' => 'position-' . $node['id'],
-                    'position' => [
-                        'title' => $node['title'],
-                        'parent' =>
-                            optional(collect($chartData['nodes'])->firstWhere('id', $node['parent_id']))[
-                                'title'
-                            ] ?? null,
-                        'indirect_supervisor' => $node['indirect_supervisor'] ?? null,
-                        'employees' => $node['employees'] ?? [],
-                    ],
-                    'editRoute' => route('organization.structure.edit', $node['id']),
-                ])
-            @endforeach
+                    <div class="org-title">
+                        ORGANIZATIONAL STRUCTURE OF BPR PERDANA DAYA NUSANTARA
+                    </div>
+
+                    @if (!empty($chartData) && !empty($chartData['nodes']))
+                        <div id="chart_div">
+                            <svg></svg>
+                            <!-- Zoom control buttons -->
+                            <div class="zoom-controls">
+                                <button id="zoom-in" class="zoom-btn">+</button>
+                                <button id="zoom-reset" class="zoom-btn">⟳</button> <!-- NEW: Reset Button -->
+                                <button id="zoom-out" class="zoom-btn">-</button>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center p-4">
+                            <p>Belum ada data jabatan untuk ditampilkan. Silakan tambahkan jabatan pertama.</p>
+                        </div>
+                    @endif
+
+                    {{-- Modal Detail for Organizational Node --}}
+                    @foreach ($chartData['nodes'] as $node)
+                        @include('organization.components.detail-modal', [
+                            'modalId' => 'position-' . $node['id'],
+                            'position' => [
+                                'title' => $node['title'],
+                                'parent' =>
+                                    optional(collect($chartData['nodes'])->firstWhere('id', $node['parent_id']))[
+                                        'title'
+                                    ] ?? null,
+                                'indirect_supervisor' => $node['indirect_supervisor'] ?? null,
+                                'employees' => $node['employees'] ?? [],
+                            ],
+                            'editRoute' => route('organization.structure.edit', $node['id']),
+                        ])
+                    @endforeach
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 @endsection
 
 @push('scripts')

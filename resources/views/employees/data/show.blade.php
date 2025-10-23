@@ -30,23 +30,21 @@
             <div class="right-actions d-flex gap-2">
                 <!-- Tombol Deactive -->
                 @if(in_array(Auth::user()->role, ['superadmin','hc']))
-                    <button type="button" class="action-button btn-deactivet-data" onclick="showDeleteModal('deactivate-employee-{{ $employee->id }}')">
+                    <a href="{{ route('employees.deactivate.form', $employee) }}" class="action-button btn-deactivet-data">
                         <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
-                    </button>
+                    </a>
                 @else
-                    {{-- Tambahkan elemen kosong agar space-between tetap bekerja --}}
                     <div></div>
                 @endif
-
                 <!-- Modal Deactive -->
-                <x-delete-modal 
+                {{-- <x-delete-modal 
                     modalId="deactivate-employee-{{ $employee->id }}" 
                     :action="route('employees.deactivate', $employee)" 
                     method="POST" 
                     title="Deactive Confirmation"
                     message="Are you sure you want to deactivate this employee?" 
                     iconClass="tab-close-inactive"
-                />
+                /> --}}
                 <a href="{{ route('employees.edit', $employee) }}" class="action-button btn-edit-data">
                     <i class="fas fa-edit"></i> Edit Employee Data
                 </a>

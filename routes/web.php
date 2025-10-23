@@ -28,7 +28,9 @@ use App\Http\Controllers\KpiIndicatorController;
 use App\Http\Controllers\KpiTemplateController;
 use App\Http\Controllers\KpiAssessmentController;
 use App\Http\Controllers\OvertimeApplicationController;
-use App\Http\Controllers\KpiReportController; 
+use App\Http\Controllers\KpiReportController;
+use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ApprovalController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -53,6 +55,7 @@ Route::middleware('auth')->group(function () {
         // Employee CRUD - Hanya superadmin
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+        Route::get('/employees/{employee}/deactivate-form', [EmployeeController::class, 'showDeactivateForm'])->name('employees.deactivate.form');
 
         // Struktur Organisasi: CRUD hanya superadmin & hc
         Route::get('/organization/structure/create', [OrganizationalStructureController::class, 'create'])->name('organization.structure.create');
@@ -61,6 +64,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/organization/structure/{position}/edit', [OrganizationalStructureController::class, 'edit'])->name('organization.structure.edit');
         Route::put('/organization/structure/{position}', [OrganizationalStructureController::class, 'update'])->name('organization.structure.update');
         Route::delete('/organization/structure/{position}', [OrganizationalStructureController::class, 'destroy'])->name('organization.structure.destroy');
+
+        Route::prefix('organization/division')->name('organization.division.')->group(function () {
+            Route::get('/create', [DivisionController::class, 'create'])->name('create');
+            Route::post('/', [DivisionController::class, 'store'])->name('store');
+            Route::get('/{division}/edit', [DivisionController::class, 'edit'])->name('edit');
+            Route::put('/{division}', [DivisionController::class, 'update'])->name('update');
+            Route::delete('/{division}', [DivisionController::class, 'destroy'])->name('destroy');
+        });
 
         // ========================================================================
         // KPI MANAGEMENT (SETUP)
@@ -99,60 +110,46 @@ Route::middleware('auth')->group(function () {
             Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
         });
 
-    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')
-    ->prefix('interview-schedule')
-    ->group(function () {
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
+            Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
 
-        // Semua role terkait bisa lihat daftar jadwal interview (view only)
-        Route::get('/', [InterviewScheduleController::class, 'index'])
-            ->name('interview-schedule.index');
+                // Yang bisa diakses semua role terkait (view only)
+                Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
 
-        // Hanya superadmin & hc yang bisa create, edit, delete
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::get('/create', [InterviewScheduleController::class, 'create'])
-                ->name('interview-schedule.create');
+                // Yang hanya boleh superadmin
+                Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+                    Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
+                    Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
+                    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
+                    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
+                    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
+                });
 
-            Route::post('/', [InterviewScheduleController::class, 'store'])
-                ->name('interview-schedule.store');
-
-            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])
-                ->name('interview-schedule.edit');
-
-            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])
-                ->name('interview-schedule.update');
-
-            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])
-                ->name('interview-schedule.destroy');
-
-            Route::get('/interview-schedule/get-interviewers', [InterviewScheduleController::class, 'getInterviewersByApplicant'])
-    ->name('interview-schedule.get-interviewers');
-
+                // Route ini harus diletakkan paling akhir
+                Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
+            });
         });
-
-        // Detail satu jadwal (bisa dilihat oleh semua role terkait)
-        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])
-            ->name('interview-schedule.show');
-    });
 
     });
 
     Route::post('/applicants/{id}/convert-to-employee', [ApplicantController::class, 'convertToEmployee'])
-    ->name('applicants.convertToEmployee');
-Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])
-    ->name('employees.convert');
+        ->name('applicants.convertToEmployee');
+    Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])
+        ->name('employees.convert');
 
     // tambahan khusus approve/reject
-Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
-Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');
+    Route::post('overtime-applications/{overtime_application}/approve', [OvertimeApplicationController::class, 'approve'])->name('overtime.approve');
+    Route::post('overtime-applications/{overtime_application}/reject', [OvertimeApplicationController::class, 'reject'])->name('overtime.reject');
 
-// Overtime Application (resource)
-Route::resource('overtime-applications', OvertimeApplicationController::class);
+    // Overtime Application (resource)
+    Route::resource('overtime-applications', OvertimeApplicationController::class);
 
-Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
-    ->name('overtime-tasks.toggle');
+    Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::class, 'toggleTask'])
+        ->name('overtime-tasks.toggle');
 
-    // === SUPERADMIN ROUTES ===
+    // === SUPERADMIN & DIREKSI ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+        // Announcement - Superadmin dan direksi
         Route::resource('announcement', AnnouncementController::class);
         Route::get('/announcement/{id}/export-polling', [AnnouncementController::class, 'exportPolling'])->name('announcement.export_polling');
     });
@@ -251,14 +248,35 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
 
 
         // Career Projection
-        Route::prefix('employees/{employee}/career-projection')
-            ->name('employees.career_projection.')
-            ->group(function () {
-                Route::get('/', [CareerProjectionController::class, 'form'])->name('form');
-                Route::post('/', [CareerProjectionController::class, 'storeOrUpdate'])->name('storeOrUpdate');
-                Route::delete('/', [CareerProjectionController::class, 'destroy'])->name('destroy');
-            });
+        // Semua user bisa melihat daftar career path miliknya (atau milik karyawan lain jika diizinkan)
+        Route::get(
+            '/employees/{employee}/career-projections',
+            [CareerProjectionController::class, 'index']
+        )->name('career-projections.index');
+        Route::get(
+            '/employees/{employee}/career-projections/create',
+            [CareerProjectionController::class, 'create']
+        )->name('career-projections.create');
 
+        Route::post(
+            '/employees/{employee}/career-projections',
+            [CareerProjectionController::class, 'store']
+        )->name('career-projections.store');
+
+        Route::get(
+            '/employees/{employee}/career-projections/{careerProjection}/edit',
+            [CareerProjectionController::class, 'edit']
+        )->name('career-projections.edit');
+
+        Route::put(
+            '/employees/{employee}/career-projections/{careerProjection}',
+            [CareerProjectionController::class, 'update']
+        )->name('career-projections.update');
+
+        Route::delete(
+            '/employees/{employee}/career-projections/{careerProjection}',
+            [CareerProjectionController::class, 'destroy']
+        )->name('career-projections.destroy');
     });
 
     // === ALL AUTHENTICATED USERS ROUTES ===
@@ -284,13 +302,14 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::get('/notifications/redirect/{id}', [NotificationController::class, 'redirect'])
-    ->name('notifications.redirect');
+        ->name('notifications.redirect');
 
     Route::get('/notifications/read/{id}', [NotificationController::class, 'readAndRedirect'])
-    ->name('notifications.readAndRedirect');
+        ->name('notifications.readAndRedirect');
 
     // Struktur Organisasi: Semua role bisa akses halaman index
     Route::get('/organization/structure', [OrganizationalStructureController::class, 'index'])->name('organization.structure.index');
+    Route::get('/organization/division', [DivisionController::class, 'index'])->name('organization.division.index');
     Route::get('/test-notif', function () {
         $target = User::whereIn('role', ['hc', 'superadmin'])->first();
 
@@ -313,6 +332,40 @@ Route::patch('/overtime-tasks/{task}/toggle', [OvertimeApplicationController::cl
         Route::resource('kpi-assessments', KpiAssessmentController::class)->except(['destroy', 'edit']);
     });
 
+    // hanya hc
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hc')->prefix('approvals')->name('approvals.')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('index');
+        Route::get('/{cdr}', [ApprovalController::class, 'show'])->name('show');
+
+        // Aksi
+        Route::post('/{cdr}/check', [ApprovalController::class, 'check'])->name('check');
+        Route::post('/{cdr}/approve', [ApprovalController::class, 'approve'])->name('approve');
+        Route::post('/{cdr}/reject', [ApprovalController::class, 'reject'])->name('reject');
+    });
+
+
+    // Hanya superadmin, hc, manager, dan section_head yang boleh CRUD
+    // Route::middleware(['auth', 'role:superadmin,hc,manager,section_head'])->group(function () {
+    //     Route::get('/employees/{employee}/career-projections/create', 
+    //         [CareerProjectionController::class, 'create']
+    //     )->name('career-projections.create');
+
+    //     Route::post('/employees/{employee}/career-projections', 
+    //         [CareerProjectionController::class, 'store']
+    //     )->name('career-projections.store');
+
+    //     Route::get('/employees/{employee}/career-projections/{careerProjection}/edit', 
+    //         [CareerProjectionController::class, 'edit']
+    //     )->name('career-projections.edit');
+
+    //     Route::put('/employees/{employee}/career-projections/{careerProjection}', 
+    //         [CareerProjectionController::class, 'update']
+    //     )->name('career-projections.update');
+
+    //     Route::delete('/employees/{employee}/career-projections/{careerProjection}', 
+    //         [CareerProjectionController::class, 'destroy']
+    //     )->name('career-projections.destroy');
+    // });
 });
 // === GUEST ROUTES ===
 // Routes yang tidak memerlukan authentication bisa ditambahkan di sini

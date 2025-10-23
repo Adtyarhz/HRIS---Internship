@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
+use App\Services\ApprovalWorkflowService; // <-- Ditambahkan
 
 class WorkExperienceController extends Controller
 {
@@ -51,8 +52,32 @@ class WorkExperienceController extends Controller
         ]);
 
         $user = Auth::user();
-        DB::beginTransaction();
 
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            $payload = $validated;
+            $payload['employee_id'] = $employee->id;
+            
+            if ($request->hasFile('reference_letter_file')) {
+                $file = $request->file('reference_letter_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+            if ($request->hasFile('salary_slip_file')) {
+                $file = $request->file('salary_slip_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+
+            $tempModel = new WorkExperience($payload);
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Permintaan penambahan pengalaman kerja telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+        
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if ($request->hasFile('reference_letter_file')) {
                 $file = $request->file('reference_letter_file');
@@ -93,7 +118,6 @@ class WorkExperienceController extends Controller
             }
 
             $employee->workExperience()->create($validated);
-
             DB::commit();
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Work experience added successfully.');
@@ -148,6 +172,35 @@ class WorkExperienceController extends Controller
         ]);
 
         $user = Auth::user();
+        
+        //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
+        if ($user && $user->role === 'hc') {
+            $payload = $validated;
+            if ($request->hasFile('reference_letter_file')) {
+                $file = $request->file('reference_letter_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+            if ($request->hasFile('salary_slip_file')) {
+                $file = $request->file('salary_slip_file');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $payload['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+            }
+            
+            // Gunakan 'clone' untuk menjaga data original
+            $tempModel = clone $workExperience;
+            // Isi clone dengan data baru
+            $tempModel->fill($payload);
+            
+            // Panggil metode public `captureModelChange`
+            ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
+            
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Permintaan perubahan pengalaman kerja telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
+
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
         DB::beginTransaction();
 
         try {
@@ -196,8 +249,6 @@ class WorkExperienceController extends Controller
             }
 
             $workExperience->update($validated);
-            DB::commit();
-
             return redirect()->route('employees.work-experience.index', $employee)->with('success', 'Work experience updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -220,8 +271,17 @@ class WorkExperienceController extends Controller
         }
 
         $user = Auth::user();
-        DB::beginTransaction();
+        
+        //-- APPROVAL LOGIC START --//
+        if ($user && $user->role === 'hc') {
+            ApprovalWorkflowService::captureModelChange($user, $workExperience, 'delete');
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Permintaan penghapusan pengalaman kerja telah dikirim untuk approval.');
+        }
+        //-- APPROVAL LOGIC END --//
 
+        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
+        DB::beginTransaction();
         try {
             if (!in_array($user->role, ['superadmin', 'hc'])) {
                 $notifier = new RequestNotifierService();
@@ -277,3 +337,4 @@ class WorkExperienceController extends Controller
         abort(403, 'Unauthorized action.');
     }
 }
+
