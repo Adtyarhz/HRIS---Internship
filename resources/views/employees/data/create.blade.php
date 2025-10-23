@@ -323,7 +323,6 @@
     </div>
 </div>
 
-
                             <!-- Office -->
                             <div class="col-12">
                                 <div class="form-group">
@@ -337,34 +336,33 @@
                                 </div>
                             </div>
 
-                            <!-- Division & Position -->
+                            <!-- Division (Readonly) -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="division_id">Division</label>
-                                    <select class="form-control @error('division_id') is-invalid @enderror" id="division_id" name="division_id">
-                                        <option value="">-- No Division --</option>
-                                        @foreach ($divisions as $division)
-                                            <option value="{{ $division->id }}" {{ old('division_id', $applicant->division_id ?? '') == $division->id ? 'selected' : '' }}>
-                                                {{ $division->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('division_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                                    <label>Division</label>
+                                    <input type="text" id="division_name" class="form-control"
+                                        value="{{ old('division_name', $applicant->division->name ?? '-') }}" readonly>
+
+                                    <input type="hidden" name="division_id" id="division_id"
+                                        value="{{ old('division_id', $applicant->division_id ?? '') }}">
                                 </div>
                             </div>
 
+                            <!-- Position (User Select) -->
                             <div class="col-12">
                                 <div class="form-group">
                                     <label class="required">Position</label>
-<select name="position_id" class="form-control" required>
-    <option value="">-- Select Position --</option>
-    @foreach($positions as $pos)
-        <option value="{{ $pos->id }}"
-            {{ old('position_id', $applicant->applied_position ?? '') == $pos->id ? 'selected' : '' }}>
-            {{ $pos->title }}
-        </option>
-    @endforeach
-</select>
+                                    <select name="position_id" id="position_id" class="form-control" required>
+                                        <option value="">-- Select Position --</option>
+                                        @foreach ($positions as $pos)
+                                            <option value="{{ $pos->id }}"
+                                                data-division-id="{{ $pos->division_id }}"
+                                                data-division="{{ $pos->division->name ?? '-' }}"
+                                                {{ old('position_id', $applicant->applied_position ?? '') == $pos->id ? 'selected' : '' }}>
+                                                {{ $pos->title }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     @error('position_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -470,6 +468,16 @@
                     }
                 });
             }
+        });
+    </script>
+    <script>
+        document.getElementById('position_id').addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            const divisionName = selected.getAttribute('data-division') || '-';
+            const divisionId = selected.getAttribute('data-division-id') || '';
+
+            document.getElementById('division_name').value = divisionName;
+            document.getElementById('division_id').value = divisionId;
         });
     </script>
 @endpush

@@ -232,29 +232,27 @@
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="division_id">Division</label>
-                    <select class="form-control @error('division_id') is-invalid @enderror" name="division_id">
-                        <option value="">-- No Division --</option>
-                        @foreach ($divisions as $division)
-                            <option value="{{ $division->id }}"
-                                {{ old('division_id', $employee->division_id) == $division->id ? 'selected' : '' }}>
-                                {{ $division->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('division_id')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                    <label>Division</label>
+                    <input type="text" id="division_name" class="form-control"
+                        value="{{ $employee->division->name ?? '-' }}" readonly>
+
+                    {{-- hidden agar tetap ke-submit --}}
+                    <input type="hidden" name="division_id" id="division_id"
+                        value="{{ $employee->division_id }}">
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="form-group">
                     <label for="position_id">Position</label>
-                    <select class="form-control @error('position_id') is-invalid @enderror" name="position_id">
+                    <select id="position_id" class="form-control @error('position_id') is-invalid @enderror" name="position_id">
                         <option value="">-- No Position --</option>
                         @foreach ($positions as $position)
                             <option value="{{ $position->id }}"
+                                data-division-id="{{ $position->division_id }}"
+                                data-division="{{ $position->division->name ?? '-' }}"
                                 {{ old('position_id', $employee->position_id) == $position->id ? 'selected' : '' }}>
-                                {{ $position->title }}</option>
+                                {{ $position->title }}
+                            </option>
                         @endforeach
                     </select>
                     @error('position_id')
@@ -354,6 +352,16 @@
                     }
                 });
             }
+        });
+    </script>
+    <script>
+        document.getElementById('position_id').addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const divisionName = selected.getAttribute('data-division') || '-';
+            const divisionId = selected.getAttribute('data-division-id') || '';
+
+            document.getElementById('division_name').value = divisionName;
+            document.getElementById('division_id').value = divisionId;
         });
     </script>
 @endpush

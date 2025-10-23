@@ -2,61 +2,39 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void
     {
-        // 1️⃣ Ubah dulu jadi VARCHAR biar bisa update tanpa error ENUM
-        DB::statement("ALTER TABLE recruitment_progresses MODIFY COLUMN contract_type VARCHAR(50) NULL");
-
-        // 2️⃣ Update nilai lama ke versi baru
-        DB::statement("
-            UPDATE recruitment_progresses 
-            SET contract_type = CASE
-                WHEN contract_type = 'Contract' THEN 'PKWT'
-                WHEN contract_type = 'Full-time' THEN 'PKWTT'
-                WHEN contract_type = 'Probation' THEN 'Probation'
-                WHEN contract_type = 'Internship' THEN 'Intern'
-                ELSE NULL
-            END
-        ");
-
-        // 3️⃣ Ubah kembali ke ENUM baru agar konsisten dengan employees
-        DB::statement("
-            ALTER TABLE recruitment_progresses 
-            MODIFY COLUMN contract_type ENUM(
-                'PKWT',
-                'PKWTT',
-                'Probation',
-                'Intern'
-            ) NULL DEFAULT 'PKWT'
-        ");
+        Schema::create('recruitment_progresses', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('applicant_id')->constrained('applicants')->onDelete('cascade');
+            $table->enum('stage', [
+                'cv_screening',
+                'general_knowledge_test',
+                'user_assessment',
+                'hc_interview',
+                'bod_interview',
+                'offering_letter',
+                'rejected'
+            ]);
+            $table->enum('offering_status', ['accepted', 'rejected', 'in_progress'])->nullable();
+            $table->dateTime('status_date');
+            $table->text('notes')->nullable();
+            $table->text('rejected_reason')->nullable();
+            $table->enum('contract_type', ['Contract', 'Internship', 'Probation', 'Full-time'])->nullable()->default('Contract');
+            $table->text('test_result')->nullable();
+            $table->string('result_file')->nullable();
+            $table->string('score')->nullable();
+            $table->text('slik_recap')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
-        // rollback ke enum lama
-        DB::statement("ALTER TABLE recruitment_progresses MODIFY COLUMN contract_type VARCHAR(50) NULL");
-
-        DB::statement("
-            UPDATE recruitment_progresses 
-            SET contract_type = CASE
-                WHEN contract_type = 'PKWT' THEN 'Contract'
-                WHEN contract_type = 'PKWTT' THEN 'Full-time'
-                WHEN contract_type = 'Probation' THEN 'Probation'
-                WHEN contract_type = 'Intern' THEN 'Internship'
-                ELSE NULL
-            END
-        ");
-
-        DB::statement("
-            ALTER TABLE recruitment_progresses 
-            MODIFY COLUMN contract_type ENUM(
-                'Contract',
-                'Internship',
-                'Probation',
-                'Full-time'
-            ) NULL DEFAULT 'Contract'
-        ");
+        Schema::dropIfExists('recruitment_progresses');
     }
 };
