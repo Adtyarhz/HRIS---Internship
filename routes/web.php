@@ -110,24 +110,39 @@ Route::middleware('auth')->group(function () {
             Route::put('/stage/update', [RecruitmentProgressController::class, 'stageUpdate'])->name('recruitment.stage.update');
         });
 
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
-            Route::prefix('applicants/{applicant}/interview-schedule')->group(function () {
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')
+    ->prefix('interview-schedule')
+    ->group(function () {
 
-                // Yang bisa diakses semua role terkait (view only)
-                Route::get('/', [InterviewScheduleController::class, 'index'])->name('interview-schedule.index');
+        // Semua role terkait bisa lihat daftar jadwal interview (view only)
+        Route::get('/', [InterviewScheduleController::class, 'index'])
+            ->name('interview-schedule.index');
 
-                // Yang hanya boleh superadmin
-                Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-                    Route::get('/create', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create');
-                    Route::post('/', [InterviewScheduleController::class, 'store'])->name('interview-schedule.store');
-                    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])->name('interview-schedule.edit');
-                    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])->name('interview-schedule.update');
-                    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])->name('interview-schedule.destroy');
-                });
+        // Hanya superadmin & hc yang bisa create, edit, delete
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+            Route::get('/create', [InterviewScheduleController::class, 'create'])
+                ->name('interview-schedule.create');
 
-                // Route ini harus diletakkan paling akhir
-                Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])->name('interview-schedule.show');
-            });
+            Route::post('/', [InterviewScheduleController::class, 'store'])
+                ->name('interview-schedule.store');
+
+            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])
+                ->name('interview-schedule.edit');
+
+            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])
+                ->name('interview-schedule.update');
+
+            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])
+                ->name('interview-schedule.destroy');
+
+            Route::get('/interview-schedule/get-interviewers', [InterviewScheduleController::class, 'getInterviewersByApplicant'])
+    ->name('interview-schedule.get-interviewers');
+
+        });
+
+        // Detail satu jadwal (bisa dilihat oleh semua role terkait)
+        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])
+            ->name('interview-schedule.show');
         });
 
     });

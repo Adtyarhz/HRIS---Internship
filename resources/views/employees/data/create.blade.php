@@ -303,8 +303,8 @@
     <div class="form-group">
         <label for="employee_type">Employee Type <span class="text-danger">*</span></label>
         @php
-            $prefType = old('employee_type', $mappedContractType ?? '');
-            $types = ['Kontrak', 'Magang', 'Masa Percobaan', 'Fulltime'];
+            $prefType = old('employee_type', $employee->employee_type ?? '');
+            $types = ['PKWT', 'PKWTT', 'Probation', 'Intern'];
         @endphp
         <select class="form-control @error('employee_type') is-invalid @enderror"
                 id="employee_type"
