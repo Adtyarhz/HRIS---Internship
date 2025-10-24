@@ -13,15 +13,19 @@ class DivisionSeeder extends Seeder
     public function run(): void
     {
         $divisions = [
-            'Branch Office',
-            'Lending',
+            'IT',
+            'Internal Audit',
             'Funding',
-            'Credit Analyst',
-            'KMA, SAF, IP',
+            'Lending',
+            'Branch Office',
             'Operation',
             'HC & GA',
+            'KMA, SAF, IP',
+            'Credit Analyst',
             'Brand & Promotion',
-            'IT',
+            'Research & Development',
+            'Board of Directors',
+            'Board of Commissioners',
         ];
 
         foreach ($divisions as $division) {
