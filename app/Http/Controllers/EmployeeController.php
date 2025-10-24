@@ -136,6 +136,7 @@ class EmployeeController extends Controller
             'separation_date' => 'nullable|date|after_or_equal:hire_date',
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'division_id' => 'nullable|exists:divisions,id',
             'position_id' => 'nullable|exists:positions,id',
             'user_id' => 'nullable|unique:employees,user_id|exists:users,id',
         ]);
@@ -268,6 +269,7 @@ class EmployeeController extends Controller
             'cv_file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'position_id' => 'nullable|exists:positions,id',
+            'division_id' => 'nullable|exists:divisions,id',
         ]);
 
         //-- AUTO DIVISION FOLLOW POSITION --//
@@ -419,7 +421,7 @@ class EmployeeController extends Controller
             'termination_notes' => $validated['termination_notes'] ?? null,
         ]);
         return redirect()
-            ->route('employees.show', $employee->id)
+            ->route('employees.index', $employee->id)
             ->with('success', 'Employee successfully deactivated.');
     }
     public function editAddress(Employee $employee)

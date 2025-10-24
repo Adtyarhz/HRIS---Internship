@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
         // Employee CRUD - Hanya superadmin
         Route::resource('employees', EmployeeController::class);
-        Route::post('/employees/{employee}', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+        Route::put('/employees/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
         Route::get('/employees/{employee}/deactivate-form', [EmployeeController::class, 'showDeactivateForm'])->name('employees.deactivate.form');
 
         // Struktur Organisasi: CRUD hanya superadmin & hc
@@ -111,39 +111,39 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')
-    ->prefix('interview-schedule')
-    ->group(function () {
+            ->prefix('interview-schedule')
+            ->group(function () {
 
-        // Semua role terkait bisa lihat daftar jadwal interview (view only)
-        Route::get('/', [InterviewScheduleController::class, 'index'])
-            ->name('interview-schedule.index');
+                // Semua role terkait bisa lihat daftar jadwal interview (view only)
+                Route::get('/', [InterviewScheduleController::class, 'index'])
+                    ->name('interview-schedule.index');
 
-        // Hanya superadmin & hc yang bisa create, edit, delete
-        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
-            Route::get('/create', [InterviewScheduleController::class, 'create'])
-                ->name('interview-schedule.create');
+                // Hanya superadmin & hc yang bisa create, edit, delete
+                Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
+                    Route::get('/create', [InterviewScheduleController::class, 'create'])
+                        ->name('interview-schedule.create');
 
-            Route::post('/', [InterviewScheduleController::class, 'store'])
-                ->name('interview-schedule.store');
+                    Route::post('/', [InterviewScheduleController::class, 'store'])
+                        ->name('interview-schedule.store');
 
-            Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])
-                ->name('interview-schedule.edit');
+                    Route::get('/{schedule}/edit', [InterviewScheduleController::class, 'edit'])
+                        ->name('interview-schedule.edit');
 
-            Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])
-                ->name('interview-schedule.update');
+                    Route::put('/{schedule}', [InterviewScheduleController::class, 'update'])
+                        ->name('interview-schedule.update');
 
-            Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])
-                ->name('interview-schedule.destroy');
+                    Route::delete('/{schedule}', [InterviewScheduleController::class, 'destroy'])
+                        ->name('interview-schedule.destroy');
 
-            Route::get('/interview-schedule/get-interviewers', [InterviewScheduleController::class, 'getInterviewersByApplicant'])
-    ->name('interview-schedule.get-interviewers');
+                    Route::get('/interview-schedule/get-interviewers', [InterviewScheduleController::class, 'getInterviewersByApplicant'])
+                        ->name('interview-schedule.get-interviewers');
 
-        });
+                });
 
-        // Detail satu jadwal (bisa dilihat oleh semua role terkait)
-        Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])
-            ->name('interview-schedule.show');
-        });
+                // Detail satu jadwal (bisa dilihat oleh semua role terkait)
+                Route::get('/{schedule}', [InterviewScheduleController::class, 'show'])
+                    ->name('interview-schedule.show');
+            });
 
     });
 

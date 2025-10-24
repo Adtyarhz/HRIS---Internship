@@ -39,6 +39,9 @@ class Employee extends Model
         'division_id',
         'position_id',
         'user_id',
+        'deactivation_date',
+        'termination_reason',
+        'termination_notes',
     ];
 
      // ✅ Accessor untuk pastikan keluar string "YYYY-MM-DD"

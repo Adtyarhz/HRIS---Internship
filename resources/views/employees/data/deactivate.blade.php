@@ -62,6 +62,7 @@
             {{-- Deactivation Form --}}
             <form id="deactivateForm" method="POST" action="{{ route('employees.deactivate', $employee) }}">
                 @csrf
+                @method('PUT')
 
                 {{-- 📅 Last Working Date --}}
                 <div class="form-group row align-items-center">
@@ -71,13 +72,9 @@
 
                     <div class="col-md-3">
                         <div class="input-group date-input-group">
-                            <input
-                                type="date"
-                                id="deactivation_date"
-                                name="deactivation_date"
+                            <input type="date" id="deactivation_date" name="deactivation_date"
                                 class="form-control @error('deactivation_date') is-invalid @enderror"
-                                value="{{ old('deactivation_date') }}"
-                                required>
+                                value="{{ old('deactivation_date') }}" required>
                             <label for="deactivation_date" class="input-group-append">
                                 <span class="input-group-text">
                                     <img src="{{ asset('img/calendar_icon.png') }}" alt="calendar">
@@ -99,12 +96,15 @@
                     <div class="col-md-3">
                         <select name="termination_reason" id="termination_reason"
                             class="form-control @error('termination_reason') is-invalid @enderror" required>
-                            <option value="" disabled selected>-- Select Reason --</option>
+                            <option value="" disabled {{ old('termination_reason') ? '' : 'selected' }}>-- Select Reason --
+                            </option>
                             <option value="Mengundurkan diri" {{ old('termination_reason') == 'Mengundurkan diri' ? 'selected' : '' }}>Resigned</option>
-                            <option value="Pensiun" {{ old('termination_reason') == 'Pensiun' ? 'selected' : '' }}>Retired</option>
-                            <option value="Tidak lulus masa percobaan" {{ old('termination_reason') == 'Tidak lulus masa percobaan' ? 'selected' : '' }}>TFailed probation</option>
+                            <option value="Pensiun" {{ old('termination_reason') == 'Pensiun' ? 'selected' : '' }}>Retired
+                            </option>
+                            <option value="Tidak lulus masa percobaan" {{ old('termination_reason') == 'Tidak lulus masa percobaan' ? 'selected' : '' }}>Failed probation</option>
                             <option value="Tidak cakap bekerja" {{ old('termination_reason') == 'Tidak cakap bekerja' ? 'selected' : '' }}>Incompetent to work</option>
-                            <option value="Tidak mampu bekerja karena alasan kesehatan" {{ old('termination_reason') == 'Tidak mampu bekerja karena alasan kesehatan' ? 'selected' : '' }}>Unable to work due to health reasons</option>
+                            <option value="Tidak mampu bekerja karena alasan kesehatan" {{ old('termination_reason') == 'Tidak mampu bekerja karena alasan kesehatan' ? 'selected' : '' }}>Unable to work due to health
+                                reasons</option>
                             <option value="Meninggal dunia" {{ old('termination_reason') == 'Meninggal dunia' ? 'selected' : '' }}>Deceased</option>
                             <option value="Melakukan pelanggaran tata tertib dan disiplin" {{ old('termination_reason') == 'Melakukan pelanggaran tata tertib dan disiplin' ? 'selected' : '' }}>Violation of company rules and discipline</option>
                             <option value="Merugikan perusahaan" {{ old('termination_reason') == 'Merugikan perusahaan' ? 'selected' : '' }}>Caused company losses</option>
@@ -131,28 +131,29 @@
                     </div>
                 </div>
 
+                {{-- Hidden submit button so JS handler can find and disable it --}}
+                <button type="submit" id="deactivateFormSubmitBtn" style="display:none;"></button>
+
                 {{-- 🔘 Action Buttons --}}
                 <div class="form-buttons-container mt-4">
                     <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-cancel">
                         Cancel
                     </a>
-                    <button type="button"
-                        class="btn btn-deactive"
+
+                    {{-- tombol ini hanya membuka modal konfirmasi --}}
+                    <button type="button" class="btn btn-deactive"
                         onclick="showDeleteModal('deactivate-employee-{{ $employee->id }}')">
                         Deactivate
                     </button>
                 </div>
             </form>
 
-            {{-- Deactivation Confirmation Modal --}}
-            <x-delete-modal
-                modalId="deactivate-employee-{{ $employee->id }}"
-                :action="route('employees.deactivate', $employee)"
-                method="POST"
-                title="Confirm Employee Deactivation"
-                message="Are you sure you want to deactivate this employee?"
-                iconClass="tab-close-inactive"
-            />
+            {{-- Deactivation Confirmation Modal
+            pass useFormId so modal will submit the main form when user confirms --}}
+            <x-deactive-modal modalId="deactivate-employee-{{ $employee->id }}" :action="route('employees.deactivate', $employee)" method="POST" title="Confirm Employee Deactivation"
+                message="Are you sure you want to deactivate this employee?" iconClass="tab-close-inactive"
+                useFormId="deactivateForm" {{-- <-- new prop --}} />
+
         </div>
     </div>
 @endsection
