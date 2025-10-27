@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # ====== ALLOW STORAGE ACCESS (FIX FOR ACCESS DENIED) ======
+    RewriteCond %{REQUEST_URI} ^/storage/ [NC]
+    RewriteRule ^(.*)$ storage/$1 [L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
