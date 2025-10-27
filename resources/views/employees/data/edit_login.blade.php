@@ -68,7 +68,7 @@
 
         <!-- Teks konfirmasi default password -->
         <p class="text-muted mt-2" id="defaultPasswordText" style="display: none;">
-            Apakah ingin reset password ke default <strong>"password123"</strong>?
+            Reset password to employee’s <strong>NIP</strong>?
             <button type="submit" class="btn btn-sm btn-danger ms-2">Ya, Reset</button>
             <button type="button" class="btn btn-sm btn-secondary ms-1" id="cancelReset">Batal</button>
         </p>

@@ -154,16 +154,28 @@ class LoginController extends Controller
 }
 
     public function resetPassword(Request $request, $id)
-    {
-        $employee = Employee::findOrFail($id);
-        $user = $employee->user;
-        
-        // Reset password ke default
-        $user->password = Hash::make('password123');
+{
+    $employee = Employee::findOrFail($id);
+
+    if (!$employee->user) {
+        return redirect()->back()->with('error', 'This employee does not have a linked user account.');
+    }
+
+    $user = $employee->user;
+
+    if ($employee->nip) {
+        $user->password = Hash::make($employee->nip);
         $user->save();
 
-        Log::info('Password reset', ['user_id' => $user->id, 'employee_id' => $employee->id]);
+        Log::info('Password reset', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'reset_to' => 'employee_nip'
+        ]);
 
-        return redirect()->back()->with('success', 'Password berhasil direset ke default.');
+        return redirect()->back()->with('success', 'Password has been reset to the employee\'s NIP.');
+    } else {
+        return redirect()->back()->with('error', 'Cannot reset password because the employee has no NIP.');
     }
+}
 }

@@ -62,6 +62,8 @@ class InterviewScheduleController extends Controller
             'start' => $item->interview_date,
             'interviewer' => $item->interviewer?->name ?? '-',
             'location' => $item->location,
+            'meeting_link' => $item->meeting_link,
+            'description' => $item->result,
             'type' => $item->interview_type,
         ];
     });
@@ -132,7 +134,8 @@ public function getInterviewersByApplicant(Request $request)
         'interview_type' => 'required|in:User,HC,Direksi',
         'interview_date' => 'required|date',
         'interviewer_id' => 'required|exists:users,id',
-        'location' => 'required|string|max:255',
+        'location' => 'required|in:online,onsite',
+        'meeting_link' => 'nullable|url',
         'result' => 'nullable|string',
     ]);
 
@@ -202,27 +205,33 @@ public function update(Request $request, Applicant $applicant, InterviewSchedule
         'interview_type' => 'required|in:User,HC,Direksi',
         'interview_date' => 'required|date',
         'interviewer_id' => 'required|exists:users,id',
-        'location' => 'required|string|max:255',
+        'location' => 'required|in:online,onsite',
+        'meeting_link' => 'nullable|url',
         'result' => 'nullable|string',
     ]);
 
-    // Simpan perubahan ke database
+    // Jika lokasi bukan online, hapus meeting_link
+    $meetingLink = $request->location === 'online' ? $request->meeting_link : null;
+
+    // Update ke database
     $schedule->update([
         'interview_type' => $request->interview_type,
         'interview_date' => $request->interview_date,
         'interviewer_id' => $request->interviewer_id,
         'location' => $request->location,
+        'meeting_link' => $meetingLink,
         'result' => $request->result,
     ]);
 
-    // Kirim notifikasi ke interviewer yang dipilih (seperti di method store)
+    // Kirim notifikasi ke interviewer yang dipilih
     $interviewer = User::find($request->interviewer_id);
     if ($interviewer) {
         $interviewer->notify(new InterviewScheduleNotification($schedule));
     }
-        return redirect()
-            ->route('interview-schedule.index', $applicant->id)
-            ->with('success', 'Interview schedule was updated and notification sent to the selected interviewer.');
+
+    return redirect()
+        ->route('interview-schedule.index', $applicant->id)
+        ->with('success', 'Interview schedule was updated and notification sent to the selected interviewer.');
 }
 
 public function destroy(Applicant $applicant, InterviewSchedule $schedule)

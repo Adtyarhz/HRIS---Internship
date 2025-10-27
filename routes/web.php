@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc,direksi,manager,section_head')->group(function () {
         // Applicants - Superadmin, direksi, manager, section_head
         Route::resource('applicants', ApplicantController::class);
+        Route::get('/applicants/export/csv', [ApplicantController::class, 'exportCsv'])->name('applicants.export.csv');
 
         // Recruitment Progress - Superadmin, direksi, manager, section_head
         Route::prefix('applicants/{applicant}/recruitment-progress')->group(function () {

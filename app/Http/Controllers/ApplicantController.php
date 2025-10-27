@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use App\Models\Employee;
 use App\Models\User;
 use App\Notifications\NewApplicantNotification;
+use App\Models\RecruitmentProgress;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicantController extends Controller
 {
@@ -25,29 +27,78 @@ class ApplicantController extends Controller
     $user = auth()->user();
     $divisionId = optional($user->employee)->division_id;
 
+    // Tahapan recruitment
+    $stages = [
+        'general_knowledge_test',
+        'computer_skills_test',
+        'hc_interview',
+        'user_assessment',
+        'bod_interview',
+        'offering_letter',
+    ];
+
     $applicants = Applicant::with(['division', 'position', 'recruitmentProgresses'])
         ->get()
-        ->filter(function ($applicant) use ($filterStage, $filterDivision, $search, $user, $divisionId) {
+        ->filter(function ($applicant) use ($filterStage, $filterDivision, $search, $user, $divisionId, $stages) {
 
-            // 🔍 Pencarian nama
+            // 🔍 Filter pencarian nama
             if ($search && stripos($applicant->full_name, $search) === false) {
                 return false;
             }
 
-            // 👥 Filter berdasarkan role manager/section_head
+            // 👥 Filter role manager/section_head berdasarkan divisi
             if (in_array($user->role, ['manager', 'section_head']) && $applicant->division_id !== $divisionId) {
                 return false;
             }
 
-            // 🏢 Filter berdasarkan dropdown division
+            // 🏢 Filter division
             if ($filterDivision && $filterDivision !== '') {
                 if ($applicant->division_id != $filterDivision) {
                     return false;
                 }
             }
 
-            // 🎯 Filter berdasarkan current stage
-            if ($filterStage && $applicant->current_stage !== $filterStage) {
+            // 🎯 Tentukan current stage berdasarkan logika dari exportCsv
+            $progresses = $applicant->recruitmentProgresses->keyBy('stage');
+            $currentStage = null;
+            $rejected = false;
+
+            foreach ($stages as $index => $stage) {
+                $progress = $progresses[$stage] ?? null;
+                $status = $progress?->offering_status;
+
+                if ($status === 'rejected') {
+                    $rejected = true;
+                    break;
+                }
+
+                if ($status === 'accepted') {
+                    // Kalau offering letter accepted, tetap di offering_letter
+                    if ($stage === 'offering_letter') {
+                        $currentStage = 'offering_letter';
+                    } else {
+                        // lanjut ke stage berikutnya (kalau ada)
+                        $currentStage = $stages[$index + 1] ?? 'offering_letter';
+                    }
+                } elseif ($status === 'in_progress') {
+                    $currentStage = $stage;
+                    break;
+                } elseif (!$status && $index === 0) {
+                    // Jika belum ada progress sama sekali
+                    $currentStage = $stages[0];
+                    break;
+                }
+            }
+
+            if ($rejected) {
+                $currentStage = 'rejected';
+            }
+
+            // Simpan stage hasil perhitungan (untuk ditampilkan di tabel jika mau)
+            $applicant->computed_stage = $currentStage;
+
+            // 🔎 Filter berdasarkan stage (jika user memilih filterStage)
+            if ($filterStage && $filterStage !== $currentStage) {
                 return false;
             }
 
@@ -59,7 +110,7 @@ class ApplicantController extends Controller
         ? $applicants->sortBy('created_at')
         : $applicants->sortByDesc('created_at');
 
-    // Pagination manual
+    // 📄 Pagination manual
     $perPage = 10;
     $page = $request->get('page', 1);
     $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -254,5 +305,200 @@ class ApplicantController extends Controller
             ->route('employees.show', $employee->id)
             ->with('success', 'Applicant has been successfully converted to employee.');
     }
+    public function exportCsv(Request $request)
+{
+    $filterDivision = $request->input('division_id'); // ambil filter divisi dari request
+    $stages = [
+        'general_knowledge_test',
+        'computer_skills_test',
+        'hc_interview',
+        'user_assessment',
+        'bod_interview',
+        'offering_letter',
+    ];
+
+    $filename = 'recruitment_report_' . now()->format('Ymd_His') . '.csv';
+    $headers = [
+        'Content-Type' => 'text/csv; charset=UTF-8',
+        'Content-Disposition' => "attachment; filename=\"$filename\"",
+    ];
+
+    // ✅ Jika filter divisi dipilih (bukan "All Divisions")
+    if ($filterDivision && $filterDivision !== 'all') {
+        $division = Division::with(['applicants.recruitmentProgresses', 'applicants.position'])
+            ->findOrFail($filterDivision);
+
+        $callback = function () use ($division, $stages) {
+            echo "\xEF\xBB\xBF"; // BOM UTF-8 agar bisa dibuka di Excel
+            $handle = fopen('php://output', 'w');
+            $delimiter = ';';
+
+            // Header CSV (format detail per pelamar)
+            fputcsv($handle, [
+                'Full Name',
+                'Applied Position',
+                'Current Stage',
+                'Email',
+                'Phone',
+                'Address',
+                'Last Education',
+                'Institution Name',
+                'GPA / Score',
+            ], $delimiter);
+
+            foreach ($division->applicants as $applicant) {
+                $progresses = $applicant->recruitmentProgresses->keyBy('stage');
+
+                // 🔹 Tentukan current stage (logika sama seperti exportCsv sebelumnya)
+                $currentStage = null;
+                $hasRejected = false;
+                $lastAcceptedIndex = -1;
+
+                foreach ($stages as $i => $stage) {
+                    if (!isset($progresses[$stage])) continue;
+
+                    $status = $progresses[$stage]->offering_status;
+
+                    if ($status === 'rejected') {
+                        $hasRejected = true;
+                        break;
+                    }
+
+                    if ($status === 'accepted') {
+                        $lastAcceptedIndex = $i;
+                    } elseif ($status === 'in_progress') {
+                        $currentStage = $stage;
+                        break;
+                    }
+                }
+
+                if ($hasRejected) {
+                    $currentStage = 'rejected';
+                } elseif ($currentStage === null) {
+                    if ($lastAcceptedIndex === count($stages) - 1) {
+                        $currentStage = 'offering_letter';
+                    } elseif ($lastAcceptedIndex >= 0) {
+                        $currentStage = $stages[$lastAcceptedIndex + 1] ?? 'offering_letter';
+                    } else {
+                        $currentStage = $stages[0];
+                    }
+                }
+
+                // 🔹 Tulis data pelamar ke CSV
+                fputcsv($handle, [
+                    $applicant->full_name,
+                    optional($applicant->position)->title ?? '-',
+                    ucfirst(str_replace('_', ' ', $currentStage)),
+                    $applicant->email,
+                    "\t" . $applicant->phone,
+                    $applicant->address,
+                    $applicant->last_education,
+                    $applicant->origin,
+                    $applicant->gpa_score,
+                ], $delimiter);
+            }
+
+            fclose($handle);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
+    }
+
+    // ✅ Jika tidak ada filter divisi (All Divisions)
+    $divisions = Division::with(['applicants.recruitmentProgresses'])->get();
+
+    $callback = function () use ($divisions, $stages) {
+        echo "\xEF\xBB\xBF";
+        $handle = fopen('php://output', 'w');
+        $delimiter = ';';
+
+        // Header rekap per divisi
+        fputcsv($handle, [
+            'Division',
+            'Total Applicants',
+            'General Knowledge Test',
+            'Computer Skills Test',
+            'HC Interview',
+            'User Assessment',
+            'BOD Interview',
+            'Offering Letter',
+            'Rejected',
+        ], $delimiter);
+
+        foreach ($divisions as $division) {
+            $totalApplicants = $division->applicants->count();
+
+            $counts = [
+                'general_knowledge_test' => 0,
+                'computer_skills_test' => 0,
+                'hc_interview' => 0,
+                'user_assessment' => 0,
+                'bod_interview' => 0,
+                'offering_letter' => 0,
+                'rejected' => 0,
+            ];
+
+            foreach ($division->applicants as $applicant) {
+                $progresses = $applicant->recruitmentProgresses->keyBy('stage');
+
+                $currentStage = null;
+                $hasRejected = false;
+                $lastAcceptedIndex = -1;
+
+                foreach ($stages as $i => $stage) {
+                    if (!isset($progresses[$stage])) continue;
+                    $status = $progresses[$stage]->offering_status;
+
+                    if ($status === 'rejected') {
+                        $hasRejected = true;
+                        break;
+                    }
+
+                    if ($status === 'accepted') {
+                        $lastAcceptedIndex = $i;
+                    }
+                }
+
+                if ($hasRejected) {
+                    $currentStage = 'rejected';
+                } elseif ($lastAcceptedIndex === count($stages) - 1) {
+                    $currentStage = 'offering_letter';
+                } elseif ($lastAcceptedIndex >= 0) {
+                    $currentStage = $stages[$lastAcceptedIndex + 1] ?? 'offering_letter';
+                } else {
+                    foreach ($stages as $stage) {
+                        if (isset($progresses[$stage])) {
+                            $currentStage = $stage;
+                            break;
+                        }
+                    }
+                }
+
+                if ($currentStage === 'rejected') {
+                    $counts['rejected']++;
+                } elseif ($currentStage && isset($counts[$currentStage])) {
+                    $counts[$currentStage]++;
+                }
+            }
+
+            fputcsv($handle, [
+                $division->name,
+                $totalApplicants,
+                $counts['general_knowledge_test'],
+                $counts['computer_skills_test'],
+                $counts['hc_interview'],
+                $counts['user_assessment'],
+                $counts['bod_interview'],
+                $counts['offering_letter'],
+                $counts['rejected'],
+            ], $delimiter);
+        }
+
+        fclose($handle);
+    };
+
+    return new StreamedResponse($callback, 200, $headers);
+}
+
 }
 

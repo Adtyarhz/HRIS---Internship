@@ -18,8 +18,6 @@
         max-width: 900px;
         border: 1px solid #ddd;
         font-family: 'Manrope', sans-serif;
-        box-sizing: border-box;
-        position: relative;
         margin: auto;
     }
     .detail-row {
@@ -86,13 +84,9 @@
 @endpush
 
 @section('content_header')
-    <div class="header-with-icon d-flex align-items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 2048 2048" class="mr-2">
-            <path fill="currentColor"
-                d="..."/>
-        </svg>
-        <h1 class="header-title mb-0">Recruitment Applicant</h1>
-    </div>
+<div class="header-with-icon d-flex align-items-center">
+    <h1 class="header-title mb-0">Recruitment Applicant</h1>
+</div>
 @endsection
 
 @section('content')
@@ -106,6 +100,7 @@
         @method('PUT')
         <input type="hidden" name="stage" value="{{ $stage }}">
 
+        {{-- Offering Status --}}
         <div class="detail-row">
             <div class="detail-label">Recruitment Status</div>
             <div class="input-wrapper">
@@ -118,13 +113,16 @@
             </div>
         </div>
 
+        {{-- Status Date --}}
         <div class="detail-row">
             <div class="detail-label">Status Date</div>
             <div class="input-wrapper">
-               <input type="date" name="status_date" class="form-control" id="status_date" value="{{ old('status_date', $progress->status_date ? \Carbon\Carbon::parse($progress->status_date)->format('Y-m-d') : '') }}">
+                <input type="date" name="status_date" class="form-control" id="status_date"
+                    value="{{ old('status_date', $progress->status_date ? \Carbon\Carbon::parse($progress->status_date)->format('Y-m-d') : '') }}">
             </div>
         </div>
 
+        {{-- Notes --}}
         <div class="detail-row">
             <div class="detail-label">Notes</div>
             <div class="input-wrapper">
@@ -132,25 +130,26 @@
             </div>
         </div>
 
-        {{-- Rejected Reason (Only if rejected) --}}
+        {{-- Rejected Reason --}}
         <div class="detail-row" id="rejected_reason_wrapper" style="display: none;">
             <div class="detail-label">Rejected Reason</div>
             <div class="input-wrapper">
-                <input type="text" name="rejected_reason" class="form-control" value="{{ old('rejected_reason', $progress->rejected_reason) }}">
+                <input type="text" name="rejected_reason" class="form-control"
+                    value="{{ old('rejected_reason', $progress->rejected_reason) }}">
             </div>
         </div>
 
-        {{-- Contract Type --}}
+        {{-- Contract Type (only general_knowledge_test) --}}
         <div class="detail-row">
             <div class="detail-label">Contract Type</div>
             <div class="input-wrapper">
-                @if ($stage === 'cv_screening')
+                @if ($stage === 'general_knowledge_test')
                     <select name="contract_type" class="form-control">
                         <option value="">-- Select Contract Type --</option>
-                        <option value="PKWT" {{ old('contract_type', $progress->contract_type) === 'PKWT' ? 'selected' : '' }}>PKWT</option>
-                        <option value="PKWTT" {{ old('contract_type', $progress->contract_type) === 'PKWTT' ? 'selected' : '' }}>PKWTT</option>
+                        <option value="Contract" {{ old('contract_type', $progress->contract_type) === 'Contract' ? 'selected' : '' }}>Contract</option>
+                        <option value="Internship" {{ old('contract_type', $progress->contract_type) === 'Internship' ? 'selected' : '' }}>Internship</option>
                         <option value="Probation" {{ old('contract_type', $progress->contract_type) === 'Probation' ? 'selected' : '' }}>Probation</option>
-                        <option value="Intern" {{ old('contract_type', $progress->contract_type) === 'Intern' ? 'selected' : '' }}>Intern</option>
+                        <option value="Full-time" {{ old('contract_type', $progress->contract_type) === 'Full-time' ? 'selected' : '' }}>Full-time</option>
                     </select>
                 @else
                     <input type="text" class="form-control" value="{{ $contractType ?? '-' }}" disabled>
@@ -158,45 +157,47 @@
             </div>
         </div>
 
-        <div class="detail-row">
-            <div class="detail-label">Test Result</div>
-            <div class="input-wrapper">
-                <textarea name="test_result" class="form-control">{{ old('test_result', $progress->test_result) }}</textarea>
-            </div>
-        </div>
-
-        {{-- Hide Result File for offering_letter --}}
-        @if ($stage !== 'offering_letter')
-        <div class="detail-row">
-            <div class="detail-label">Result File</div>
-            <div class="input-wrapper">
-                <input type="file" name="result_file" class="form-control">
-                @if ($progress->result_file)
-                    <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
-                        <i class="fas fa-file-lines"></i> {{ basename($progress->result_file) }}
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
-
-        <div class="detail-row">
-            <div class="detail-label">Score</div>
-            <div class="input-wrapper">
-                <input type="text" name="score" class="form-control" value="{{ old('score', $progress->score) }}">
-            </div>
-        </div>
-
-        {{-- Slik Recap only for HC Interview --}}
-        @if ($stage === 'hc_interview')
+        {{-- General Knowledge Test dan Computer Skills Test --}}
+@if (in_array($stage, ['general_knowledge_test', 'computer_skills_test']))
+    {{-- Hanya tampilkan SLIK untuk general_knowledge_test --}}
+    @if ($stage === 'general_knowledge_test')
         <div class="detail-row">
             <div class="detail-label">Slik Recap</div>
             <div class="input-wrapper">
-                <input type="text" name="slik_recap" class="form-control" value="{{ old('slik_recap', $progress->slik_recap) }}">
+                <input type="text" name="slik_recap" class="form-control"
+                    value="{{ old('slik_recap', $progress->slik_recap) }}">
             </div>
         </div>
-        @endif
+    @endif
 
+    <div class="detail-row">
+        <div class="detail-label">Test Result</div>
+        <div class="input-wrapper">
+            <textarea name="test_result" class="form-control">{{ old('test_result', $progress->test_result) }}</textarea>
+        </div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Score</div>
+        <div class="input-wrapper">
+            <input type="text" name="score" class="form-control" value="{{ old('score', $progress->score) }}">
+        </div>
+    </div>
+
+    <div class="detail-row">
+        <div class="detail-label">Result File</div>
+        <div class="input-wrapper">
+            <input type="file" name="result_file" class="form-control">
+            @if ($progress->result_file)
+                <a href="{{ asset('storage/' . $progress->result_file) }}" target="_blank" class="file-link">
+                    <i class="fas fa-file-lines"></i> {{ basename($progress->result_file) }}
+                </a>
+            @endif
+        </div>
+    </div>
+@endif
+
+        {{-- Buttons --}}
         <div class="action-buttons">
             <a href="{{ route('recruitment.stage.show', [$applicant->id, $stage]) }}" class="btn-cancel">Cancel</a>
             <button type="submit" class="btn-submit">Submit</button>
@@ -212,7 +213,6 @@
         const rejectedReasonWrapper = document.getElementById('rejected_reason_wrapper');
         const statusDateInput = document.getElementById('status_date');
 
-        // Simpan nilai awal
         const initialStatus = statusSelect.value;
         const initialDate = statusDateInput.value;
 
@@ -222,7 +222,6 @@
 
         function handleStatusChange() {
             toggleRejectedReason();
-
             if (statusSelect.value !== initialStatus) {
                 statusDateInput.value = '';
             } else {
@@ -231,7 +230,7 @@
         }
 
         statusSelect.addEventListener('change', handleStatusChange);
-        toggleRejectedReason(); // jalankan sekali di awal
+        toggleRejectedReason();
     });
 </script>
 @endpush

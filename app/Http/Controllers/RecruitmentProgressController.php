@@ -12,17 +12,16 @@ use Illuminate\Support\Str;
 class RecruitmentProgressController extends Controller
 {
     private array $stages = [
-        'cv_screening',
         'general_knowledge_test',
-        'user_assessment',
+        'computer_skills_test',
         'hc_interview',
+        'user_assessment',
         'bod_interview',
         'offering_letter',
     ];
 
     public function show(Applicant $applicant)
     {
-        // 🔒 Batasi akses divisi
         $this->authorizeDivisionAccess($applicant);
 
         $applicant->load('recruitmentProgresses');
@@ -69,8 +68,9 @@ class RecruitmentProgressController extends Controller
         $allProgress = RecruitmentProgress::where('applicant_id', $applicant->id)->get()->keyBy('stage');
         $currentProgress = $allProgress[$stage] ?? null;
 
-        $cvProgress = $allProgress['cv_screening'] ?? null;
-        $contractType = optional($cvProgress)->contract_type;
+        // Ambil contract_type dari general_knowledge_test agar bisa tampil di semua stage
+        $generalTest = $allProgress['general_knowledge_test'] ?? null;
+        $contractType = optional($generalTest)->contract_type;
 
         return view('recruitment_progress.stage', [
             'applicant' => $applicant,
@@ -92,7 +92,7 @@ class RecruitmentProgressController extends Controller
             abort(403, 'Anda tidak memiliki izin untuk mengakses tahap ini.');
         }
 
-        // Pastikan tahap sebelumnya accepted
+        // Validasi bahwa tahap sebelumnya sudah accepted
         $currentIndex = array_search($stage, $this->stages);
         if ($currentIndex > 0) {
             $previousStage = $this->stages[$currentIndex - 1];
@@ -110,11 +110,12 @@ class RecruitmentProgressController extends Controller
             'stage' => $stage
         ]);
 
-        $cvProgress = RecruitmentProgress::where('applicant_id', $applicant->id)
-            ->where('stage', 'cv_screening')
+        // Ambil contract_type dari general_knowledge_test agar bisa tampil di stage lain
+        $generalTest = RecruitmentProgress::where('applicant_id', $applicant->id)
+            ->where('stage', 'general_knowledge_test')
             ->first();
 
-        $contractType = optional($cvProgress)->contract_type;
+        $contractType = optional($generalTest)->contract_type;
 
         return view('recruitment_progress.edit', compact('applicant', 'progress', 'stage', 'contractType'));
     }
@@ -142,20 +143,27 @@ class RecruitmentProgressController extends Controller
             abort(403, 'Anda tidak memiliki izin untuk memperbarui tahap ini.');
         }
 
+        // Upload file result jika ada
         if ($request->hasFile('result_file')) {
             $file = $request->file('result_file');
             $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $validated['result_file'] = $file->storeAs('result_files', $filename, 'public');
         }
 
-        if ($stage !== 'cv_screening') {
-            $cvScreening = RecruitmentProgress::where('applicant_id', $applicant->id)
-                ->where('stage', 'cv_screening')
+        // 🔹 Field khusus hanya untuk general_knowledge_test dan computer_skills_test
+        if (!in_array($stage, ['general_knowledge_test', 'computer_skills_test'])) {
+            $generalTest = RecruitmentProgress::where('applicant_id', $applicant->id)
+                ->where('stage', 'general_knowledge_test')
                 ->first();
-            $validated['contract_type'] = optional($cvScreening)->contract_type;
+
+            $validated['contract_type'] = optional($generalTest)->contract_type;
+
+            // Hilangkan field khusus general test
+            unset($validated['slik_recap'], $validated['test_result'], $validated['score']);
         }
 
-        if ($stage !== 'hc_interview') {
+        // 🔸 Untuk computer_skills_test, tidak ada field 'slik_recap'
+        if ($stage === 'computer_skills_test') {
             unset($validated['slik_recap']);
         }
 
@@ -164,7 +172,7 @@ class RecruitmentProgressController extends Controller
             array_merge($validated, ['applicant_id' => $applicant->id])
         );
 
-        // Notifikasi ke role tahap berikut
+        // 🔔 Kirim notifikasi ke stage berikutnya
         $nextStage = $this->getNextStage($stage);
         if ($nextStage) {
             $receivers = User::whereIn('role', $this->getStageRoles($nextStage))->get();
@@ -180,10 +188,10 @@ class RecruitmentProgressController extends Controller
     private function canEditStage(string $stage, string $role, ?Applicant $applicant = null): bool
     {
         $permissions = [
-            'cv_screening' => ['superadmin', 'hc'],
             'general_knowledge_test' => ['superadmin', 'hc'],
-            'user_assessment' => ['superadmin', 'manager', 'section_head'],
+            'computer_skills_test' => ['superadmin', 'hc'],
             'hc_interview' => ['superadmin', 'hc'],
+            'user_assessment' => ['superadmin', 'manager', 'section_head'],
             'bod_interview' => ['superadmin', 'direksi'],
             'offering_letter' => ['superadmin', 'hc'],
         ];
@@ -192,10 +200,10 @@ class RecruitmentProgressController extends Controller
             return false;
         }
 
-        // 🔒 Khusus user_assessment → interviewer yang bersangkutan
+        // 🔒 Hanya interviewer yang sesuai untuk user_assessment
         if ($stage === 'user_assessment' && in_array($role, ['manager', 'section_head']) && $applicant) {
             $interview = $applicant->interviewSchedules()
-                ->where('interviewer_id', auth()->id()) // hanya filter ini (tanpa 'stage' karena kolomnya tidak ada)
+                ->where('interviewer_id', auth()->id())
                 ->first();
 
             return (bool) $interview;
@@ -208,7 +216,6 @@ class RecruitmentProgressController extends Controller
     {
         $user = auth()->user();
 
-        // Hanya manager/section head yang dibatasi per divisi
         if (in_array($user->role, ['manager', 'section_head'])) {
             $userDivisionId = optional($user->employee)->division_id;
             if ($applicant->division_id !== $userDivisionId) {
@@ -226,10 +233,10 @@ class RecruitmentProgressController extends Controller
     private function getStageRoles($stage)
     {
         $permissions = [
-            'cv_screening' => ['superadmin', 'hc'],
             'general_knowledge_test' => ['superadmin', 'hc'],
-            'user_assessment' => ['superadmin', 'manager', 'section_head'],
+            'computer_skills_test' => ['superadmin', 'hc'],
             'hc_interview' => ['superadmin', 'hc'],
+            'user_assessment' => ['superadmin', 'manager', 'section_head'],
             'bod_interview' => ['superadmin', 'direksi'],
             'offering_letter' => ['superadmin', 'hc'],
         ];
