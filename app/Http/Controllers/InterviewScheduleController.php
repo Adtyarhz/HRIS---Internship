@@ -49,16 +49,26 @@ class InterviewScheduleController extends Controller
     $user = Auth::user();
     $role = $user->role;
 
-    // Ambil semua jadwal interview
-    $schedules = InterviewSchedule::with(['applicant', 'interviewer'])
-        ->orderBy('interview_date', 'asc')
-        ->get();
+    // Base query untuk ambil jadwal interview
+    $query = InterviewSchedule::with(['applicant', 'interviewer'])
+        ->orderBy('interview_date', 'asc');
 
-    // Format event untuk kalender
+    // 🔒 Filter akses:
+    // Hanya superadmin & hc yang bisa lihat semua jadwal
+    if (!in_array($role, ['superadmin', 'hc'])) {
+        // Role lain (direksi, manager, section head) hanya lihat jadwal interview miliknya
+        $query->whereHas('interviewer', function ($q) use ($user) {
+            $q->where('id', $user->id);
+        });
+    }
+
+    $schedules = $query->get();
+
+    // Format untuk kalender
     $events = $schedules->map(function ($item) {
         return [
-            'id' => $item->id, // WAJIB untuk FullCalendar
-            'title' => $item->applicant?->full_name ?? '-' . ' (' . ($item->interview_type ?? '-') . ')',
+            'id' => $item->id,
+            'title' => ($item->applicant?->full_name ?? '-') . ' (' . ($item->interview_type ?? '-') . ')',
             'start' => $item->interview_date,
             'interviewer' => $item->interviewer?->name ?? '-',
             'location' => $item->location,
@@ -68,36 +78,25 @@ class InterviewScheduleController extends Controller
         ];
     });
 
-    // Ambil jadwal 7 hari ke depan
-    $upcomingSchedules = InterviewSchedule::with(['applicant', 'interviewer'])
+    // 🔜 Filter jadwal 7 hari ke depan juga pakai aturan akses yang sama
+    $upcomingQuery = InterviewSchedule::with(['applicant', 'interviewer'])
         ->whereBetween('interview_date', [now(), now()->addDays(7)])
-        ->orderBy('interview_date', 'asc')
-        ->get();
+        ->orderBy('interview_date', 'asc');
 
-    // Hanya superadmin & hc bisa tambah interview
+    if (!in_array($role, ['superadmin', 'hc'])) {
+        $upcomingQuery->whereHas('interviewer', function ($q) use ($user) {
+            $q->where('id', $user->id);
+        });
+    }
+
+    $upcomingSchedules = $upcomingQuery->get();
+
+    // 🧩 Hanya superadmin & hc yang boleh menambah interview
     $canAddInterview = in_array($role, ['superadmin', 'hc']);
 
     return view('interview_schedule.index', compact('events', 'upcomingSchedules', 'canAddInterview'));
 }
 
-
-   public function create()
-{
-    $this->authorizeAccessByRole('create');
-
-    // Ambil semua applicant untuk dropdown
-    $applicants = Applicant::all();
-    $hcInterviewers = User::whereIn('role', ['hc', 'superadmin'])->get();
-    $direksiInterviewers = User::where('role', 'direksi')->get();
-    $userInterviewers = User::whereIn('role', ['manager', 'section_head'])->get();
-
-    return view('interview_schedule.create', [
-        'applicants' => $applicants,
-        'hcInterviewers' => $hcInterviewers,
-        'direksiInterviewers' => $direksiInterviewers,
-        'userInterviewers' => $userInterviewers, 
-    ]);
-}
 
 public function getInterviewersByApplicant(Request $request)
 {

@@ -149,7 +149,7 @@
     .btn-export span {
         font-size: 0.95rem;
     }
-    
+
         .applicant-table {
             width: 100%;
             border-collapse: collapse;
@@ -236,13 +236,15 @@
                                 <i class="fas fa-filter"></i> Filter
                             </button>
 
-                            {{-- 🔽 Tombol Export CSV --}}
-                            <a href="{{ route('applicants.export.csv', ['division_id' => request('division_id')]) }}"
-                            class="btn-export"
-                            title="Export Recruitment Report (CSV)">
-                            <i class="bi bi-file-earmark-spreadsheet"></i>
-                            <span>Report</span>
-                            </a>
+                            {{-- 🔽 Tombol Export CSV (hanya untuk HC & Superadmin) --}}
+                            @if(auth()->user()->role === 'hc' || auth()->user()->role === 'superadmin')
+                                <a href="{{ route('applicants.export.csv', ['division_id' => request('division_id')]) }}"
+                                class="btn-export"
+                                title="Export Recruitment Report (CSV)">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                <span>Report</span>
+                                </a>
+                            @endif
                             <a href="{{ route('applicants.index') }}" class="btn-reset" id="filter-reset">Reset</a>
 
                             @if(auth()->user()->role === 'superadmin')
