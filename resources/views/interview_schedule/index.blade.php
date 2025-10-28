@@ -70,13 +70,20 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
-                <p><strong>Applicant:</strong> <span id="modalApplicant"></span></p>
-                <p><strong>Type:</strong> <span id="modalType"></span></p>
-                <p><strong>Date:</strong> <span id="modalDate"></span></p>
-                <p><strong>Interviewer:</strong> <span id="modalInterviewer"></span></p>
-                <p><strong>Location:</strong> <span id="modalLocation"></span></p>
-            </div>
+            <div class="modal-body" id="modalBody">
+    <p class="modal-field" id="fieldApplicant"><strong>Applicant:</strong> <span id="modalApplicant"></span></p>
+    <p class="modal-field" id="fieldType"><strong>Type:</strong> <span id="modalType"></span></p>
+    <p class="modal-field" id="fieldDate"><strong>Date:</strong> <span id="modalDate"></span></p>
+    <p class="modal-field" id="fieldInterviewer"><strong>Interviewer:</strong> <span id="modalInterviewer"></span></p>
+    <p class="modal-field" id="fieldLocationType"><strong>Location Type:</strong> <span id="modalLocationType"></span></p>
+    <p class="modal-field" id="fieldLocation"><strong>Location:</strong> <span id="modalLocation"></span></p>
+    <p class="modal-field" id="fieldMeetingLink" style="display: none;">
+    <strong>Meeting Link:</strong>
+    <a id="modalMeetingLink" href="#" target="_blank" title="Click the URL"
+       style="color:#007bff; text-decoration:underline; cursor:pointer;"></a>
+</p>
+    <p class="modal-field" id="fieldDescription"><strong>Description:</strong> <span id="modalDescription"></span></p>
+</div>
 
             <div class="modal-footer">
                 {{-- ✏️ Tombol Edit hanya untuk role hc & superadmin --}}
@@ -107,7 +114,12 @@
     <h3>Upcoming Interviews (Next 7 Days)</h3>
     @forelse ($upcomingSchedules as $schedule)
         <div class="week-item">
-            <h5>{{ $schedule->applicant?->full_name ?? '-' }} ({{ $schedule->interview_type ?? '-' }})</h5>
+            <h5><a href="{{ route('interview-schedule.show', [$schedule->applicant_id, $schedule->id]) }}" 
+                   class="text-decoration-none text-dark"
+                   style="cursor: pointer;">
+                    {{ $schedule->applicant?->full_name ?? '-' }}
+                    ({{ $schedule->interview_type ?? '-' }})
+                </a></h5>
             <small>
                 📅 {{ \Carbon\Carbon::parse($schedule->interview_date)->format('d M Y, H:i') }} — 
                 👤 {{ $schedule->interviewer?->name ?? '-' }} — 
@@ -142,30 +154,70 @@ document.addEventListener('DOMContentLoaded', function() {
         hour12: false
     },
     eventClick: function(info) {
-        const e = info.event;
+    const e = info.event;
 
-        // Format waktu dalam 24 jam
-        const date = new Date(e.start);
-        const formattedDate = date.toLocaleString('id-ID', {
-            dateStyle: 'full',
-            timeStyle: 'short',
-            hour12: false
-        });
+    // Format tanggal ke format lokal Indonesia
+    const date = new Date(e.start);
+    const formattedDate = date.toLocaleString('id-ID', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+        hour12: false
+    });
 
-        document.getElementById('modalApplicant').textContent = e.title;
-        document.getElementById('modalType').textContent = e.extendedProps.type ?? '-';
-        document.getElementById('modalDate').textContent = formattedDate;
-        document.getElementById('modalInterviewer').textContent = e.extendedProps.interviewer ?? '-';
-        document.getElementById('modalLocation').textContent = e.extendedProps.location ?? '-';
+    // Ambil data dari extendedProps
+    const props = e.extendedProps || {};
+    const fields = {
+        applicant: e.title,
+        type: props.type,
+        date: formattedDate,
+        interviewer: props.interviewer,
+        locationType: props.location_type,
+        location: props.location,
+        meetingLink: props.meeting_link,
+        description: props.description
+    };
 
-        const editButton = document.getElementById('editButton');
-        const deleteForm = document.getElementById('deleteForm');
+    // Mapping elemen DOM
+    const elements = {
+        applicant: document.getElementById('modalApplicant'),
+        type: document.getElementById('modalType'),
+        date: document.getElementById('modalDate'),
+        interviewer: document.getElementById('modalInterviewer'),
+        locationType: document.getElementById('modalLocationType'),
+        location: document.getElementById('modalLocation'),
+        meetingLink: document.getElementById('modalMeetingLink'),
+        description: document.getElementById('modalDescription')
+    };
 
-        if (editButton) editButton.href = editRouteTemplate.replace(':id', e.id);
-        if (deleteForm) deleteForm.action = deleteRouteTemplate.replace(':id', e.id);
+    // Reset tampilan
+    document.querySelectorAll('.modal-field').forEach(f => f.style.display = 'none');
 
-        new bootstrap.Modal(document.getElementById('eventModal')).show();
+    // Isi field satu per satu, hanya tampilkan jika ada datanya
+    for (const key in fields) {
+        const value = fields[key];
+        const fieldEl = document.getElementById(`field${key.charAt(0).toUpperCase() + key.slice(1)}`);
+        if (!fieldEl) continue;
+
+        if (value && value.trim() !== '') {
+            fieldEl.style.display = 'block';
+
+            if (key === 'meetingLink') {
+                elements.meetingLink.textContent = value;
+                elements.meetingLink.href = value.startsWith('http') ? value : `https://${value}`;
+            } else {
+                elements[key].textContent = value;
+            }
+        }
     }
+
+    // Update tombol edit dan delete
+    const editButton = document.getElementById('editButton');
+    const deleteForm = document.getElementById('deleteForm');
+    if (editButton) editButton.href = editRouteTemplate.replace(':id', e.id);
+    if (deleteForm) deleteForm.action = deleteRouteTemplate.replace(':id', e.id);
+
+    new bootstrap.Modal(document.getElementById('eventModal')).show();
+}
 });
 
     calendar.render();

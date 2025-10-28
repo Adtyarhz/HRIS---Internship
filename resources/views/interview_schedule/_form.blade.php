@@ -80,17 +80,30 @@
 </div>
 
 
-    {{-- Location --}}
+     {{-- Location --}}
     <div class="detail-row">
         <div class="detail-label">Location</div>
         <div class="input-wrapper">
-            <input type="text" name="location" class="form-control input-large"
-                value="{{ old('location', $schedule->location ?? '') }}" required>
+            <select name="location" id="location" class="form-control input-small" required>
+                <option value="">-- Select Location Type --</option>
+                <option value="onsite" {{ old('location', $schedule->location ?? '') == 'onsite' ? 'selected' : '' }}>Onsite</option>
+                <option value="online" {{ old('location', $schedule->location ?? '') == 'online' ? 'selected' : '' }}>Online</option>
+            </select>
+        </div>
+    </div>
+    {{-- Meeting Link (for Online) --}}
+    <div class="detail-row" id="meeting_link_wrapper" style="display: none;">
+        <div class="detail-label">Meeting Link</div>
+        <div class="input-wrapper">
+            <input type="url" name="meeting_link" id="meeting_link" class="form-control input-large"
+                placeholder="https://zoom.us/..." 
+                value="{{ old('meeting_link', $schedule->meeting_link ?? '') }}">
+            <small class="text-muted">Enter valid URL (Zoom/Google Meet link)</small>
         </div>
     </div>
 
     {{-- Description --}}
-    <div class="detail-row">
+    <div class="detail-row" id="description_wrapper">
         <div class="detail-label">Description</div>
         <div class="input-wrapper">
             <textarea name="result" class="form-control input-large" rows="3">{{ old('result', $schedule->result ?? '') }}</textarea>
@@ -113,6 +126,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const typeSelect = document.getElementById('interview_type');
     const interviewerSelect = document.getElementById('interviewer_id');
+    const locationSelect = document.getElementById('location');
+    const meetingLinkWrapper = document.getElementById('meeting_link_wrapper');
+    const descriptionWrapper = document.getElementById('description_wrapper');
 
     function filterInterviewers() {
         const selectedType = typeSelect.value;
@@ -129,9 +145,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+    // === Fungsi tampilkan Meeting Link jika Online ===
+    function toggleMeetingLink() {
+        if (locationSelect.value === 'online') {
+            meetingLinkWrapper.style.display = 'flex';
+        } else {
+            meetingLinkWrapper.style.display = 'none';
+        }
+    }
 
+     // === Event listeners ===
     typeSelect.addEventListener('change', filterInterviewers);
-    filterInterviewers(); // jalankan saat load awal
+    locationSelect.addEventListener('change', toggleMeetingLink);
+
+    // === Jalankan saat halaman pertama kali dibuka ===
+    filterInterviewers();
+    toggleMeetingLink();
 });
 </script>
 @endpush

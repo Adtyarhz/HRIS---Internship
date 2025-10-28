@@ -120,6 +120,36 @@
             align-items: center;
         }
 
+         .btn-export {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.25s ease-in-out;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-export:hover {
+        background: linear-gradient(135deg, #27ae60, #219150);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .btn-export i {
+        font-size: 1.2rem;
+    }
+
+    .btn-export span {
+        font-size: 0.95rem;
+    }
+
         .applicant-table {
             width: 100%;
             border-collapse: collapse;
@@ -206,6 +236,15 @@
                                 <i class="fas fa-filter"></i> Filter
                             </button>
 
+                            {{-- 🔽 Tombol Export CSV (hanya untuk HC & Superadmin) --}}
+                            @if(auth()->user()->role === 'hc' || auth()->user()->role === 'superadmin')
+                                <a href="{{ route('applicants.export.csv', ['division_id' => request('division_id')]) }}"
+                                class="btn-export"
+                                title="Export Recruitment Report (CSV)">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                <span>Report</span>
+                                </a>
+                            @endif
                             <a href="{{ route('applicants.index') }}" class="btn-reset" id="filter-reset">Reset</a>
 
                             @if(auth()->user()->role === 'superadmin')
@@ -232,8 +271,8 @@
                                     <label for="stage">Recruitment Stage</label>
                                     <select name="stage" id="stage" onchange="this.form.submit()">
                                         <option value="">-- Filter by Current Stage --</option>
-                                        <option value="cv_screening" {{ request('stage') == 'cv_screening' ? 'selected' : '' }}>CV Screening</option>
                                         <option value="general_knowledge_test" {{ request('stage') == 'general_knowledge_test' ? 'selected' : '' }}>General Knowledge Test</option>
+                                        <option value="computer_skills_test" {{ request('stage') == 'computer_skills_test' ? 'selected' : '' }}>Computer Skills Test</option>
                                         <option value="user_assessment" {{ request('stage') == 'user_assessment' ? 'selected' : '' }}>User Assessment</option>
                                         <option value="hc_interview" {{ request('stage') == 'hc_interview' ? 'selected' : '' }}>HC Interview</option>
                                         <option value="bod_interview" {{ request('stage') == 'bod_interview' ? 'selected' : '' }}>BOD Interview</option>

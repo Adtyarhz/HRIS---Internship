@@ -16,6 +16,7 @@ class InterviewSchedule extends Model
         'interview_date',
         'interviewer_id',
         'location',
+        'meeting_link',
         'result',
     ];
 
