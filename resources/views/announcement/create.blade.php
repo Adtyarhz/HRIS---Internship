@@ -302,7 +302,7 @@
     <div id="external-links-container" style="flex: 1;">
         {{-- Input pertama --}}
         <div class="d-flex mb-2 external-link-item">
-            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com" required>
+            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com">
             <button type="button" class="btn btn-danger btn-sm ms-2 remove-link" style="display:none;">Hapus</button>
         </div>
     </div>
@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const newInput = document.createElement('div');
         newInput.classList.add('d-flex', 'mb-2', 'external-link-item');
         newInput.innerHTML = `
-            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com" required>
+            <input type="url" name="external_link[]" class="form-control" placeholder="https://contoh.com">
             <button type="button" class="btn btn-danger btn-sm ms-2 remove-link">Hapus</button>
         `;
         container.appendChild(newInput);

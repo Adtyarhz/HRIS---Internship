@@ -122,7 +122,23 @@ public function getInterviewersByApplicant(Request $request)
 
     return response()->json($userInterviewers);
 }
+    public function create()
+{
+    $this->authorizeAccessByRole('create');
 
+    // Ambil semua applicant untuk dropdown
+    $applicants = Applicant::all();
+    $hcInterviewers = User::whereIn('role', ['hc', 'superadmin'])->get();
+    $direksiInterviewers = User::where('role', 'direksi')->get();
+    $userInterviewers = User::whereIn('role', ['manager', 'section_head'])->get();
+
+    return view('interview_schedule.create', [
+        'applicants' => $applicants,
+        'hcInterviewers' => $hcInterviewers,
+        'direksiInterviewers' => $direksiInterviewers,
+        'userInterviewers' => $userInterviewers, 
+    ]);
+}
 
     public function store(Request $request)
 {

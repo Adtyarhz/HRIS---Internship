@@ -46,7 +46,7 @@ class PollingController extends Controller
             ->exists();
 
         if ($sudahVote) {
-            return back()->with('error', 'Anda sudah memberikan suara pada polling ini.');
+            return back()->with('error', 'You have already voted on this poll.');
         }
 
         // Simpan suara
@@ -55,7 +55,7 @@ class PollingController extends Controller
             'polling_option_id' => $request->polling_option_id,
         ]);
 
-        return back()->with('success', 'Terima kasih, suara Anda telah direkam.');
+        return back()->with('success', 'Thank you, your voice has been recorded.');
     }
 
     public function export($id)
