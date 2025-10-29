@@ -279,7 +279,7 @@
                         <td>{{ $announcement->label }}</td>
                         <td>
                             @if (!empty($announcement->attachment_file))
-                                <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
+                                <a href="{{ asset('storage/' . $announcement->attachment_file) }}" 
                                    class="btn-detail" target="_blank" title="Click here to view the attachment">
                                     <i class="fas fa-file-pdf"></i> View File
                                 </a>

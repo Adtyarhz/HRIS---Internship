@@ -299,6 +299,8 @@ Route::middleware('auth')->group(function () {
     // Polling - Semua user yang login bisa vote
     Route::post('/polling/{polling}/vote', [PollingController::class, 'vote'])->name('polling.vote');
     Route::post('/announcements/{id}/vote', [AnnouncementController::class, 'vote'])->name('announcement.vote');
+    Route::post('/polling/{id}/end', [PollingController::class, 'endNow'])->name('polling.endNow');
+
 
     // === EMPLOYEE EDIT REQUEST - Only HC & SUPERADMIN ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {

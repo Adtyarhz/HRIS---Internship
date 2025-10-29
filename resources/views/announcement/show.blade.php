@@ -165,7 +165,7 @@ if ($isPolling && $polling) {
                 <div style="min-width: 130px; font-weight: 600">Attachment</div>
                 <div>
                     @if ($announcement->attachment_file)
-                        <a href="{{ asset('storage/announcement/' . $announcement->attachment_file) }}" 
+                        <a href="{{ asset('storage/' . $announcement->attachment_file) }}" 
                         target="_blank"
                         title="Click here to view the attachment">Lihat File</a>
                     @else
