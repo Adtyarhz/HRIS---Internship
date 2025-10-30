@@ -10,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\EmployeeImport;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -21,25 +20,30 @@ class ImportEmployeesJob implements ShouldQueue
     protected $filePath;
     protected $importId;
 
-    public function __construct($filePath)
+    public function __construct($filePath, $importId)
     {
         $this->filePath = $filePath;
-        $this->importId = Str::uuid();
+        $this->importId = $importId;
     }
 
     public function handle()
     {
+        $fullPath = storage_path('app/' . $this->filePath);
+
+        if (!file_exists($fullPath)) {
+            \Log::error("File import hilang saat queue: {$this->filePath}");
+            return;
+        }
+
         try {
             DB::beginTransaction();
-            Excel::import(new EmployeeImport($this->importId), storage_path('app/' . $this->filePath));
+            Excel::import(new EmployeeImport($this->importId), $fullPath);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log error atau notify user
-            Log::error('Import failed: ' . $e->getMessage());
+            \Log::error('Import queue gagal: ' . $e->getMessage());
         } finally {
-            // Hapus file sementara
-            Storage::delete($this->filePath);
+            @unlink($fullPath); // Hapus langsung dari filesystem
         }
     }
 

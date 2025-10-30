@@ -6,7 +6,6 @@ use App\Models\Employee;
 use App\Models\Position;
 use App\Services\ApprovalWorkflowService;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -14,79 +13,62 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\BeforeImport;
-use Illuminate\Support\Facades\Broadcast;
-use App\Events\ImportProgressUpdated;
 
-class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, WithChunkReading, WithEvents
+class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, WithChunkReading
 {
     protected $importId;
-    protected $totalRows = 0;
-    protected $processedRows = 0;
 
     public function __construct($importId)
     {
         $this->importId = $importId;
     }
 
-    public function registerEvents(): array
-    {
-        return [
-            BeforeImport::class => function (BeforeImport $event) {
-                $worksheet = $event->reader->getActiveSheet();
-                $this->totalRows = $worksheet->getHighestRow() - 1; // Kurangi header
-                $this->updateProgress(0);
-            },
-        ];
-    }
-
     public function model(array $row)
     {
         $user = Auth::user();
+
+        // CAST SEMUA FIELD AGAR SESUAI VALIDASI CONTROLLER
         $data = [
-            'nik' => $row['nik'],
-            'full_name' => $row['full_name'],
-            'nip' => $row['nip'] ?? null,
-            'npwp' => $row['npwp'] ?? null,
-            'gender' => $row['gender'],
-            'religion' => $row['religion'],
-            'birth_place' => $row['birth_place'],
+            'nik' => (string) ($row['nik'] ?? ''),
+            'full_name' => (string) ($row['full_name'] ?? ''),
+            'nip' => !empty($row['nip']) ? (string) $row['nip'] : null,
+            'npwp' => !empty($row['npwp']) ? (string) $row['npwp'] : null,
+            'gender' => (string) ($row['gender'] ?? ''),
+            'religion' => (string) ($row['religion'] ?? ''),
+            'birth_place' => (string) ($row['birth_place'] ?? ''),
             'birth_date' => $row['birth_date'] ? Carbon::parse($row['birth_date'])->format('Y-m-d') : null,
-            'marital_status' => $row['marital_status'],
-            'dependents' => $row['dependents'],
-            'ktp_address' => $row['ktp_address'],
-            'current_address' => $row['current_address'],
-            'phone_number' => $row['phone_number'],
-            'email' => $row['email'],
-            'status' => $row['status'],
-            'employee_type' => $row['employee_type'],
-            'office' => $row['office'] ?? null,
+            'marital_status' => (string) ($row['marital_status'] ?? ''),
+            'dependents' => isset($row['dependents']) ? (int) $row['dependents'] : null, // integer
+            'ktp_address' => (string) ($row['ktp_address'] ?? ''),
+            'current_address' => (string) ($row['current_address'] ?? ''),
+            'phone_number' => (string) ($row['phone_number'] ?? ''),
+            'email' => (string) ($row['email'] ?? ''),
+            'status' => (string) ($row['status'] ?? ''),
+            'employee_type' => (string) ($row['employee_type'] ?? ''),
+            'office' => !empty($row['office']) ? (string) $row['office'] : null,
             'hire_date' => $row['hire_date'] ? Carbon::parse($row['hire_date'])->format('Y-m-d') : null,
-            'separation_date' => $row['separation_date'] ? Carbon::parse($row['separation_date'])->format('Y-m-d') : null,
-            'division_id' => $row['division_id'] ?? null,
-            'position_id' => $row['position_id'] ?? null,
-            'user_id' => $row['user_id'] ?? null,
+            'separation_date' => !empty($row['separation_date']) ? Carbon::parse($row['separation_date'])->format('Y-m-d') : null,
+            'division_id' => !empty($row['division_id']) ? (int) $row['division_id'] : null,
+            'position_id' => !empty($row['position_id']) ? (int) $row['position_id'] : null,
+            'user_id' => !empty($row['user_id']) ? (int) $row['user_id'] : null,
         ];
 
         // Auto set division dari position
         if (!empty($data['position_id'])) {
             $position = Position::find($data['position_id']);
-            $data['division_id'] = $position?->division_id ?? $data['division_id'];
+            if ($position) {
+                $data['division_id'] = $position->division_id;
+            }
         }
 
-        if ($user->role === 'hc') {
-            // Trigger approval untuk HC
+        if ($user && $user->role === 'hc') {
             $tempEmployee = new Employee($data);
             ApprovalWorkflowService::captureModelChange($user, $tempEmployee, 'create');
-            $this->incrementProcessed();
             return null;
         }
 
-        // Simpan untuk superadmin
         $employee = Employee::create($data);
 
-        // Buat Career History
         if (!empty($data['position_id'])) {
             \App\Models\CareerHistory::create([
                 'employee_id' => $employee->id,
@@ -100,17 +82,19 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             ]);
         }
 
-        $this->incrementProcessed();
         return $employee;
     }
 
+    /**
+     * VALIDASI 100% SAMA DENGAN CONTROLLER
+     */
     public function rules(): array
     {
         return [
-            'nik' => 'required|string|size:16|unique:employees,nik|regex:/^[0-9]+$/',
+            'nik' => 'required|size:16|unique:employees,nik|regex:/^[0-9]+$/',
             'full_name' => 'required|string|max:100',
-            'nip' => 'nullable|string|max:20|unique:employees,nip|regex:/^[0-9]+$/',
-            'npwp' => 'nullable|string|max:20|unique:employees,npwp|regex:/^[0-9]+$/',
+            'nip' => 'nullable|max:20|unique:employees,nip|regex:/^[0-9]+$/',
+            'npwp' => 'nullable|max:20|unique:employees,npwp|regex:/^[0-9]+$/',
             'gender' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
             'religion' => 'required|string|max:50',
             'birth_place' => 'required|string|max:50',
@@ -119,7 +103,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'dependents' => 'required|integer|min:0',
             'ktp_address' => 'required|string',
             'current_address' => 'required|string',
-            'phone_number' => 'required|string|max:20|unique:employees,phone_number|regex:/^\+?[0-9]{8,20}$/',
+            'phone_number' => ['required', 'max:20', 'unique:employees,phone_number', 'regex:/^\+?[0-9]{8,20}$/'],
             'email' => 'required|email|max:100|unique:employees,email',
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
             'employee_type' => ['required', Rule::in(['PKWT', 'PKWTT', 'Probation', 'Intern'])],
@@ -135,17 +119,5 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, WithChu
     public function chunkSize(): int
     {
         return 100;
-    }
-
-    protected function incrementProcessed()
-    {
-        $this->processedRows++;
-        $progress = ($this->processedRows / $this->totalRows) * 100;
-        $this->updateProgress($progress);
-    }
-
-    protected function updateProgress($progress)
-    {
-        broadcast(new ImportProgressUpdated($this->importId, $progress));
     }
 }
