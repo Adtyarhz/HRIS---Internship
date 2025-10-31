@@ -14,6 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\CloseExpiredAssessments::class,
+        \App\Console\Commands\ImportEmployeesCommand::class,
+        \App\Console\Commands\ExportEmployeeTemplateCommand::class,
     ];
 
     /**
