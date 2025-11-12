@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class ImportEmployeesCommand extends Command
 {
-    protected $signature = 'import:employees {file_path : Path ke file Excel untuk import (xlsx, xls, csv)}';
+    protected $signature = 'import:employees {file_path : Path ke file Excel untuk import (xlsx, xls, csv)} {--sync : Jalankan import secara synchronous}';
     protected $description = 'Import data karyawan dari file Excel untuk migrasi awal';
 
     public function handle()
@@ -61,10 +61,7 @@ class ImportEmployeesCommand extends Command
 
         $importId = (string) Str::uuid();
 
-        if ($rowCount > 100) {
-            ImportEmployeesJob::dispatch($fileName, $importId);
-            $this->info("Impor besar ({$rowCount} baris) dikirim ke queue. ID: {$importId}");
-        } else {
+        if ($this->option('sync') || $rowCount <= 100) {
             try {
                 DB::beginTransaction();
                 Excel::import(new EmployeeImport($importId), $fullStoragePath);
@@ -79,6 +76,9 @@ class ImportEmployeesCommand extends Command
                 DB::rollBack();
                 $this->error('Gagal import: ' . $e->getMessage());
             }
+        } else {
+            ImportEmployeesJob::dispatch($fileName, $importId)->onQueue('default');
+            $this->info("Impor besar ({$rowCount} baris) dikirim ke queue. ID: {$importId}");
         }
 
         // 7. Selalu hapus file
