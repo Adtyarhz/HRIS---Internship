@@ -20,7 +20,7 @@
         <select id="insurance_type" class="form-control @error('insurance_type') is-invalid @enderror"
             name="insurance_type" required>
             <option value="">-- Select --</option>
-            @foreach (['KES', 'TK', 'N-BPJS'] as $type)
+            @foreach (['BPJS KESEHATAN', 'BPJS KETENAGAKERJAAN', 'ASURANSI SWASTA (N-BPJS)'] as $type)
                 <option value="{{ $type }}"
                     {{ old('insurance_type', $insurance->insurance_type ?? '') === $type ? 'selected' : '' }}>
                     {{ $type }}

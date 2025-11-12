@@ -40,7 +40,7 @@ class InsuranceController extends Controller
 
         $validated = $request->validate([
             'insurance_number' => 'required|string|max:30|unique:insurances,insurance_number',
-            'insurance_type' => 'required|in:KES,TK,N-BPJS',
+            'insurance_type' => 'required|in:BPJS KESEHATAN,BPJS KETENAGAKERJAAN,ASURANSI SWASTA (N-BPJS)',
             'faskes_name' => 'required|string|max:255',
             'faskes_address' => 'required|string|max:500',
             'start_date' => 'required|date',
@@ -137,7 +137,7 @@ class InsuranceController extends Controller
 
         $validated = $request->validate([
             'insurance_number' => 'required|string|max:30|unique:insurances,insurance_number,' . $insurance->id,
-            'insurance_type' => 'required|in:KES,TK,N-BPJS',
+            'insurance_type' => 'required|in:BPJS KESEHATAN,BPJS KETENAGAKERJAAN,ASURANSI SWASTA (N-BPJS)',
             'faskes_name' => 'required|string|max:255',
             'faskes_address' => 'required|string|max:500',
             'start_date' => 'required|date',
