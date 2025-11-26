@@ -6,9 +6,37 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Employee;
 
 class AuthApiController extends Controller
 {
+    /**
+     * Standardized API Response
+     */
+    private function apiResponse($success, $message = null, $data = null, $status = 200)
+    {
+        return response()->json([
+            'success' => $success,
+            'message' => $message,
+            'data'    => $data
+        ], $status);
+    }
+
+    /**
+     * Format user data 
+     */
+    private function formatUserData(User $user)
+    {
+        $employee = $user->employee;
+        return [
+            'email' => $user->email,
+            'name'  => $user->name,
+            'role'  => $user->role,
+            'division'  => $employee?->division?->name,
+            'position'  => $employee?->position?->title,
+        ];
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -19,21 +47,14 @@ class AuthApiController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials'
-            ], 401);
+            return $this->apiResponse(false, 'Invalid credentials', null, 401);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id'    => $user->id,
-                'email' => $user->email,
-                'name'  => $user->name,
-                'role'  => $user->role,
-            ]
-        ]);
+        return $this->apiResponse(
+            true,
+            'Login successful',
+            $this->formatUserData($user)
+        );
     }
 
     public function getUser($id)
@@ -41,28 +62,18 @@ class AuthApiController extends Controller
         $user = User::find($id);
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found'
-            ], 404);
+            return $this->apiResponse(false, 'User not found', null, 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id'    => $user->id,
-                'email' => $user->email,
-                'name'  => $user->name,
-                'role'  => $user->role
-            ]
-        ]);
+        return $this->apiResponse(
+            true,
+            'User retrieved',
+            $this->formatUserData($user)
+        );
     }
+
     public function logout(Request $request)
     {
-        // Since this is a stateless API, logout can be handled on the client side
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged out successfully'
-        ]);
+        return $this->apiResponse(true, 'Logged out successfully');
     }
 }

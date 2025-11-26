@@ -13,9 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // 🔥 Masukkan middleware ke dalam group API
-        $middleware->appendToGroup('api', [
-            \App\Http\Middleware\CorsMiddleware::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
