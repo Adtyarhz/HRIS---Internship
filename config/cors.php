@@ -4,7 +4,7 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['POST'],
 
     // Tarik dari ENV
     'allowed_origins' => [
