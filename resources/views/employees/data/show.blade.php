@@ -336,7 +336,7 @@
                                         <ul class="list-unstyled mb-0">
                                             @foreach ($certification->certificationMaterials as $index => $material)
                                                 <li>
-                                                    <a href="{{ asset('storage/' . $material->file_path) }}"
+                                                    <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}"
                                                         target="_blank">
                                                         <i class="fas fa-file-alt"></i> 
                                                         {{ Str::afterLast($material->file_path, '_') }}

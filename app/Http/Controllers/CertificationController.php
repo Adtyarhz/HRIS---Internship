@@ -390,7 +390,7 @@ class CertificationController extends Controller
                 'date_obtained' => $validatedData['date_obtained'],
                 'expiry_date' => $validatedData['expiry_date'] ?? null,
                 'cost' => $validatedData['cost'] ?? null,
-                'certificate_file' => $validatedData['certificate_file'],
+                'certificate_file' => 'certifications/' . $fileName,
             ]);
 
             if ($request->hasFile('material_files')) {

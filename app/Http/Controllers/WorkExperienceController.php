@@ -11,10 +11,25 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Services\RequestNotifierService;
 use App\Notifications\EmployeeEditRequestNotification;
-use App\Services\ApprovalWorkflowService; // <-- Ditambahkan
+use App\Services\ApprovalWorkflowService;
 
 class WorkExperienceController extends Controller
 {
+    /**
+     * Generate nama file aman + unik
+     */
+    private function storeExperienceFile($file)
+    {
+        $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $slug     = Str::slug($original);
+        $ext      = $file->getClientOriginalExtension();
+
+        // 🔥 Nama file dijamin unik
+        $filename = uniqid() . '_' . $slug . '.' . $ext;
+
+        return $file->storeAs('experience_files', $filename, 'public');
+    }
+
     public function index(Employee $employee)
     {
         $this->authorizeAccess($employee);
@@ -56,21 +71,18 @@ class WorkExperienceController extends Controller
         //-- APPROVAL LOGIC START --//
         if ($user && $user->role === 'hc') {
             $payload = $validated;
-            $payload['employee_id'] = $employee->id;
-            
+
             if ($request->hasFile('reference_letter_file')) {
-                $file = $request->file('reference_letter_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $payload['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $payload['reference_letter_file'] = $this->storeExperienceFile($request->file('reference_letter_file'));
             }
+
             if ($request->hasFile('salary_slip_file')) {
-                $file = $request->file('salary_slip_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $payload['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $payload['salary_slip_file'] = $this->storeExperienceFile($request->file('salary_slip_file'));
             }
 
             $tempModel = new WorkExperience($payload);
             ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
+
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Permintaan penambahan pengalaman kerja telah dikirim untuk approval.');
         }
@@ -80,18 +92,18 @@ class WorkExperienceController extends Controller
         DB::beginTransaction();
         try {
             if ($request->hasFile('reference_letter_file')) {
-                $file = $request->file('reference_letter_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validated['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $validated['reference_letter_file'] =
+                    $this->storeExperienceFile($request->file('reference_letter_file'));
             }
 
             if ($request->hasFile('salary_slip_file')) {
-                $file = $request->file('salary_slip_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validated['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $validated['salary_slip_file'] =
+                    $this->storeExperienceFile($request->file('salary_slip_file'));
             }
 
+            // Employee non-admin → create request
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+
                 $notifier = new RequestNotifierService();
 
                 $editRequest = $notifier->createEditRequest(
@@ -101,35 +113,32 @@ class WorkExperienceController extends Controller
                     ['employee_id' => $employee->id],
                     'create'
                 );
+
                 if (!$editRequest) {
                     DB::rollBack();
-                    if (!empty($validated['reference_letter_file'])) {
-                        Storage::disk('public')->delete($validated['reference_letter_file']);
-                    }
-                    if (!empty($validated['salary_slip_file'])) {
-                        Storage::disk('public')->delete($validated['salary_slip_file']);
-                    }
+                    Storage::disk('public')->delete($validated['reference_letter_file'] ?? null);
+                    Storage::disk('public')->delete($validated['salary_slip_file'] ?? null);
+
                     return back()->with('error', 'Failed to create work experience data request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.work-experience.index', $employee)
-                    ->with('info', 'Work experience addition request has been sent and is awaiting approval.');
+                    ->with('info', 'Work experience addition request sent for approval.');
             }
 
+            // SUPERADMIN → langsung simpan
             $employee->workExperience()->create($validated);
+
             DB::commit();
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Work experience added successfully.');
+
         } catch (\Exception $e) {
             DB::rollBack();
 
-            if (!empty($validated['reference_letter_file'])) {
-                Storage::disk('public')->delete($validated['reference_letter_file']);
-            }
-            if (!empty($validated['salary_slip_file'])) {
-                Storage::disk('public')->delete($validated['salary_slip_file']);
-            }
+            Storage::disk('public')->delete($validated['reference_letter_file'] ?? null);
+            Storage::disk('public')->delete($validated['salary_slip_file'] ?? null);
 
             return back()->with('error', 'Failed to save data: ' . $e->getMessage())->withInput();
         }
@@ -140,7 +149,7 @@ class WorkExperienceController extends Controller
         $this->authorizeAccess($employee);
 
         if ($workExperience->employee_id !== $employee->id) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         return view('employees.data.work-experience.edit', [
@@ -154,7 +163,7 @@ class WorkExperienceController extends Controller
         $this->authorizeAccess($employee);
 
         if ($workExperience->employee_id !== $employee->id) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -176,53 +185,40 @@ class WorkExperienceController extends Controller
         //-- APPROVAL LOGIC START (PERBAIKAN KONSISTENSI) --//
         if ($user && $user->role === 'hc') {
             $payload = $validated;
+
             if ($request->hasFile('reference_letter_file')) {
-                $file = $request->file('reference_letter_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $payload['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $payload['reference_letter_file'] = $this->storeExperienceFile($request->file('reference_letter_file'));
             }
             if ($request->hasFile('salary_slip_file')) {
-                $file = $request->file('salary_slip_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $payload['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
+                $payload['salary_slip_file'] = $this->storeExperienceFile($request->file('salary_slip_file'));
             }
-            
-            // Gunakan 'clone' untuk menjaga data original
+
             $tempModel = clone $workExperience;
-            // Isi clone dengan data baru
             $tempModel->fill($payload);
-            
-            // Panggil metode public `captureModelChange`
+
             ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update');
-            
+
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Permintaan perubahan pengalaman kerja telah dikirim untuk approval.');
         }
-        //-- APPROVAL LOGIC END --//
 
         // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
         DB::beginTransaction();
-
         try {
+            // Upload new file (jangan hapus file lama dulu!)
             if ($request->hasFile('reference_letter_file')) {
-                $file = $request->file('reference_letter_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validated['reference_letter_file'] = $file->storeAs('experience_files', $filename, 'public');
-                if ($workExperience->reference_letter_file) {
-                    Storage::disk('public')->delete($workExperience->reference_letter_file);
-                }
+                $validated['reference_letter_file'] =
+                    $this->storeExperienceFile($request->file('reference_letter_file'));
             }
 
             if ($request->hasFile('salary_slip_file')) {
-                $file = $request->file('salary_slip_file');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $validated['salary_slip_file'] = $file->storeAs('experience_files', $filename, 'public');
-                if ($workExperience->salary_slip_file) {
-                    Storage::disk('public')->delete($workExperience->salary_slip_file);
-                }
+                $validated['salary_slip_file'] =
+                    $this->storeExperienceFile($request->file('salary_slip_file'));
             }
 
+            // Employee non-admin → buat request approval
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+
                 $notifier = new RequestNotifierService();
 
                 $editRequest = $notifier->createEditRequest(
@@ -234,30 +230,42 @@ class WorkExperienceController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    if (!empty($validated['reference_letter_file'])) {
-                        Storage::disk('public')->delete($validated['reference_letter_file']);
-                    }
-                    if (!empty($validated['salary_slip_file'])) {
-                        Storage::disk('public')->delete($validated['salary_slip_file']);
-                    }
-                    return back()->with('error', 'Failed to create work experience update request.');
+
+                    Storage::disk('public')->delete($validated['reference_letter_file'] ?? null);
+                    Storage::disk('public')->delete($validated['salary_slip_file'] ?? null);
+
+                    return back()->with('error', 'Failed to send update request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.work-experience.index', $employee)
-                    ->with('info', 'Work experience update request has been sent and is awaiting approval.');
+                    ->with('info', 'Work experience update request sent for approval.');
             }
 
+            // SUPERADMIN → lakukan update dan hapus file lama SETELAH berhasil upload file baru
+            $oldReference = $workExperience->reference_letter_file;
+            $oldSalary    = $workExperience->salary_slip_file;
+
             $workExperience->update($validated);
-            return redirect()->route('employees.work-experience.index', $employee)->with('success', 'Work experience updated successfully.');
+
+            // Hapus file lama hanya jika ada file baru
+            if ($request->hasFile('reference_letter_file') && $oldReference) {
+                Storage::disk('public')->delete($oldReference);
+            }
+            if ($request->hasFile('salary_slip_file') && $oldSalary) {
+                Storage::disk('public')->delete($oldSalary);
+            }
+
+            DB::commit();
+            return redirect()->route('employees.work-experience.index', $employee)
+                ->with('success', 'Work experience updated successfully.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            if (!empty($validated['reference_letter_file'])) {
-                Storage::disk('public')->delete($validated['reference_letter_file']);
-            }
-            if (!empty($validated['salary_slip_file'])) {
-                Storage::disk('public')->delete($validated['salary_slip_file']);
-            }
+
+            Storage::disk('public')->delete($validated['reference_letter_file'] ?? null);
+            Storage::disk('public')->delete($validated['salary_slip_file'] ?? null);
+
             return back()->with('error', 'Failed to update data: ' . $e->getMessage())->withInput();
         }
     }
@@ -267,23 +275,24 @@ class WorkExperienceController extends Controller
         $this->authorizeAccess($employee);
 
         if ($workExperience->employee_id !== $employee->id) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $user = Auth::user();
-        
-        //-- APPROVAL LOGIC START --//
-        if ($user && $user->role === 'hc') {
+
+        // HC → hanya kirim approval
+        if ($user->role === 'hc') {
             ApprovalWorkflowService::captureModelChange($user, $workExperience, 'delete');
+
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Permintaan penghapusan pengalaman kerja telah dikirim untuk approval.');
         }
-        //-- APPROVAL LOGIC END --//
 
-        // Logika di bawah ini hanya berjalan untuk SUPERADMIN dan user non-admin
         DB::beginTransaction();
         try {
+            // Non-admin → request terlebih dahulu
             if (!in_array($user->role, ['superadmin', 'hc'])) {
+
                 $notifier = new RequestNotifierService();
 
                 $editRequest = $notifier->createEditRequest(
@@ -296,29 +305,27 @@ class WorkExperienceController extends Controller
 
                 if (!$editRequest) {
                     DB::rollBack();
-                    return back()->with('error', 'Failed to create work experience deletion request.');
+                    return back()->with('error', 'Failed to send deletion request.');
                 }
 
                 DB::commit();
                 return redirect()->route('employees.work-experience.index', $employee)
-                    ->with('info', 'Work experience deletion request has been sent and is awaiting approval.');
+                    ->with('info', 'Deletion request sent for approval.');
             }
 
-            if ($workExperience->reference_letter_file) {
-                Storage::disk('public')->delete($workExperience->reference_letter_file);
-            }
-            if ($workExperience->salary_slip_file) {
-                Storage::disk('public')->delete($workExperience->salary_slip_file);
-            }
+            // SUPERADMIN → hapus file fisik
+            Storage::disk('public')->delete($workExperience->reference_letter_file ?? null);
+            Storage::disk('public')->delete($workExperience->salary_slip_file ?? null);
 
             $workExperience->delete();
-            DB::commit();
 
+            DB::commit();
             return redirect()->route('employees.work-experience.index', $employee)
                 ->with('success', 'Work experience deleted successfully.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to delete data: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete: ' . $e->getMessage());
         }
     }
 
@@ -334,7 +341,6 @@ class WorkExperienceController extends Controller
             return true;
         }
 
-        abort(403, 'Unauthorized action.');
+        abort(403);
     }
 }
-
