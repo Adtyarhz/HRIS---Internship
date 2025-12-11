@@ -199,29 +199,33 @@
                                 </div>
 
                                 <div class="form-group row align-items-center">
-    <label for="certificate_file" class="col-md-2 col-form-label">Certificate File :</label>
-    <div class="col-md-4">
-        {{-- ✅ Tampilkan file yang sudah ada (jika ada) --}}
-        @if ($trainingHistory->certificate_file)
-            <p class="mb-2">
-                <a href="{{ asset('storage/certificates/' . $trainingHistory->certificate_file) }}" target="_blank">
-                    <i class="fas fa-file-alt"></i>
-                    {{ Str::afterLast($trainingHistory->certificate_file, '_') }}
-                </a>
-            </p>
-        @else
-            <p class="text-muted">No certificate file uploaded yet.</p>
-        @endif
+                                    <label for="certificate_file" class="col-md-2 col-form-label">Certificate File :</label>
+                                    <div class="col-md-4">
+                                        {{-- ✅ Tampilkan file yang sudah ada (jika ada) --}}
+                                        @if ($trainingHistory->certificate_file)
+                                            <p class="mb-2">
+                                                <a href="{{ asset('storage/' . $trainingHistory->certificate_file) }}"
+                                                    target="_blank">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    {{ Str::afterLast($trainingHistory->certificate_file, '_') }}
+                                                </a>
+                                            </p>
+                                        @else
+                                            <p class="text-muted">No certificate file uploaded yet.</p>
+                                        @endif
 
-        {{-- ✅ Input file baru --}}
-        <input type="file" class="form-control mt-2 @error('certificate_file') is-invalid @enderror"
-            id="certificate_file" name="certificate_file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-        <small class="form-text text-muted">Allowed types: PDF, JPG, PNG, DOC, DOCX (max 10MB).</small>
-        @error('certificate_file')
-            <span class="text-danger small mt-1">{{ $message }}</span>
-        @enderror
-    </div>
-</div>
+                                        {{-- ✅ Input file baru --}}
+                                        <input type="file"
+                                            class="form-control mt-2 @error('certificate_file') is-invalid @enderror"
+                                            id="certificate_file" name="certificate_file"
+                                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                        <small class="form-text text-muted">Allowed types: PDF, JPG, PNG, DOC, DOCX (max
+                                            10MB).</small>
+                                        @error('certificate_file')
+                                            <span class="text-danger small mt-1">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
 
                                 <div class="form-group row align-items-center">
                                     <label class="col-md-2 col-form-label">Training Record Files :</label>
@@ -230,7 +234,7 @@
                                             <ul class="existing-files">
                                                 @foreach ($trainingHistory->trainingMaterials as $material)
                                                     <li>
-                                                        <a href="{{ asset('storage/training_materials/' . $material->file_path) }}"
+                                                        <a href="{{ asset('storage/' . $material->file_path) }}"
                                                             target="_blank">
                                                             <i class="fas fa-file-alt"></i>
                                                             {{ Str::afterLast($material->file_path, '_') }}

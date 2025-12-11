@@ -260,7 +260,7 @@ class TrainingHistoryController extends Controller
                     $materialFileName = time() . '_mat_' . Str::slug(pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME))
                         . '.' . $materialFile->getClientOriginalExtension();
                     $materialFile->storeAs('training_materials', $materialFileName, 'public');
-                    $storedFiles[] = $materialFileName;
+                    $storedFiles[] = 'training_materials/' . $materialFileName;
                 }
             }
 
