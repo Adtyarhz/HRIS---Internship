@@ -1,13 +1,8 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard')
-
-@section('content_header')
-    <div style="display: flex; align-items: center; gap: 10px; font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 24px;">
-        <i class="fas fa-home" style="color: #000;"></i>
-        <span>Dashboard</span>
-    </div>
-@endsection
+@section('header_icon', 'mdi-light--home')
+@section('content_header', 'Dashboard')
 
 @section('content')
     @php

@@ -42,9 +42,9 @@
         <nav class="main-header navbar navbar-expand">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
-                <!-- Hamburger Menu Icon: Toggles the sidebar on mobile and collapses it on desktop -->
-                <li class="nav-item">
-                    <a class="nav-link custom-sidebar-toggle" data-widget="pushmenu" href="#" role="button"><i
+                <!-- Hamburger Menu Icon: Toggles the sidebar on mobile -->
+                <li class="nav-item d-lg-none">
+                    <a class="nav-link custom-sidebar-toggle" href="#" role="button"><i
                             class="fas fa-bars"></i></a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
@@ -239,7 +239,30 @@
 
     @stack('scripts')
 </body>
-<script>
+    <script>
+    $(document).ready(function() {
+        // Handle sidebar toggle for desktop (collapse/expand)
+        $('.custom-sidebar-toggle').on('click', function(e) {
+            e.preventDefault();
+            if ($(window).width() >= 992) { // Desktop
+                $('body').toggleClass('sidebar-collapse');
+            } else { // Mobile
+                $('body').toggleClass('sidebar-open');
+            }
+        });
+
+        // For mobile: close sidebar when clicking outside
+        $(document).on('click', function(e) {
+            if ($(window).width() < 992) { // Mobile
+                if (!$(e.target).closest('.main-sidebar').length &&
+                    !$(e.target).closest('.custom-sidebar-toggle').length &&
+                    $('body').hasClass('sidebar-open')) {
+                    $('body').removeClass('sidebar-open');
+                }
+            }
+        });
+    });
+
     function showDeletePopup(id) {
         const modal = new bootstrap.Modal(document.getElementById('deletePopup-' + id));
         modal.show();

@@ -17,42 +17,37 @@
                 Employee Detail : {{ $employee->full_name }}
             </h1>
             <div class="page-header-actions d-flex justify-content-between align-items-center">
-            {{-- Back to List hanya untuk superadmin --}}
-            @if(in_array(Auth::user()->role, ['superadmin','hc']))
-                <a href="{{ route('employees.index') }}" class="action-button btn-back">
-                    <i class="fas fa-arrow-left"></i> Back to List
-                </a>
-            @else
-                {{-- Tambahkan elemen kosong agar space-between tetap bekerja --}}
-                <div></div>
-            @endif
-
-            <div class="right-actions d-flex gap-2">
-                <!-- Tombol Deactive -->
-                @if(in_array(Auth::user()->role, ['superadmin','hc']))
-                    <a href="{{ route('employees.deactivate.form', $employee) }}" class="action-button btn-deactivet-data">
-                        <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
+                {{-- Back to List hanya untuk superadmin --}}
+                @if(in_array(Auth::user()->role, ['superadmin', 'hc']))
+                    <a href="{{ route('employees.index') }}" class="action-button btn-back">
+                        <i class="fas fa-arrow-left"></i> Back to List
                     </a>
                 @else
+                    {{-- Tambahkan elemen kosong agar space-between tetap bekerja --}}
                     <div></div>
                 @endif
-                <!-- Modal Deactive -->
-                {{-- <x-delete-modal 
-                    modalId="deactivate-employee-{{ $employee->id }}" 
-                    :action="route('employees.deactivate', $employee)" 
-                    method="POST" 
-                    title="Deactive Confirmation"
-                    message="Are you sure you want to deactivate this employee?" 
-                    iconClass="tab-close-inactive"
-                /> --}}
-                <a href="{{ route('employees.edit', $employee) }}" class="action-button btn-edit-data">
-                    <i class="fas fa-edit"></i> Edit Employee Data
-                </a>
-                <a href="{{ route('employees.data.edit_login', $employee->id) }}" class="action-button btn-edit-login">
-                    <i class="fas fa-user-cog"></i> Edit Login Account
-                </a>
+
+                <div class="right-actions d-flex gap-2">
+                    <!-- Tombol Deactive -->
+                    @if(in_array(Auth::user()->role, ['superadmin', 'hc']))
+                        <a href="{{ route('employees.deactivate.form', $employee) }}" class="action-button btn-deactivet-data">
+                            <span class="material-symbols--tab-close-inactive"></span> Deactive Employee
+                        </a>
+                    @else
+                        <div></div>
+                    @endif
+                    <!-- Modal Deactive -->
+                    {{-- <x-delete-modal modalId="deactivate-employee-{{ $employee->id }}"
+                        :action="route('employees.deactivate', $employee)" method="POST" title="Deactive Confirmation"
+                        message="Are you sure you want to deactivate this employee?" iconClass="tab-close-inactive" /> --}}
+                    <a href="{{ route('employees.edit', $employee) }}" class="action-button btn-edit-data">
+                        <i class="fas fa-edit"></i> Edit Employee Data
+                    </a>
+                    <a href="{{ route('employees.data.edit_login', $employee->id) }}" class="action-button btn-edit-login">
+                        <i class="fas fa-user-cog"></i> Edit Login Account
+                    </a>
+                </div>
             </div>
-        </div>
         </div>
 
         <!-- Main Content (2 Columns) -->
@@ -99,8 +94,8 @@
                             <span class="data-label">CV File</span>
                             <span class="data-value">
                                 @if ($employee->cv_file)
-                                    <a href="{{ asset('storage/' . $employee->cv_file) }}" target="_blank"
-                                        class="cv-link"><i class="fas fa-file-alt"></i> Lihat File</a>
+                                    <a href="{{ asset('storage/' . $employee->cv_file) }}" target="_blank" class="cv-link"><i
+                                            class="fas fa-file-alt"></i> Lihat File</a>
                                 @else
                                     -
                                 @endif
@@ -124,9 +119,9 @@
                             <span class="data-value">{{ $employee->user->email ?? '-' }}</span>
                         </div>
                         <div class="data-item">
-                        <span class="data-label">Role</span>
-                        <span class="data-value">{{ $employee->user->role ?? '-' }}</span>
-                    </div>
+                            <span class="data-label">Role</span>
+                            <span class="data-value">{{ $employee->user->role ?? '-' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -319,8 +314,7 @@
                                 <span class="data-label">Certificate File</span>
                                 <span class="data-value">
                                     @if ($certification->certificate_file)
-                                        <a href="{{ asset('storage/' . $certification->certificate_file) }}"
-                                            target="_blank">
+                                        <a href="{{ asset('storage/' . $certification->certificate_file) }}" target="_blank">
                                             <i class="fas fa-file-alt"></i>
                                             {{ Str::afterLast($certification->certificate_file, '_') }}
                                         </a>
@@ -338,7 +332,7 @@
                                                 <li>
                                                     <a href="{{ asset('storage/certifications/materials/' . $material->file_path) }}"
                                                         target="_blank">
-                                                        <i class="fas fa-file-alt"></i> 
+                                                        <i class="fas fa-file-alt"></i>
                                                         {{ Str::afterLast($material->file_path, '_') }}
                                                     </a>
                                                 </li>
@@ -469,94 +463,92 @@
         </div>
 
         <!-- Training Records Collapsible Card -->
-<div class="full-width-column">
-    <div class="detail-card collapsible-card">
-        <div class="card-header collapsible-header" data-bs-toggle="collapse" href="#trainingRecordsCollapse"
-            role="button" aria-expanded="false" aria-controls="trainingRecordsCollapse">
-            <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Training Records</h3>
-            <i class="fas fa-chevron-down collapse-icon"></i>
-        </div>
-        <div class="collapse" id="trainingRecordsCollapse">
-            <div class="card-content">
-                @forelse ($employee->trainingHistories()->with('trainingMaterials')->latest()->get() as $training)
-                    <div class="data-item">
-                        <span class="data-label">Training Name</span>
-                        <span class="data-value">{{ $training->training_name ?? '-' }}</span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">Provider</span>
-                        <span class="data-value">{{ $training->provider ?? '-' }}</span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">Description</span>
-                        <span class="data-value">{{ $training->description ?? '-' }}</span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">Start Date</span>
-                        <span class="data-value">
-                            {{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('d F Y') : '-' }}
-                        </span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">End Date</span>
-                        <span class="data-value">
-                            {{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('d F Y') : '-' }}
-                        </span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">Cost</span>
-                        <span class="data-value">
-                            {{ $training->cost ? 'Rp ' . number_format($training->cost, 0, ',', '.') : '-' }}
-                        </span>
-                    </div>
-                    <div class="data-item">
-                        <span class="data-label">Location</span>
-                        <span class="data-value">{{ $training->location ?? '-' }}</span>
-                    </div>
+        <div class="full-width-column">
+            <div class="detail-card collapsible-card">
+                <div class="card-header collapsible-header" data-bs-toggle="collapse" href="#trainingRecordsCollapse"
+                    role="button" aria-expanded="false" aria-controls="trainingRecordsCollapse">
+                    <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Training Records</h3>
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                </div>
+                <div class="collapse" id="trainingRecordsCollapse">
+                    <div class="card-content">
+                        @forelse ($employee->trainingHistories()->with('trainingMaterials')->latest()->get() as $training)
+                            <div class="data-item">
+                                <span class="data-label">Training Name</span>
+                                <span class="data-value">{{ $training->training_name ?? '-' }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Provider</span>
+                                <span class="data-value">{{ $training->provider ?? '-' }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Description</span>
+                                <span class="data-value">{{ $training->description ?? '-' }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Start Date</span>
+                                <span class="data-value">
+                                    {{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('d F Y') : '-' }}
+                                </span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">End Date</span>
+                                <span class="data-value">
+                                    {{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('d F Y') : '-' }}
+                                </span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Cost</span>
+                                <span class="data-value">
+                                    {{ $training->cost ? 'Rp ' . number_format($training->cost, 0, ',', '.') : '-' }}
+                                </span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Location</span>
+                                <span class="data-value">{{ $training->location ?? '-' }}</span>
+                            </div>
 
-                    {{-- Certificate File --}}
-                    <div class="data-item">
-                        <span class="data-label">Certificate File</span>
-                        <span class="data-value">
-                            @if (!empty($training->certificate_file))
-                                <a href="{{ asset('storage/' . $training->certificate_file) }}" target="_blank">
-                                    <i class="fas fa-file-pdf"></i> View Certificate
-                                </a>
-                            @else
-                                -
-                            @endif
-                        </span>
-                    </div>
+                            {{-- Certificate File --}}
+                            <div class="data-item">
+                                <span class="data-label">Certificate File</span>
+                                <span class="data-value">
+                                    @if (!empty($training->certificate_file))
+                                        <a href="{{ asset('storage/' . $training->certificate_file) }}" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> View Certificate
+                                        </a>
+                                    @else
+                                        -
+                                    @endif
+                                </span>
+                            </div>
 
-                    {{-- Training Materials --}}
-                    <div class="data-item">
-                        <span class="data-label">Training Materials</span>
-                        <span class="data-value">
-                            @if ($training->trainingMaterials && $training->trainingMaterials->count())
-                                <ul class="list-unstyled mb-0">
-                                    @foreach ($training->trainingMaterials as $index => $material)
-                                        <li>
-                                            <a href="{{ asset('storage/' . $material->file_path) }}"
-                                                target="_blank">
-                                                <i class="fas fa-file-alt"></i> File {{ $index + 1 }}
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                -
-                            @endif
-                        </span>
+                            {{-- Training Materials --}}
+                            <div class="data-item">
+                                <span class="data-label">Training Materials</span>
+                                <span class="data-value">
+                                    @if ($training->trainingMaterials && $training->trainingMaterials->count())
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach ($training->trainingMaterials as $index => $material)
+                                                <li>
+                                                    <a href="{{ asset('storage/' . $material->file_path) }}" target="_blank">
+                                                        <i class="fas fa-file-alt"></i> File {{ $index + 1 }}
+                                                    </a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        -
+                                    @endif
+                                </span>
+                            </div>
+                            <hr>
+                        @empty
+                            <p>No training records available.</p>
+                        @endforelse
                     </div>
-                    <hr>
-                @empty
-                    <p>No training records available.</p>
-                @endforelse
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
 
         {{-- Ikuti card kesehatan diatas untuk menerapkan expand card untuk menampilkan data lainnya --}}
     </div>
@@ -564,7 +556,8 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {{-- <script>
+    {{--
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
             const collapseEl = document.getElementById('healthHistoryCollapse');
             collapseEl.addEventListener('show.bs.collapse', function () {
