@@ -31,6 +31,7 @@ use App\Http\Controllers\OvertimeApplicationController;
 use App\Http\Controllers\KpiReportController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\OnboardingDocumentController;
 
 // === LOGIN & LOGOUT ROUTES ===
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -49,14 +50,18 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard - Semua role bisa akses
     Route::get('/dashboard', [AnnouncementController::class, 'dashboard'])->name('dashboard');
-
+    
     // === SUPERADMIN ONLY ROUTES ===
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':superadmin,hc')->group(function () {
         // Employee CRUD - Hanya superadmin
         Route::resource('employees', EmployeeController::class);
         Route::put('/employees/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
         Route::get('/employees/{employee}/deactivate-form', [EmployeeController::class, 'showDeactivateForm'])->name('employees.deactivate.form');
-
+        
+        // Onboarding Document Management - Superadmin & HC
+        Route::resource('onboarding', OnboardingDocumentController::class)
+    ->parameters(['onboarding' => 'onboardingDocument']);
+        
         // Struktur Organisasi: CRUD hanya superadmin & hc
         Route::get('/organization/structure/create', [OrganizationalStructureController::class, 'create'])->name('organization.structure.create');
         Route::post('/organization/structure', [OrganizationalStructureController::class, 'store'])->name('organization.structure.store');
@@ -147,7 +152,7 @@ Route::middleware('auth')->group(function () {
             });
 
     });
-
+    
     Route::post('/applicants/{id}/convert-to-employee', [ApplicantController::class, 'convertToEmployee'])
         ->name('applicants.convertToEmployee');
     Route::get('/employees/convert/{id}', [EmployeeController::class, 'convert'])

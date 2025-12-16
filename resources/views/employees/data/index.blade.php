@@ -66,6 +66,18 @@
                                             Fulltime</option>
                                     </select>
                                 </div>
+                               <div class="filter-item">
+    <label for="status">Status</label>
+    <select name="status" id="status" class="form-control">
+        <option value="Aktif" {{ request('status', 'Aktif') == 'Aktif' ? 'selected' : '' }}>
+            Aktif (Default)
+        </option>
+        <option value="Tidak Aktif" {{ request('status') == 'Tidak Aktif' ? 'selected' : '' }}>
+            Tidak Aktif
+        </option>
+    </select>
+</div>
+
                             </div>
                             <div class="filter-column">
                                 <div class="filter-item">

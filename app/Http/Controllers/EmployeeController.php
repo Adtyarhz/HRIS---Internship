@@ -26,43 +26,63 @@ class EmployeeController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
-        // Automatically update status if separation_date has passed
-        Employee::whereNotNull('separation_date')
-            ->where('separation_date', '<', Carbon::today())
-            ->where('status', '!=', 'Tidak Aktif')
-            ->update(['status' => 'Tidak Aktif']);
-        $user = Auth::user();
-        if (in_array($user->role, ['superadmin', 'hc'])) {
-            $query = Employee::where('status', 'Aktif');
-        } else {
-            $query = Employee::where('status', 'Aktif')
-                ->where('user_id', $user->id);
-        }
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
-            });
-        }
-        if ($request->filled('division_id')) {
-            $query->where('division_id', $request->division_id);
-        }
-        if ($request->filled('position_id')) {
-            $query->where('position_id', $request->position_id);
-        }
-        if ($request->filled('employee_type')) {
-            $query->where('employee_type', $request->employee_type);
-        }
-        if ($request->filled('office')) {
-            $query->where('office', $request->office);
-        }
-        $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
-        $positions = Position::orderBy('title')->get();
-        $employees = $query->latest()->paginate(9)->withQueryString();
-        return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+{
+    // Auto update status jika separation_date lewat
+    Employee::whereNotNull('separation_date')
+        ->where('separation_date', '<', Carbon::today())
+        ->where('status', '!=', 'Tidak Aktif')
+        ->update(['status' => 'Tidak Aktif']);
+
+    $user = Auth::user();
+
+    $query = Employee::query();
+
+    // 🔐 Role restriction
+    if (!in_array($user->role, ['superadmin', 'hc'])) {
+        $query->where('user_id', $user->id);
     }
+
+    // ✅ Filter Status (Aktif / Tidak Aktif / Semua)
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    } else {
+        // default → hanya aktif
+        $query->where('status', 'Aktif');
+    }
+
+    // 🔍 Search
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('full_name', 'like', "%$search%")
+              ->orWhere('nik', 'like', "%$search%");
+        });
+    }
+
+    // 🎯 Filter lainnya
+    if ($request->filled('division_id')) {
+        $query->where('division_id', $request->division_id);
+    }
+
+    if ($request->filled('position_id')) {
+        $query->where('position_id', $request->position_id);
+    }
+
+    if ($request->filled('employee_type')) {
+        $query->where('employee_type', $request->employee_type);
+    }
+
+    if ($request->filled('office')) {
+        $query->where('office', $request->office);
+    }
+
+    $divisions = Division::where('name', '!=', 'N/A')->orderBy('name')->get();
+    $positions = Position::orderBy('title')->get();
+
+    $employees = $query->latest()->paginate(9)->withQueryString();
+
+    return view('employees.data.index', compact('employees', 'divisions', 'positions'));
+}
 
     public function indexCareer(Request $request)
     {

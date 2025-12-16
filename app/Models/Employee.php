@@ -146,4 +146,10 @@ class Employee extends Model
 
         return $value;
     }
+
+   public function isOnboarding(): bool
+{
+    return $this->employee_type === 'Probation';
+}
+
 }
