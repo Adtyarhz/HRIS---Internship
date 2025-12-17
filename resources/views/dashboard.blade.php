@@ -178,49 +178,137 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Employee Gender
+    // ================= EMPLOYEE GENDER =================
     @if($genderStats->isNotEmpty())
-    new Chart(document.getElementById('employee-gender-chart'), {
-        type: 'doughnut',
-        data: {
-            labels: @json(array_keys($genderStats->toArray())),
-            datasets: [{ data: @json(array_values($genderStats->toArray())) }]
-        }
-    });
+    const employeeGenderCtx = document.getElementById('employee-gender-chart');
+    if (employeeGenderCtx) {
+        new Chart(employeeGenderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: @json(array_keys($genderStats->toArray())),
+                datasets: [{
+                    label: 'Number of Employees',
+                    data: @json(array_values($genderStats->toArray())),
+                    backgroundColor: ['#36A2EB', '#FF6384']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Employee Gender Statistics'
+                    }
+                }
+            }
+        });
+    }
     @endif
 
-    // Employee Division
+
+    // ================= EMPLOYEE DIVISION =================
     @if(in_array($role, ['superadmin','hc','direksi']) && $divisionStats->isNotEmpty())
-    new Chart(document.getElementById('employee-division-chart'), {
-        type: 'bar',
-        data: {
-            labels: @json($divisionStats->pluck('name')),
-            datasets: [{ data: @json($divisionStats->pluck('employees_count')) }]
-        }
-    });
+    const employeeDivisionCtx = document.getElementById('employee-division-chart');
+    if (employeeDivisionCtx) {
+        new Chart(employeeDivisionCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($divisionStats->pluck('name')),
+                datasets: [{
+                    label: 'Employees per Division',
+                    data: @json($divisionStats->pluck('employees_count')),
+                    backgroundColor: '#4BC0C0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Employee Statistics by Division'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
     @endif
 
-    // Intern Gender
+
+    // ================= INTERN GENDER =================
     @if($internGenderStats->isNotEmpty())
-    new Chart(document.getElementById('intern-gender-chart'), {
-        type: 'doughnut',
-        data: {
-            labels: @json(array_keys($internGenderStats->toArray())),
-            datasets: [{ data: @json(array_values($internGenderStats->toArray())) }]
-        }
-    });
+    const internGenderCtx = document.getElementById('intern-gender-chart');
+    if (internGenderCtx) {
+        new Chart(internGenderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: @json(array_keys($internGenderStats->toArray())),
+                datasets: [{
+                    label: 'Number of Interns',
+                    data: @json(array_values($internGenderStats->toArray())),
+                    backgroundColor: ['#36A2EB', '#FF6384']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Intern Gender Statistics'
+                    }
+                }
+            }
+        });
+    }
     @endif
 
-    // Intern Division
+
+    // ================= INTERN DIVISION =================
     @if(in_array($role, ['superadmin','hc','direksi']) && $internDivisionStats->isNotEmpty())
-    new Chart(document.getElementById('intern-division-chart'), {
-        type: 'bar',
-        data: {
-            labels: @json($internDivisionStats->pluck('name')),
-            datasets: [{ data: @json($internDivisionStats->pluck('employees_count')) }]
-        }
-    });
+    const internDivisionCtx = document.getElementById('intern-division-chart');
+    if (internDivisionCtx) {
+        new Chart(internDivisionCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($internDivisionStats->pluck('name')),
+                datasets: [{
+                    label: 'Interns per Division',
+                    data: @json($internDivisionStats->pluck('employees_count')),
+                    backgroundColor: '#4BC0C0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Intern Statistics by Division'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
     @endif
+
 });
 </script>
 @endpush
