@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Carbon\Carbon;
+use App\Models\OnboardingDocument;
 
 class AnnouncementController extends Controller
 {
@@ -29,85 +31,192 @@ class AnnouncementController extends Controller
     }
 
     public function dashboard()
-    {
-        try {
-            $user = auth()->user();
-            $role = $user->role;
-            $divisionId = $user->employee->division_id ?? null;
+{
+    try {
+        $user = auth()->user();
+        $role = $user->role;
+        $employee = $user->employee;
+        $divisionId = $employee->division_id ?? null;
 
-            if (in_array($role, ['hc', 'superadmin'])) {
-                $announcements = Announcement::latest()->paginate(20);
-            } else {
-                $announcements = Announcement::where(function ($q) use ($divisionId) {
-                    $q->whereHas('targetDivisions', function ($q2) use ($divisionId) {
-                        $q2->where('divisions.id', $divisionId);
-                    })->orDoesntHave('targetDivisions');
-                })->latest()->paginate(20);
-            }
+        /* ================= ANNOUNCEMENTS ================= */
 
-            $genderStats = collect();
-            $divisionStats = collect();
-
-            if (in_array($role, ['superadmin', 'hc', 'direksi'])) {
-                $genderStats = Employee::selectRaw('gender, COUNT(*) as total')
-                    ->groupBy('gender')
-                    ->pluck('total', 'gender')
-                    ->mapWithKeys(function ($value, $key) {
-                        $englishKey = match (strtolower($key)) {
-                            'laki-laki' => 'Male',
-                            'perempuan' => 'Female',
-                            default => ucfirst($key),
-                        };
-                        return [$englishKey => $value];
-                    });
-
-                $divisionStats = Division::where('name', '!=', 'N/A')->withCount('employees')->get();
-            } elseif ($role === 'manager') {
-                $divisionId = $user->employee->division_id ?? null;
-                if ($divisionId) {
-                    $genderStats = Employee::where('division_id', $divisionId)
-                        ->selectRaw('gender, COUNT(*) as total')
-                        ->groupBy('gender')
-                        ->pluck('total', 'gender')
-                        ->mapWithKeys(function ($value, $key) {
-                            $englishKey = match (strtolower($key)) {
-                                'laki-laki' => 'Male',
-                                'perempuan' => 'Female',
-                                default => ucfirst($key),
-                            };
-                            return [$englishKey => $value];
-                        });
-                }
-            } elseif ($role === 'section_head') {
-                $divisionId = $user->employee->division_id ?? null;
-                if ($divisionId) {
-                    $hasManager = User::where('role', 'manager')
-                        ->whereHas('employee', function ($q) use ($divisionId) {
-                            $q->where('division_id', $divisionId);
-                        })->exists();
-                    if (!$hasManager) {
-                        $genderStats = Employee::where('division_id', $divisionId)
-                            ->selectRaw('gender, COUNT(*) as total')
-                            ->groupBy('gender')
-                            ->pluck('total', 'gender')
-                            ->mapWithKeys(function ($value, $key) {
-                                $englishKey = match (strtolower($key)) {
-                                    'laki-laki' => 'Male',
-                                    'perempuan' => 'Female',
-                                    default => ucfirst($key),
-                                };
-                                return [$englishKey => $value];
-                            });
-                    }
-                }
-            }
-
-            return view('dashboard', compact('announcements', 'genderStats', 'divisionStats'));
-        } catch (\Exception $e) {
-            Log::error('Error loading dashboard: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'An error occurred while loading the dashboard.');
+        if (in_array($role, ['hc', 'superadmin'])) {
+            $announcements = Announcement::latest()->paginate(20);
+        } else {
+            $announcements = Announcement::where(function ($q) use ($divisionId) {
+                $q->whereHas('targetDivisions', function ($q2) use ($divisionId) {
+                    $q2->where('divisions.id', $divisionId);
+                })->orDoesntHave('targetDivisions');
+            })->latest()->paginate(20);
         }
+
+        /* ================= STATISTICS ================= */
+
+$genderStats = collect();
+$divisionStats = collect();
+
+$internGenderStats = collect();
+$internDivisionStats = collect();
+
+if (in_array($role, ['superadmin', 'hc', 'direksi'])) {
+
+    /* ========= NON INTERNSHIP ========= */
+    $genderStats = Employee::where('employee_type', '!=', 'Intern')
+        ->where('status', 'aktif')
+        ->selectRaw('gender, COUNT(*) as total')
+        ->groupBy('gender')
+        ->pluck('total', 'gender')
+        ->mapWithKeys(fn ($value, $key) => [
+            match (strtolower($key)) {
+                'laki-laki' => 'Male',
+                'perempuan' => 'Female',
+                default => ucfirst($key),
+            } => $value
+        ]);
+
+                $divisionStats = Division::where('name', '!=', 'N/A')
+                    ->withCount([
+                        'employees' => function ($q) {
+                            $q->where('employee_type', '!=', 'Intern')
+                                ->where('status', 'aktif');
+        }])
+        ->get();
+
+    /* ========= INTERNSHIP ========= */
+    $internGenderStats = Employee::where('employee_type', 'Intern')
+        ->where('status', 'aktif')
+        ->selectRaw('gender, COUNT(*) as total')
+        ->groupBy('gender')
+        ->pluck('total', 'gender')
+        ->mapWithKeys(fn ($value, $key) => [
+            match (strtolower($key)) {
+                'laki-laki' => 'Male',
+                'perempuan' => 'Female',
+                default => ucfirst($key),
+            } => $value
+        ]);
+
+    $internDivisionStats = Division::where('name', '!=', 'N/A')
+        ->withCount(['employees' => function ($q) {
+            $q->where('employee_type', 'Intern')
+                ->where('status', 'aktif');
+        }])
+        ->get();
+
+} elseif ($role === 'manager' && $divisionId) {
+
+    /* ========= NON INTERNSHIP ========= */
+    $genderStats = Employee::where('division_id', $divisionId)
+        ->where('employee_type', '!=', 'Interns')
+        ->where('status', 'aktif')
+        ->selectRaw('gender, COUNT(*) as total')
+        ->groupBy('gender')
+        ->pluck('total', 'gender')
+        ->mapWithKeys(fn ($value, $key) => [
+            match (strtolower($key)) {
+                'laki-laki' => 'Male',
+                'perempuan' => 'Female',
+                default => ucfirst($key),
+            } => $value
+        ]);
+
+    /* ========= INTERNSHIP ========= */
+    $internGenderStats = Employee::where('division_id', $divisionId)
+        ->where('employee_type', 'Intern')
+        ->where('status', 'aktif')
+        ->selectRaw('gender, COUNT(*) as total')
+        ->groupBy('gender')
+        ->pluck('total', 'gender')
+        ->mapWithKeys(fn ($value, $key) => [
+            match (strtolower($key)) {
+                'laki-laki' => 'Male',
+                'perempuan' => 'Female',
+                default => ucfirst($key),
+            } => $value
+        ]);
+
+} elseif ($role === 'section_head' && $divisionId) {
+
+    $hasManager = User::where('role', 'manager')
+        ->whereHas('employee', fn ($q) => $q->where('division_id', $divisionId))
+        ->exists();
+
+    if (!$hasManager) {
+
+        /* ========= NON INTERNSHIP ========= */
+        $genderStats = Employee::where('division_id', $divisionId)
+            ->where('employee_type', '!=', 'Intern')
+            ->where('status', 'aktif')
+            ->selectRaw('gender, COUNT(*) as total')
+            ->groupBy('gender')
+            ->pluck('total', 'gender')
+            ->mapWithKeys(fn ($value, $key) => [
+                match (strtolower($key)) {
+                    'laki-laki' => 'Male',
+                    'perempuan' => 'Female',
+                    default => ucfirst($key),
+                } => $value
+            ]);
+
+        /* ========= INTERNSHIP ========= */
+        $internGenderStats = Employee::where('division_id', $divisionId)
+            ->where('employee_type', 'Intern')
+            ->where('status', 'aktif')
+            ->selectRaw('gender, COUNT(*) as total')
+            ->groupBy('gender')
+            ->pluck('total', 'gender')
+            ->mapWithKeys(fn ($value, $key) => [
+                match (strtolower($key)) {
+                    'laki-laki' => 'Male',
+                    'perempuan' => 'Female',
+                    default => ucfirst($key),
+                } => $value
+            ]);
     }
+}
+
+        /* ================= ONBOARDING DOCUMENTS (FINAL) ================= */
+
+        $onboardingDocuments = collect();
+
+        // 1️⃣ SUPERADMIN → SELALU TAMPIL
+        if ($role === 'superadmin') {
+            $onboardingDocuments = OnboardingDocument::where('is_active', true)
+                ->orderBy('created_at')
+                ->get();
+        }
+
+        // 2️⃣ ROLE LAIN → HANYA JIKA PROBATION
+        elseif ($employee && $employee->employee_type === 'Probation') {
+            $onboardingDocuments = OnboardingDocument::where('is_active', true)
+                ->where(function ($q) use ($divisionId) {
+                    $q->whereNull('division_id')
+                      ->orWhere('division_id', $divisionId);
+                })
+                ->orderBy('created_at')
+                ->get();
+        }
+
+        /* ================= RETURN VIEW ================= */
+
+        return view('dashboard', compact(
+            'announcements',
+            'genderStats',
+            'divisionStats',
+            'internGenderStats',
+            'internDivisionStats',
+            'onboardingDocuments'
+        ));
+
+    } catch (\Exception $e) {
+        Log::error('Error loading dashboard: ' . $e->getMessage());
+
+        return redirect()
+            ->back()
+            ->with('error', 'An error occurred while loading the dashboard.');
+    }
+}
+
 
     public function index(Request $request)
     {
