@@ -22,9 +22,7 @@
 
             <div class="mb-3">
                 <label>Description</label>
-                <textarea name="description" class="form-control" rows="3">
-                    {{ $onboardingDocument->description }}
-                </textarea>
+                <textarea name="description" class="form-control" rows="3">{{ $onboardingDocument->description }}</textarea>
             </div>
 
             <div class="mb-3">
