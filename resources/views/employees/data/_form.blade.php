@@ -300,23 +300,6 @@
                     @enderror
                 </div>
             </div>
-            <div class="col-md-6 offset-md-6">
-                <div class="form-group">
-                    <label for="user_id">Connect to User</label>
-                    <select class="form-control @error('user_id') is-invalid @enderror" name="user_id">
-                        <option value="">-- Not Connected --</option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}"
-                                {{ old('user_id', $employee->user_id) == $user->id ? 'selected' : '' }}>
-                                {{ $user->name }} ({{ $user->email }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('user_id')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
         </div>
     </div>
 </div>

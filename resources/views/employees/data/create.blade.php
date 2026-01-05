@@ -367,22 +367,6 @@
                                 </div>
                             </div>
 
-                            <!-- Connect to User -->
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="user_id">Connect to User</label>
-                                    <select class="form-control @error('user_id') is-invalid @enderror" id="user_id" name="user_id">
-                                        <option value="">-- Not Connected --</option>
-                                        @foreach ($users as $user)
-                                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }} ({{ $user->email }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('user_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
                             <!-- Files -->
                             <div class="col-12 mt-3">
                                 <h5>Files & Documents</h5>
