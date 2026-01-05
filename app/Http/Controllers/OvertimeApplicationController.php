@@ -13,21 +13,20 @@ use App\Models\User;
 
 class OvertimeApplicationController extends Controller
 {
-    // Daftar pengajuan lembur
-    // Daftar pengajuan lembur
+    // List of overtime applications
 public function index()
 {
     $user = Auth::user();
 
     if ($user->role === 'staff_bisnis' || $user->role === 'staff_support') {
-        // staff hanya bisa lihat pengajuan yg ditujukan untuk dirinya
+        // staff can only see applications intended for them
         $applications = OvertimeApplication::with(['employee', 'requester', 'approver'])
             ->where('employee_id', $user->employee->id)
             ->latest()
             ->paginate(10);
 
     } elseif ($user->role === 'section_head') {
-        // section head bisa lihat yg dia buat sendiri + yg dibuat untuk dirinya
+        // section head can see those they created + those created for them
         $applications = OvertimeApplication::with(['employee', 'requester', 'approver'])
             ->where(function ($q) use ($user) {
                 $q->where('requested_by', $user->id)
@@ -37,14 +36,14 @@ public function index()
             ->paginate(10);
 
     } elseif ($user->role === 'manager') {
-        // manager hanya lihat yg dia buat
+        // manager only sees what they created
         $applications = OvertimeApplication::with(['employee', 'requester', 'approver'])
             ->where('requested_by', $user->id)
             ->latest()
             ->paginate(10);
 
     } elseif (in_array($user->role, ['hc', 'superadmin'])) {
-        // HC & superadmin bisa lihat semua
+        // HC & superadmin can see all
         $applications = OvertimeApplication::with(['employee', 'requester', 'approver'])
             ->latest()
             ->paginate(10);
@@ -56,23 +55,23 @@ public function index()
     return view('overtime-application.index', compact('applications'));
 }
 
-    // Form create
+    // Create form
 public function create()
 {
     $user = Auth::user();
 
-    // default kosong
+    // default empty
     $employees = collect();
 
     if (in_array($user->role, ['hc', 'superadmin'])) {
-        // HC & Superadmin bisa pilih semua employee
+        // HC & Superadmin can choose all employees
         $employees = Employee::all();
 
     } else {
         $employee   = $user->employee;
         $divisionId = $employee->division_id ?? null;
 
-        // cek apakah ada manager di divisi ini
+        // check if there is a manager in this division
         $hasManager = false;
         if ($divisionId) {
             $hasManager = Employee::where('division_id', $divisionId)
@@ -83,7 +82,7 @@ public function create()
         }
 
         if ($user->role === 'manager' && $hasManager) {
-            // Manager bisa pilih dirinya + section_head + staff
+            // Manager can choose themself + section_head + staff
             $employees = Employee::where('division_id', $divisionId)
                 ->whereHas('user', function ($q) {
                     $q->whereIn('role', ['manager', 'section_head', 'staff_bisnis', 'staff_support']);
@@ -91,7 +90,7 @@ public function create()
                 ->get();
 
         } elseif ($user->role === 'section_head' && !$hasManager) {
-            // Jika tidak ada manager, section head bisa pilih dirinya + staff
+            // If there is no manager, section head can choose themself + staff
             $employees = Employee::where('division_id', $divisionId)
                 ->whereHas('user', function ($q) {
                     $q->whereIn('role', ['section_head', 'staff_bisnis', 'staff_support']);
@@ -99,7 +98,7 @@ public function create()
                 ->get();
 
         } elseif (in_array($user->role, ['staff_bisnis', 'staff_support'])) {
-            // Staff tidak boleh create
+            // Staff cannot create
            abort(403, 'Unauthorized access.');
         } else {
             abort(403, 'Unauthorized access.');
@@ -109,23 +108,23 @@ public function create()
     return view('overtime-application.create', compact('employees'));
 }
 
-    // Store pengajuan lembur
+    // Store overtime application
 public function store(Request $request)
 {
     $user = Auth::user();
 
-    // default kosong
+    // default empty
     $employees = collect();
 
     if (in_array($user->role, ['hc', 'superadmin'])) {
-        // HC & Superadmin bisa pilih semua employee
+        // HC & Superadmin can choose all employees
         $employees = Employee::pluck('id')->toArray();
 
     } else {
         $employee   = $user->employee;
         $divisionId = $employee->division_id ?? null;
 
-        // cek apakah ada manager di divisi ini
+        // check if there is a manager in this division
         $hasManager = false;
         if ($divisionId) {
             $hasManager = Employee::where('division_id', $divisionId)
@@ -134,7 +133,7 @@ public function store(Request $request)
         }
 
         if ($user->role === 'manager' && $hasManager) {
-            // Manager bisa pilih dirinya + section_head + staff
+            // Manager can choose themself + section_head + staff
             $employees = Employee::where('division_id', $divisionId)
                 ->whereHas('user', fn($q) =>
                     $q->whereIn('role', ['manager', 'section_head', 'staff_bisnis', 'staff_support'])
@@ -143,7 +142,7 @@ public function store(Request $request)
                 ->toArray();
 
         } elseif ($user->role === 'section_head' && !$hasManager) {
-            // Jika tidak ada manager, section head bisa pilih dirinya + staff
+            // If there is no manager, section head can choose themself + staff
             $employees = Employee::where('division_id', $divisionId)
                 ->whereHas('user', fn($q) =>
                     $q->whereIn('role', ['section_head', 'staff_bisnis', 'staff_support'])
@@ -159,7 +158,7 @@ public function store(Request $request)
         }
     }
 
-    // ✅ Validasi form + pastikan employee_id termasuk yang boleh dipilih user
+    // ✅ Validate form + ensure employee_id is one the user is allowed to choose
     $request->validate([
         'employee_id'    => ['required', 'exists:employees,id', function ($attr, $value, $fail) use ($employees) {
             if (!in_array($value, $employees)) {
@@ -173,7 +172,7 @@ public function store(Request $request)
         'tasks.*'        => 'nullable|string',
     ]);
 
-    // ✅ Simpan pengajuan
+    // ✅ Save the application
     $application = OvertimeApplication::create([
         'employee_id'    => $request->employee_id,
         'requested_by'   => Auth::id(),
@@ -182,8 +181,8 @@ public function store(Request $request)
         'reason'         => $request->reason,
         'status'         => 'Pending',
     ]);
-    $employeeName = $application->employee->full_name ?? 'Pegawai';
-    // ✅ Simpan tasks jika ada
+    $employeeName = $application->employee->full_name ?? 'Employee';
+    // ✅ Save tasks if any
     if ($request->has('tasks')) {
         foreach ($request->tasks as $task) {
             if (!empty($task)) {
@@ -196,7 +195,7 @@ public function store(Request $request)
         }
     }
 
-    // ✅ Tambah riwayat
+    // ✅ Add history
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => Auth::id(),
@@ -216,20 +215,20 @@ if ($employeeUser) {
         ->with('success', 'Overtime request successfully created.');
 }
 
-   // Form edit
+   // Edit form
 public function edit(OvertimeApplication $overtime_application)
 {
-    // 🚫 Cegah masuk ke halaman edit jika sudah Approved/Rejected
+    // 🚫 Prevent entry to edit page if already Approved/Rejected
     if (in_array($overtime_application->status, ['Approved', 'Rejected'])) {
         return redirect()
             ->route('overtime-applications.index')
-            ->with('error', 'Pengajuan yang sudah disetujui/ditolak tidak bisa diedit.');
+            ->with('error', 'Applications that have been approved/rejected cannot be edited.');
     }
     $user = Auth::user();
     $employee = $user->employee ?? null;
     $divisionId = $employee->division_id ?? null;
 
-    // cek apakah ada manager di divisi
+    // check if there is a manager in the division
     $hasManager = false;
     if ($divisionId) {
         $hasManager = Employee::where('division_id', $divisionId)
@@ -239,7 +238,7 @@ public function edit(OvertimeApplication $overtime_application)
             ->exists();
     }
 
-    // Batasi akses edit
+    // Limit edit access
     if (
         ($user->role === 'manager' && $hasManager) ||
         ($user->role === 'section_head' && !$hasManager) ||
@@ -254,10 +253,10 @@ public function edit(OvertimeApplication $overtime_application)
     abort(403, 'Unauthorized access.');
 }
 
-    // Update pengajuan lembur
+    // Update overtime application
     public function update(Request $request, OvertimeApplication $overtime_application)
     {
-        // 🚫 Cegah update jika sudah Approved/Rejected
+        // 🚫 Prevent update if already Approved/Rejected
     if (in_array($overtime_application->status, ['Approved', 'Rejected'])) {
         return redirect()
             ->route('overtime-applications.index')
@@ -278,8 +277,8 @@ public function edit(OvertimeApplication $overtime_application)
             'end_datetime'   => $request->end_datetime,
             'reason'         => $request->reason,
         ]);
-        $employeeName = $overtime_application->employee->full_name ?? 'Pegawai';
-        // ✅ Update tasks (hapus lama → buat baru lagi)
+        $employeeName = $overtime_application->employee->full_name ?? 'Employee';
+        // ✅ Update tasks (delete old -> create new ones)
         $overtime_application->tasks()->delete();
         if ($request->has('tasks')) {
             foreach ($request->tasks as $task) {
@@ -293,7 +292,7 @@ public function edit(OvertimeApplication $overtime_application)
             }
         }
 
-        // ✅ Tambah riwayat
+        // ✅ Add history
         OvertimeApplicationHistory::create([
             'overtime_application_id' => $overtime_application->id,
             'action_by'   => Auth::id(),
@@ -301,7 +300,7 @@ public function edit(OvertimeApplication $overtime_application)
             'description' => 'Overtime request updated.',
             'created_at'  => now(),
         ]);
-        // setelah update & history disimpan
+        // after update & history is saved
 $hcUsers = User::whereIn('role', ['hc', 'superadmin'])->get();
 foreach ($hcUsers as $hc) {
     $hc->notify(new OvertimeApplicationNotification($overtime_application, "Overtime request ($employeeName) updated, awaiting approval."));
@@ -325,12 +324,12 @@ if ($employeeUser) {
         return view('overtime-application.show', compact('application'));
     }
 
-    // Approve lembur
+    // Approve overtime
 public function approve($id)
 {
     $user = Auth::user();
 
-    // ❌ Tolak jika bukan HC atau Superadmin
+    // ❌ Reject if not HC or Superadmin
     if (!in_array($user->role, ['hc', 'superadmin'])) {
         abort(403, 'Unauthorized access.');
     }
@@ -341,8 +340,8 @@ public function approve($id)
         'approved_by' => $user->id,
         'approved_at' => now(),
     ]);
-    $employeeName = $application->employee->full_name ?? 'Pegawai';
-    // ✅ Tambah riwayat
+    $employeeName = $application->employee->full_name ?? 'Employee';
+    // ✅ Add history
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => $user->id,
@@ -350,7 +349,7 @@ public function approve($id)
         'description' => 'Overtime request approved.',
         'created_at'  => now(),
     ]);
-    // setelah update status & history disimpan
+    // after status update & history is saved
 $employeeUser = $application->employee->user ?? null;
 if ($employeeUser) {
     $employeeUser->notify(new OvertimeApplicationNotification($application, "Your overtime application {$application->status}."));
@@ -364,17 +363,17 @@ if ($requester) {
     return back()->with('success', 'Overtime request approved.');
 }
 
-// Reject lembur
+// Reject overtime
 public function reject($id, Request $request)
 {
     $user = Auth::user();
 
-    // ❌ Tolak jika bukan HC atau Superadmin
+    // ❌ Reject if not HC or Superadmin
     if (!in_array($user->role, ['hc', 'superadmin'])) {
         abort(403, 'Unauthorized access.');
     }
 
-    // ✅ Validasi alasan wajib diisi
+    // ✅ Validate reason is required
     $request->validate([
         'reason' => 'required|string|max:255',
     ]);
@@ -385,16 +384,16 @@ public function reject($id, Request $request)
         'approved_by' => $user->id,
         'approved_at' => now(),
     ]);
-    $employeeName = $application->employee->full_name ?? 'Pegawai';
-    // ✅ Tambah riwayat dengan alasan
+    $employeeName = $application->employee->full_name ?? 'Employee';
+    // ✅ Add history with reason
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => $user->id,
         'action_type' => 'Rejected',
-        'description' => 'Overtime request rejected for the following reasons: '.$request->reason, // simpan alasan
+        'description' => 'Overtime request rejected for the following reasons: '.$request->reason, // save reason
         'created_at'  => now(),
     ]);
-    // setelah update status & history disimpan
+    // after status update & history is saved
 $employeeUser = $application->employee->user ?? null;
 if ($employeeUser) {
     $employeeUser->notify(new OvertimeApplicationNotification($application, "Your Overtime Application {$application->status}."));
@@ -414,37 +413,37 @@ if ($requester) {
     $application = $task->overtimeApplication;
     $user = Auth::user();
 
-     // ✅ Pastikan hanya atasan (yang membuat pengajuan lembur) yang boleh ubah task
+     // ✅ Ensure only the requester (supervisor) can change the task status
     if ($application->requested_by !== $user->id) {
         abort(403, 'Only the requester (supervisor) can update the task status.');
     }
 
-    // 🚫 Jika lemburnya sudah ditolak → tidak boleh update task
+    // 🚫 If the overtime is rejected -> cannot update task
     if ($application->status === 'Rejected') {
         return back()->with('error', 'The task cannot be updated because the overtime request has been rejected.');
     }
 
-    // 🚫 Jika lemburnya masih pending → tidak boleh update task
+    // 🚫 If the overtime is still pending -> cannot update task
     if ($application->status === 'Pending') {
         return back()->with('error', 'The task cannot be updated because the overtime request is still awaiting approval.');
     }
 
-    // ✅ Hanya jika lembur sudah disetujui → task boleh diupdate
+    // ✅ Only if overtime is approved -> task can be updated
     if ($task->is_completed) {
-        // kalau sudah selesai → kembalikan ke belum selesai
+        // if already finished -> revert to not finished
         $task->update([
             'is_completed' => false,
             'completed_at' => null,
         ]);
     } else {
-        // kalau belum selesai → tandai selesai
+        // if not finished -> mark as finished
         $task->update([
             'is_completed' => true,
             'completed_at' => now(),
         ]);
     }
-    $employeeName = $application->employee->full_name ?? 'Pegawai';
-    // Simpan riwayat
+    $employeeName = $application->employee->full_name ?? 'Employee';
+    // Save history
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $task->overtime_application_id,
         'action_by'   => Auth::id(),
@@ -453,7 +452,7 @@ if ($requester) {
             . ($task->is_completed ? "finished" : "not finished yet"),
         'created_at'  => now(),
     ]);
-    // setelah update task & history disimpan
+    // after task update & history is saved
 $requester = $application->requester;
 if ($requester) {
     $requester->notify(new OvertimeApplicationNotification($application, "($employeeName) overtime task status updated."));
@@ -469,22 +468,22 @@ foreach ($hcUsers as $hc) {
 }
 
 
-    // Hapus pengajuan lembur
+    // Delete overtime application
 public function destroy($id)
 {
     $application = OvertimeApplication::findOrFail($id);
 
-    // ✅ Tambah riwayat dulu sebelum hapus
+    // ✅ Add history first before deleting
     OvertimeApplicationHistory::create([
         'overtime_application_id' => $application->id,
         'action_by'   => Auth::id(),
         'action_type' => 'Deleted',
-        'description' => 'Pengajuan lembur dihapus.',
+        'description' => 'Overtime application deleted.',
         'created_at'  => now(),
     ]);
 
-    // Baru hapus tasks & parent
-    $application->tasks()->delete(); // hapus semua tasks terkait
+    // Then delete tasks & parent
+    $application->tasks()->delete(); // delete all related tasks
     $application->delete();
 
     return redirect()

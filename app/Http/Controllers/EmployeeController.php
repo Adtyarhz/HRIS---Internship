@@ -138,19 +138,18 @@ class EmployeeController extends Controller
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'division_id' => 'nullable|exists:divisions,id',
             'position_id' => 'nullable|exists:positions,id',
-            'user_id' => 'nullable|unique:employees,user_id|exists:users,id',
         ]);
 
         //-- APPROVAL LOGIC START --//
         if (Auth::user()->role === 'hc') {
-            // Buat instance model sementara dengan data tervalidasi, tapi jangan simpan.
+            // Create a temporary model instance with validated data, but do not save it.
             $tempEmployee = new Employee($validatedData);
             ApprovalWorkflowService::captureModelChange(Auth::user(), $tempEmployee, 'create');
-            return redirect()->route('employees.index')->with('success', 'Permintaan penambahan karyawan telah dikirim untuk approval.');
+            return redirect()->route('employees.index')->with('success', 'Request to add employee has been sent for approval.');
         }
         //-- APPROVAL LOGIC END --//
 
-        // Alur asli untuk superadmin
+        // Original flow for superadmin
         try {
             DB::beginTransaction();
             if ($request->hasFile('cv_file')) {
@@ -283,13 +282,13 @@ class EmployeeController extends Controller
             $tempEmployee = clone $employee;
             $tempEmployee->fill($validatedData);
             ApprovalWorkflowService::captureModelChange($user, $tempEmployee, 'update');
-            return redirect()->route('employees.show', $employee->id)->with('success', 'Permintaan perubahan data telah dikirim untuk approval.');
+            return redirect()->route('employees.show', $employee->id)->with('success', 'Data change request has been sent for approval.');
         }
 
         try {
             DB::beginTransaction();
 
-            // Upload file jika ada
+            // Upload file if present
             if ($request->hasFile('cv_file')) {
                 $file = $request->file('cv_file');
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
@@ -378,11 +377,11 @@ class EmployeeController extends Controller
         //-- APPROVAL LOGIC START --//
         if (Auth::user()->role === 'hc') {
             ApprovalWorkflowService::captureModelChange(Auth::user(), $employee, 'delete');
-            return redirect()->route('employees.index')->with('success', 'Permintaan penghapusan karyawan telah dikirim untuk approval.');
+            return redirect()->route('employees.index')->with('success', 'Request to delete employee has been sent for approval.');
         }
         //-- APPROVAL LOGIC END --//
 
-        // Alur asli untuk superadmin
+        // Original flow for superadmin
         try {
             DB::beginTransaction();
             if ($employee->cv_file) {

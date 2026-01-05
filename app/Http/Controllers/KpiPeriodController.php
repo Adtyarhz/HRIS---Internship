@@ -12,12 +12,12 @@ use App\Services\ApprovalWorkflowService;
 class KpiPeriodController extends Controller
 {
     /**
-     * Memastikan hanya role tertentu yang bisa mengakses fungsi CUD.
+     * Ensures only specific roles can access CUD functions.
      */
     private function authorizeAccess()
     {
         if (!in_array(Auth::user()->role, ['superadmin', 'hc'])) {
-            abort(403, 'Anda tidak memiliki akses untuk melakukan aksi ini.');
+            abort(403, 'You do not have access to perform this action.');
         }
     }
 
@@ -77,11 +77,11 @@ class KpiPeriodController extends Controller
             $tempModel = new KpiPeriod($validatedData);
             ApprovalWorkflowService::captureModelChange($user, $tempModel, 'create');
             return redirect()->route('kpi-periods.index')
-                ->with('success', 'Permintaan pembuatan Periode KPI telah dikirim untuk approval.');
+                ->with('success', 'Request to create KPI Period has been sent for approval.');
         }
         //-- APPROVAL LOGIC END --//
 
-        //-- Untuk superadmin langsung eksekusi
+        //-- Superadmin executes directly
         KpiPeriod::create($validatedData);
         return redirect()->route('kpi-periods.index')
             ->with('success', 'KPI period created successfully.');
@@ -121,19 +121,19 @@ class KpiPeriodController extends Controller
 
         $user = Auth::user();
 
-        //-- ✅ Approval logic untuk HC (dengan data lama & baru)
+        //-- ✅ Approval logic for HC (with old & new data)
         if ($user && $user->role === 'hc') {
-            $oldData = $kpiPeriod->toArray(); // snapshot sebelum perubahan
+            $oldData = $kpiPeriod->toArray(); // snapshot before changes
             $tempModel = clone $kpiPeriod;
             $tempModel->fill($validatedData);
 
             ApprovalWorkflowService::captureModelChange($user, $tempModel, 'update', $oldData);
             return redirect()->route('kpi-periods.index')
-                ->with('success', 'Permintaan perubahan Periode KPI telah dikirim untuk approval.');
+                ->with('success', 'Request to update KPI Period has been sent for approval.');
         }
         //-- APPROVAL LOGIC END --//
 
-        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
+        // The logic below only runs for SUPERADMIN
         $kpiPeriod->update($validatedData);
         return redirect()->route('kpi-periods.index')
             ->with('success', 'KPI period updated successfully.');
@@ -157,11 +157,11 @@ class KpiPeriodController extends Controller
             $oldData = $kpiPeriod->toArray();
             ApprovalWorkflowService::captureModelChange($user, $kpiPeriod, 'delete', $oldData);
             return redirect()->route('kpi-periods.index')
-                ->with('success', 'Permintaan penghapusan Periode KPI telah dikirim untuk approval.');
+                ->with('success', 'Request to delete KPI Period has been sent for approval.');
         }
         //-- APPROVAL LOGIC END --//
 
-        // Logika di bawah ini hanya berjalan untuk SUPERADMIN
+        // The logic below only runs for SUPERADMIN
         $kpiPeriod->delete();
         return redirect()->route('kpi-periods.index')
             ->with('success', 'KPI period deleted successfully.');

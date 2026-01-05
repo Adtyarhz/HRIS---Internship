@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChangeDataRequest;
-use App\Models\User; // Pastikan User di-import
+use App\Models\User; // Ensure User is imported
 use App\Services\ApprovalWorkflowService;
 use App\Services\CheckerWorkflowService;
 use Illuminate\Http\Request;
@@ -13,26 +13,26 @@ use Exception;
 class ApprovalController extends Controller
 {
     /**
-     * Menampilkan panel approval yang relevan berdasarkan peran user.
+     * Display the relevant approval panel based on the user's role.
      */
     public function index()
     {
         $user = Auth::user();
         $isApprover = optional($user->employee)->position->title === 'HC & GA Manager';
 
-        $pendingForChecking = collect(); // Default koleksi kosong
-        $pendingForApproval = collect(); // Default koleksi kosong
+        $pendingForChecking = collect(); // Default empty collection
+        $pendingForApproval = collect(); // Default empty collection
 
         if ($isApprover) {
-            // JIKA USER ADALAH APPROVER:
-            // Dia hanya peduli dengan request yang sudah diperiksa ('checked')
+            // IF THE USER IS AN APPROVER:
+            // They only care about requests that have been 'checked'.
             $pendingForApproval = ChangeDataRequest::where('status', 'checked')
                 ->with(['requester', 'checker'])
                 ->latest()
                 ->get();
         } else {
-            // JIKA USER ADALAH CHECKER BIASA:
-            // Dia hanya peduli dengan request 'pending' yang dibuat oleh orang lain
+            // IF THE USER IS A REGULAR CHECKER:
+            // They only care about 'pending' requests made by others.
             $pendingForChecking = ChangeDataRequest::where('status', 'pending')
                 ->where('requested_by', '!=', $user->id)
                 ->with('requester')
@@ -48,7 +48,7 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Menampilkan detail dari sebuah request.
+     * Display the details of a request.
      */
     public function show(ChangeDataRequest $cdr)
     {
@@ -56,7 +56,7 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Aksi 'check' oleh seorang Checker.
+     * The 'check' action by a Checker.
      */
     public function check(ChangeDataRequest $cdr, Request $request)
     {
@@ -66,14 +66,14 @@ class ApprovalController extends Controller
                 Auth::user(),
                 $request->input('status_notes')
             );
-            return redirect()->route('approvals.index')->with('success', "Request #{$cdr->id} telah diperiksa dan diteruskan ke approver.");
+            return redirect()->route('approvals.index')->with('success', "Request #{$cdr->id} has been checked and forwarded to the approver.");
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * Aksi 'approve' oleh seorang Approver.
+     * The 'approve' action by an Approver.
      */
     public function approve(ChangeDataRequest $cdr, Request $request)
     {
@@ -83,14 +83,14 @@ class ApprovalController extends Controller
                 Auth::user(),
                 $request->input('status_notes')
             );
-            return redirect()->route('approvals.index')->with('success', "Request #{$cdr->id} telah disetujui dan diterapkan.");
+            return redirect()->route('approvals.index')->with('success', "Request #{$cdr->id} has been approved and applied.");
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * Aksi 'reject' oleh Checker atau Approver.
+     * The 'reject' action by a Checker or Approver.
      */
     public function reject(ChangeDataRequest $cdr, Request $request)
     {
@@ -102,7 +102,7 @@ class ApprovalController extends Controller
                 Auth::user(),
                 $request->input('status_notes')
             );
-            return redirect()->route('approvals.index')->with('info', "Request #{$cdr->id} telah ditolak.");
+            return redirect()->route('approvals.index')->with('info', "Request #{$cdr->id} has been rejected.");
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
