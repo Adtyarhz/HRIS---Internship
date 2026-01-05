@@ -298,7 +298,7 @@
                                         use Carbon\Carbon;
 
                                         $now = Carbon::now();
-                                        $periodEnd = $kpiAssessment->period->end_date->endOfDay();
+                                        $periodEnd = $kpiAssessment->period->end_date;
                                         $hoursRemaining = $now->diffInHours($periodEnd, false);
                                         $daysRemaining = $hoursRemaining / 24; // hasil bisa desimal
                                     @endphp
@@ -329,7 +329,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     // === Tooltip Script ===
     const daysRemaining = @json($daysRemaining);
-    const periodEnd = @json($kpiAssessment->period->end_date->endOfDay()->toIso8601String()); // kirim ke JS dalam format ISO
+    const periodEnd = @json($kpiAssessment->period->end_date); // kirim ke JS dalam format ISO
 
     const tooltip = document.createElement("div");
     tooltip.className = "tooltip-submit";

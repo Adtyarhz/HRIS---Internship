@@ -69,7 +69,7 @@
                                     <option value="">-- Select Period --</option>
                                     @foreach($periods as $period)
                                         <option value="{{ $period->id }}" {{ old('kpi_period_id') == $period->id ? 'selected' : '' }}>
-                                            {{ $period->period_name }} ({{ $period->start_date->format('d-m-Y') }} - {{ $period->end_date->format('d-m-Y') }})
+                                            {{ $period->period_name }} ({{ $period->start_date }} - {{ $period->end_date }})
                                         </option>
                                     @endforeach
                                 </select>
