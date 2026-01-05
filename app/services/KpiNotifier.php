@@ -11,17 +11,26 @@ use Illuminate\Support\Facades\Log;
 
 class KpiNotifier
 {
-    public static function notifyNewSession(KpiPeriod $period, User $atasanPositionId, $subordinates)
+    public static function notifyNewSession(KpiPeriod $period, User $atasan, $subordinates)
     {
+        $subordinateNames = [];
+
         foreach ($subordinates as $bawahan) {
-            $bawahan->notify(new KpiNotification(
-                "A new KPI session has started for the {$period->period_name} period. Please check your targets."
-            ));
+            if ($bawahan) { // Safely skip any null entries
+                $bawahan->notify(new KpiNotification(
+                    "A new KPI session has started for the {$period->period_name} period. Please check your targets."
+                ));
+                if ($bawahan->employee) {
+                    $subordinateNames[] = $bawahan->employee->full_name;
+                }
+            }
         }
 
-        $atasanPositionId->notify(new KpiNotification(
-            "KPI session for {$bawahan->employee->full_name} has been created for the {$period->period_name} period. Please set targets and assessment."
-        ));
+        if (!empty($subordinateNames)) {
+            $atasan->notify(new KpiNotification(
+                "KPI session for " . implode(', ', $subordinateNames) . " has been created for the {$period->period_name} period. Please set targets and assessment."
+            ));
+        }
     }
 
     public static function notifyTargetAdjusted($subordinates)

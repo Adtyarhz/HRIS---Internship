@@ -155,7 +155,7 @@ class KpiAssessmentController extends Controller
             \App\Services\KpiNotifier::notifyNewSession(
                 KpiPeriod::find($validatedData['kpi_period_id']),
                 Auth::user(),
-                Employee::whereIn('id', $selectedEmployees)->get()->pluck('user')
+                Employee::whereIn('id', $selectedEmployees)->with('user')->get()->pluck('user')->filter()
             );
             return redirect()->route('kpi-assessments.index')->with('success', 'Assessment session created successfully. Please adjust targets, weights, and scoring rules.');
         } catch (\Exception $e) {
