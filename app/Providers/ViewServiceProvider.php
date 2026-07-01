@@ -20,111 +20,107 @@ class ViewServiceProvider extends ServiceProvider
                     case 'superadmin':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
-                            ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
-                            ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-
-                            ['label' => 'Employee Request', 'route' => 'employee-edit-requests.index', 'icon' => 'charm:git-request'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
-                        
-                            ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Onboarding Management', 'route' => 'onboarding.index', 'icon' => 'mdi:file-document-outline'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ['label' => 'Announcements', 'route' => 'announcement.index', 'icon' => 'mdi:megaphone-outline'],
+                            ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Employee Requests', 'route' => 'employee-edit-requests.index', 'icon' => 'mdi:account-edit-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
+                            ['label' => 'Careers', 'route' => 'career.index', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Applicants', 'route' => 'applicants.index', 'icon' => 'mdi:account-plus-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-templates.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Onboarding', 'route' => 'onboarding.index', 'icon' => 'mdi:clipboard-check-outline'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'hc':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
-                            ['label' => 'Announcement', 'route' => 'announcement.index', 'icon' => 'bi:list-ul'],
-                            ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-
-                            ['label' => 'Employee Request', 'route' => 'employee-edit-requests.index', 'icon' => 'charm:git-request'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
-                          
-                            ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-templates.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Approval Management', 'route' => 'approvals.index', 'icon' => 'uil:setting'],
-                            ['label' => 'Onboarding Management', 'route' => 'hc.onboarding.index', 'icon' => 'mdi:file-document-outline'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ['label' => 'Announcements', 'route' => 'announcement.index', 'icon' => 'mdi:megaphone-outline'],
+                            ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Employee Requests', 'route' => 'employee-edit-requests.index', 'icon' => 'mdi:account-edit-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
+                            ['label' => 'Careers', 'route' => 'career.index', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Applicants', 'route' => 'applicants.index', 'icon' => 'mdi:account-plus-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-templates.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Approvals', 'route' => 'approvals.index', 'icon' => 'mdi:check-decagram-outline'],
+                            ['label' => 'Onboarding', 'route' => 'hc.onboarding.index', 'icon' => 'mdi:clipboard-check-outline'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'direksi':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
-                            ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
-                            : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
-                            ['label' => 'Careers Administration', 'route' => 'career.index', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ? ['label' => 'My Data', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:account-outline']
+                            : ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
+                            ['label' => 'Careers', 'route' => 'career.index', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Applicants', 'route' => 'applicants.index', 'icon' => 'mdi:account-plus-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-assessments.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'manager':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
-                            ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
-                            : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                            ? ['label' => 'My Data', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:account-outline']
+                            : ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
                             $careerMenu = $employeeId
-                            ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
-                            : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ? ['label' => 'My Career', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:briefcase-outline']
+                            : ['label' => 'Careers', 'route' => '#', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Applicants', 'route' => 'applicants.index', 'icon' => 'mdi:account-plus-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-assessments.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'section_head':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
-                            ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
-                            : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                            ? ['label' => 'My Data', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:account-outline']
+                            : ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
                             $careerMenu = $employeeId
-                            ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
-                            : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Recruitment Applicant', 'route' => 'applicants.index', 'icon' => 'fluent-mdl2:recruitment-management'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ? ['label' => 'My Career', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:briefcase-outline']
+                            : ['label' => 'Careers', 'route' => '#', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'Applicants', 'route' => 'applicants.index', 'icon' => 'mdi:account-plus-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-assessments.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'staff_bisnis':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
-                            ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
-                            : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                            ? ['label' => 'My Data', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:account-outline']
+                            : ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
                             $careerMenu = $employeeId
-                            ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
-                            : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ? ['label' => 'My Career', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:briefcase-outline']
+                            : ['label' => 'Careers', 'route' => '#', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-assessments.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                     case 'staff_support':
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'mdi:home-outline'],
                             $employeeId
-                            ? ['label' => 'Employee Information', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'icon-park-outline:file-staff-one']
-                            : ['label' => 'Employee Information', 'route' => 'employees.index', 'icon' => 'icon-park-outline:file-staff-one'],
-                            ['label' => 'Organization Structure', 'route' => 'organization.structure.index', 'icon' => 'fluent:organization-24-regular'],
+                            ? ['label' => 'My Data', 'route' => 'employees.show', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:account-outline']
+                            : ['label' => 'Employees', 'route' => 'employees.index', 'icon' => 'mdi:account-group-outline'],
+                            ['label' => 'Organization', 'route' => 'organization.structure.index', 'icon' => 'mdi:sitemap-outline'],
                             $careerMenu = $employeeId
-                            ? ['label' => 'Careers Administration', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'material-symbols:work-outline']
-                            : ['label' => 'Careers Administration', 'route' => '#', 'icon' => 'material-symbols:work-outline'],
-                            ['label' => 'Overtime Application', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
-                            ['label' => 'Key Performance Index', 'route' => 'kpi-assessments.index', 'icon' => 'ri:bill-line'],
-                            ['label' => 'Settings', 'route' => '#', 'icon' => 'uil:setting'],
+                            ? ['label' => 'My Career', 'route' => 'employees.showCareer', 'params' => ['employee' => $employeeId], 'icon' => 'mdi:briefcase-outline']
+                            : ['label' => 'Careers', 'route' => '#', 'icon' => 'mdi:briefcase-outline'],
+                            ['label' => 'Overtime', 'route' => 'overtime-applications.index', 'icon' => 'mdi:clock-outline'],
+                            ['label' => 'KPIs', 'route' => 'kpi-assessments.index', 'icon' => 'mdi:chart-line'],
+                            ['label' => 'Settings', 'route' => '#', 'icon' => 'mdi:cog-outline'],
                         ];
                         break;
                 }

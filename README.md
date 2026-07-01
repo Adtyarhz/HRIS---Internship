@@ -1,62 +1,167 @@
-# HRIS-Perdana
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏦 HRIS BPR Perdana — Human Resource Information System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> Sistem Informasi Sumber Daya Manusia berbasis web untuk BPR Perdana, dibangun menggunakan **Laravel 12** dengan antarmuka AdminLTE.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Deskripsi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+HRIS BPR Perdana adalah aplikasi manajemen sumber daya manusia yang dikembangkan sebagai bagian dari program **Kerja Praktik (Internship)**. Sistem ini dirancang untuk membantu divisi HR dalam mengelola seluruh siklus manajemen karyawan secara efisien dan terintegrasi.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## ✨ Fitur Utama
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 👥 Manajemen Karyawan
+- Data lengkap karyawan (biodata, jabatan, divisi)
+- Riwayat karir & proyeksi karir
+- Riwayat pendidikan & pengalaman kerja
+- Data keluarga & tanggungan
+- Rekam kesehatan karyawan
+- Permintaan perubahan data karyawan
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 📊 KPI & Penilaian
+- Template KPI & indikator
+- Periode penilaian KPI
+- Penilaian KPI karyawan beserta scoring rules
+- Laporan hasil penilaian
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🧑‍💼 Rekrutmen
+- Manajemen data pelamar (Applicant)
+- Jadwal wawancara (Interview Schedule)
+- Progress rekrutmen
+- Proses onboarding dokumen
 
-## Laravel Sponsors
+### ⏰ Lembur & Kehadiran
+- Pengajuan lembur (Overtime Application)
+- Riwayat & notifikasi lembur
+- Approval workflow lembur
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 📜 Sertifikasi & Pelatihan
+- Riwayat sertifikasi karyawan
+- Riwayat pelatihan & materi pelatihan
 
-### Premium Partners
+### 🔔 Informasi & Komunikasi
+- Pengumuman (Announcement)
+- Polling karyawan
+- Asuransi karyawan
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## 🛠️ Tech Stack
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Layer | Teknologi |
+|---|---|
+| Backend | PHP 8.2+, Laravel 12 |
+| Frontend | AdminLTE 3, Blade Template, Vite |
+| Styling | Tailwind CSS |
+| Database | MySQL |
+| Excel Import/Export | Maatwebsite Excel 3.1 |
+| Activity Log | Spatie Laravel ActivityLog |
+| Auth | Laravel Breeze / Built-in Auth |
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## ⚙️ Persyaratan Sistem
 
-## Security Vulnerabilities
+- PHP >= 8.2
+- Composer
+- Node.js >= 18 & NPM
+- MySQL >= 8.0
+- Laravel 12.x
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 🚀 Instalasi & Konfigurasi
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/Adtyarhz/HRIS---Internship.git
+cd HRIS---Internship
+```
+
+### 2. Install Dependencies PHP
+
+```bash
+composer install
+```
+
+### 3. Install Dependencies Node
+
+```bash
+npm install
+```
+
+### 4. Konfigurasi Environment
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Edit file `.env` sesuai konfigurasi database lokal kamu:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=hris_perdana
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
+
+### 5. Migrasi & Seed Database
+
+```bash
+php artisan migrate --seed
+```
+
+### 6. Build Assets
+
+```bash
+npm run dev
+```
+
+### 7. Jalankan Aplikasi
+
+```bash
+php artisan serve
+```
+
+Akses aplikasi di: **http://localhost:8000**
+
+---
+
+## 📁 Struktur Direktori Utama
+
+```
+HRIS-Perdana/
+├── app/
+│   ├── Http/Controllers/   # Controller aplikasi
+│   ├── Models/             # Eloquent Models
+│   ├── Exports/            # Excel Exports
+│   ├── Imports/            # Excel Imports
+│   ├── Jobs/               # Queue Jobs
+│   └── Notifications/      # Notifikasi sistem
+├── database/
+│   ├── migrations/         # Skema database
+│   └── seeders/            # Data awal
+├── resources/
+│   └── views/              # Blade templates
+├── routes/
+│   └── web.php             # Routing aplikasi
+└── public/                 # Asset publik
+```
+
+---
+
+## 👨‍💻 Developer
+
+Dikembangkan dalam rangka **Kerja Praktik** di **BPR Perdana**.
+
+---
+
+## 📄 Lisensi
+
+Project ini bersifat **private** dan dikembangkan untuk keperluan internal BPR Perdana.
